@@ -1,0 +1,17 @@
+environments:
+  - name: local
+    platform: docker
+    containerName: directus-directus-1
+  - name: dev
+    platform: k8s
+    context: foo-dev
+    namespace: directus
+  - name: stage
+    platform: k8s
+    context: foo-stage
+    namespace: directus
+  - name: live
+    platform: k8s
+    context: foo-live
+    namespace: directus
+    doubleCheck: true
