@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { CommandFactory, CompletionFactory } from 'nest-commander';
+import { CommandFactory } from 'nest-commander';
 import { AppModule } from './app.module.js';
 import which from 'which';
 
@@ -9,22 +9,17 @@ import which from 'which';
   const cliExecutable = await which('migrateus');
 
   const app = await CommandFactory.createWithoutRunning(AppModule, {
+    errorHandler: () => {
+      process.exit(1);
+    },
     completion: {
       cmd: cliCommand,
-      fig: true,
+      fig: false,
       nativeShell: {
         executablePath: cliExecutable,
       },
     },
     logger: ['error', 'warn'],
-  });
-
-  CompletionFactory.registerCompletionCommand(app, {
-    cmd: cliCommand,
-    fig: true,
-    nativeShell: {
-      executablePath: cliExecutable,
-    },
   });
 
   await CommandFactory.runApplication(app);

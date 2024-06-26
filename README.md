@@ -46,6 +46,12 @@ environments:
 
 For more information on any command, run `migrateus <command> --help`
 
+## Completions
+
+```bash
+$ migrateus completion-script >> ~/.bashrc
+```
+
 ## License
 
 See [License](LICENSE).
