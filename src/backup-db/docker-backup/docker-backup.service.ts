@@ -6,8 +6,9 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
 import { DirectusUserService } from '../../directus/directus-user/directus-user.service.js';
 import { nanoid } from 'nanoid';
-import { highlight } from 'sql-highlight';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
+import { BackupPerformer } from '../backup-performer.js';
+import { DatabaseConfig } from '../database-config.interface.js';
 
 type ContainerConfig = {
   NetworkSettings: { Networks: string[] };
@@ -17,48 +18,27 @@ type ContainerConfig = {
 };
 
 @Injectable()
-export class DockerBackupService {
+export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
   private migrateusContainerId: string;
+  private containerConfig: ContainerConfig;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-    private readonly directusUserService: DirectusUserService,
-    private readonly directusAssetService: DirectusAssetService,
-  ) {}
-
-  public async backup(environment: DockerEnvironment, backupFile: string) {
-    const backupDir = this.createTemporaryDirectory();
-    const containerConfig = this.getContainerConfig(environment);
-    await this.ensureDatabaseContainerIsRunning(containerConfig);
-    const databaseConfig = this.getDatabaseConfig(containerConfig);
-
-    try {
-      this.startMigrateusContainer(containerConfig, backupDir);
-      this.mysqlDump(databaseConfig);
-      await this.ensureDirectusContainerIsRunning(containerConfig);
-      await this.setupDirectusUser(databaseConfig);
-      await this.directusAssetService.backupAssets(backupDir);
-      this.createBackupArchive(backupDir, backupFile);
-    } catch (error) {
-      this.logger.error(error);
-    } finally {
-      this.logger.debug(`Cleaning up`);
-      await this.cleanUpDirectusUser(databaseConfig);
-      this.cleanUpMigrateusContainer();
-      shell.rm('-rf', backupDir);
-    }
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    directusUserService: DirectusUserService,
+    directusAssetService: DirectusAssetService,
+  ) {
+    super(logger, directusUserService, directusAssetService);
   }
 
-  private async cleanUpDirectusUser(databaseConfig: {
-    host: string;
-    port: string;
-    name: string;
-    user: string;
-    password: string;
-  }) {
-    await this.directusUserService.removeUser((sql) =>
-      this.exceuteSql.bind(this)(sql, databaseConfig),
-    );
+  protected async setup(environment: DockerEnvironment, backupDir: string) {
+    this.containerConfig = this.getContainerConfig(environment);
+    await this.ensureDatabaseContainerIsRunning();
+    this.startMigrateusContainer(backupDir);
+    await this.ensureDirectusContainerIsRunning();
+  }
+
+  protected async cleanUp() {
+    this.cleanUpMigrateusContainer();
   }
 
   private cleanUpMigrateusContainer() {
@@ -66,22 +46,7 @@ export class DockerBackupService {
     shell.exec(`docker rm ${this.migrateusContainerId}`, { silent: true });
   }
 
-  private mysqlDump(databaseConfig: {
-    host: string;
-    port: string;
-    name: string;
-    user: string;
-    password: string;
-  }) {
-    const command = this.getBackupCommand(databaseConfig);
-    const output = this.eecuteInMigrateusContainer(command);
-    this.handleBackupOutput(output);
-  }
-
-  private async startMigrateusContainer(
-    containerConfig: ContainerConfig,
-    backupDir: string,
-  ) {
+  private startMigrateusContainer(backupDir: string) {
     const command = [
       'docker container create',
       `--name migrateus-${nanoid(6)}`,
@@ -90,7 +55,7 @@ export class DockerBackupService {
     ];
 
     for (const networkName of Object.keys(
-      containerConfig.NetworkSettings.Networks,
+      this.containerConfig.NetworkSettings.Networks,
     )) {
       command.push('--network', networkName);
     }
@@ -107,35 +72,10 @@ export class DockerBackupService {
     shell.exec(`docker start ${this.migrateusContainerId}`, { silent: true });
   }
 
-  private exceuteSql(sql: string, databaseConfig: any) {
-    const command = [
-      'mysql',
-      `-h${databaseConfig.host}`,
-      `-P${databaseConfig.port}`,
-      `-u${databaseConfig.user}`,
-      `-p${databaseConfig.password}`,
-      databaseConfig.name,
-      '-e',
-      `\\"${sql}\\"`,
-    ];
-    this.logger.debug(`Executing SQL: ${highlight(sql)}`);
-    const output = this.eecuteInMigrateusContainer(command.join(' '));
-
-    if (output.code !== 0) {
-      throw new Error(output.stderr);
-    }
-  }
-
-  private async setupDirectusUser(databaseConfig: any) {
-    await this.directusUserService.setupUser((sql) =>
-      this.exceuteSql.bind(this)(sql, databaseConfig),
+  private async ensureDatabaseContainerIsRunning() {
+    const networkNames = Object.keys(
+      this.containerConfig.NetworkSettings.Networks,
     );
-  }
-
-  private async ensureDatabaseContainerIsRunning(
-    containerConfig: ContainerConfig,
-  ) {
-    const networkNames = Object.keys(containerConfig.NetworkSettings.Networks);
     const containersOutput = shell.exec('docker ps -a --format json', {
       silent: true,
     }).stdout;
@@ -153,7 +93,7 @@ export class DockerBackupService {
         .filter(({ State }: { State: string }) => State !== 'running')
         .filter(({ Names }: { Names: string }) =>
           Names.split(',').some((Name: string) =>
-            Name.includes(this.getDockerEnvValue(containerConfig, 'DB_HOST')),
+            Name.includes(this.getDockerEnvValue('DB_HOST')),
           ),
         )
         .map(({ ID }: { ID: string }) => {
@@ -166,17 +106,15 @@ export class DockerBackupService {
     );
   }
 
-  private async ensureDirectusContainerIsRunning(
-    containerConfig: ContainerConfig,
-  ) {
-    if (containerConfig.State.Running) {
+  private async ensureDirectusContainerIsRunning() {
+    if (this.containerConfig.State.Running) {
       return;
     }
 
     this.logger.debug(
-      `Starting Directus container ${chalk.bold(containerConfig.Id)} since it is not running`,
+      `Starting Directus container ${chalk.bold(this.containerConfig.Id)} since it is not running`,
     );
-    shell.exec(`docker start ${containerConfig.Id}`, { silent: true });
+    shell.exec(`docker start ${this.containerConfig.Id}`, { silent: true });
     return new Promise((resolve) => setTimeout(resolve, 10000));
   }
 
@@ -188,52 +126,24 @@ export class DockerBackupService {
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
   }
 
-  private getDatabaseConfig(containerConfig: ContainerConfig) {
+  protected getDatabaseConfig(): DatabaseConfig {
     return {
-      host: this.getDockerEnvValue(containerConfig, 'DB_HOST'),
-      port: this.getDockerEnvValue(containerConfig, 'DB_PORT'),
-      name: this.getDockerEnvValue(containerConfig, 'DB_DATABASE'),
-      user: this.getDockerEnvValue(containerConfig, 'DB_USER'),
-      password: this.getDockerEnvValue(containerConfig, 'DB_PASSWORD'),
+      host: this.getDockerEnvValue('DB_HOST'),
+      port: this.getDockerEnvValue('DB_PORT'),
+      name: this.getDockerEnvValue('DB_DATABASE'),
+      user: this.getDockerEnvValue('DB_USER'),
+      password: this.getDockerEnvValue('DB_PASSWORD'),
     };
   }
 
-  private createTemporaryDirectory() {
-    return shell.exec('mktemp -d', { silent: true }).stdout.trim();
-  }
-
-  private getBackupCommand(databaseConfig: any) {
-    return [
-      'mysqldump',
-      '--no-tablespaces',
-      `-h${databaseConfig.host}`,
-      `-P${databaseConfig.port}`,
-      `-u${databaseConfig.user}`,
-      `-p${databaseConfig.password}`,
-      databaseConfig.name,
-      '>/backup/backup.sql',
-    ].join(' ');
-  }
-
-  private eecuteInMigrateusContainer(command: string) {
+  protected executeInMigrateusContainer(command: string) {
     const fullCommand = `docker exec ${this.migrateusContainerId} /bin/bash -c "${command}"`;
+    this.logger.debug(`Executing command: ${fullCommand}`);
     return shell.exec(fullCommand, { silent: true });
   }
 
-  private handleBackupOutput(output: shell.ShellString) {
-    if (output.code !== 0) {
-      throw new Error(`Backup failed: ${output.stderr}`);
-    }
-  }
-
-  private createBackupArchive(backupDir: string, backupFile: string) {
-    shell.exec(`tar -czf ${backupFile} ${backupDir}/*`, {
-      silent: true,
-    });
-  }
-
-  private getDockerEnvValue(containerConfig: ContainerConfig, name: string) {
-    const variable = containerConfig.Config.Env.find((env: string) =>
+  private getDockerEnvValue(name: string) {
+    const variable = this.containerConfig.Config.Env.find((env: string) =>
       env.startsWith(name),
     );
 
