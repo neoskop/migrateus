@@ -84,7 +84,7 @@ export class DockerBackupService {
               this.directusUserService.token,
             );
           } catch (error) {
-            failedDownloads.push(asset.id);
+            failedDownloads.push(asset);
           }
           progressBar.increment();
         }),
@@ -98,8 +98,10 @@ export class DockerBackupService {
         `Failed to download ${chalk.bold(failedDownloads.length)} assets`,
       );
 
-      for (const id of failedDownloads) {
-        this.logger.debug(`Failed to download asset ${chalk.bold(id)}`);
+      for (const asset of failedDownloads) {
+        this.logger.debug(
+          `Failed to download asset ${chalk.bold(asset.id)}: ${chalk.bold(asset.filename_disk)}`,
+        );
       }
     }
   }
@@ -120,14 +122,13 @@ export class DockerBackupService {
       )[0].count,
     );
 
-    let assets = await directus.request(
-      readFiles({ fields: ['id'], limit: 100 }),
-    );
+    const fields = ['id', 'filename_disk'];
+    let assets = await directus.request(readFiles({ fields, limit: 100 }));
 
     while (assets.length < assetCount) {
       const nextAssets = await directus.request(
         readFiles({
-          fields: ['id'],
+          fields,
           offset: assets.length,
           limit: 100,
         }),
