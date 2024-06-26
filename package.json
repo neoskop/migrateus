@@ -22,7 +22,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "watch": "nodemon --ext ts --watch 'src/**/*.ts' --exec 'npm run build'"
+    "watch": "nodemon --ext ts --watch 'src/**/*.ts' --exec 'npm run build'",
+    "gv": "genversion --esm src/version.ts",
+    "release": "npm run gv && npm run build && npm publish"
   },
   "dependencies": {
     "@1password/op-js": "0.1.13",

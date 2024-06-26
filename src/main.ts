@@ -3,6 +3,7 @@
 import { CommandFactory } from 'nest-commander';
 import { AppModule } from './app.module.js';
 import which from 'which';
+import { version } from './version.js';
 
 (async () => {
   const cliCommand = 'migrateus';
@@ -12,6 +13,7 @@ import which from 'which';
     errorHandler: () => {
       process.exit(1);
     },
+    version,
     completion: {
       cmd: cliCommand,
       fig: false,
