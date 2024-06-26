@@ -6,16 +6,8 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
 import { DirectusUserService } from '../../directus/directus-user/directus-user.service.js';
 import { nanoid } from 'nanoid';
-import { DirectusService } from '../../directus/directus.service.js';
-import { aggregate, readFiles } from '@directus/sdk';
-import { Readable } from 'node:stream';
-import { ReadableStream } from 'stream/web';
-import fs from 'node:fs';
-import { join } from 'node:path';
-import { finished } from 'node:stream/promises';
-import pLimit from 'p-limit';
-import cliProgress from 'cli-progress';
 import { highlight } from 'sql-highlight';
+import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
 
 type ContainerConfig = {
   NetworkSettings: { Networks: string[] };
@@ -31,7 +23,7 @@ export class DockerBackupService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
-    private readonly directusService: DirectusService,
+    private readonly directusAssetService: DirectusAssetService,
   ) {}
 
   public async backup(environment: DockerEnvironment, backupFile: string) {
@@ -45,7 +37,7 @@ export class DockerBackupService {
       this.mysqlDump(databaseConfig);
       await this.ensureDirectusContainerIsRunning(containerConfig);
       await this.setupDirectusUser(databaseConfig);
-      await this.backupAssets(backupDir);
+      await this.directusAssetService.backupAssets(backupDir);
       this.createBackupArchive(backupDir, backupFile);
     } catch (error) {
       this.logger.error(error);
@@ -54,112 +46,6 @@ export class DockerBackupService {
       await this.cleanUpDirectusUser(databaseConfig);
       this.cleanUpMigrateusContainer();
       shell.rm('-rf', backupDir);
-    }
-  }
-
-  private async backupAssets(backupDir: string) {
-    const assets = await this.getAllAssets();
-    this.logger.debug(`Found ${chalk.bold(assets.length)} assets to backup`);
-    const limit = pLimit(10);
-
-    const progressBar = new cliProgress.SingleBar({
-      etaBuffer: 50,
-      format:
-        'Downloading assets |' +
-        chalk.cyan('{bar}') +
-        '| {percentage}% || {value}/{total}',
-      hideCursor: true,
-    });
-
-    progressBar.start(assets.length, 0);
-    const failedDownloads = [];
-
-    await Promise.all(
-      assets.map((asset) =>
-        limit(async () => {
-          try {
-            await this.downloadAsset(
-              backupDir,
-              asset.id,
-              this.directusUserService.token,
-            );
-          } catch (error) {
-            failedDownloads.push(asset);
-          }
-          progressBar.increment();
-        }),
-      ),
-    );
-
-    progressBar.stop();
-
-    if (failedDownloads.length > 0) {
-      this.logger.warn(
-        `Failed to download ${chalk.bold(failedDownloads.length)} assets`,
-      );
-
-      for (const asset of failedDownloads) {
-        this.logger.debug(
-          `Failed to download asset ${chalk.bold(asset.id)}: ${chalk.bold(asset.filename_disk)}`,
-        );
-      }
-    }
-  }
-
-  private async getAllAssets() {
-    const directus = this.directusService.getClient(
-      8055,
-      this.directusUserService.token,
-    );
-
-    const assetCount = Number(
-      (
-        await directus.request(
-          aggregate('directus_files', {
-            aggregate: { count: '*' },
-          }),
-        )
-      )[0].count,
-    );
-
-    const fields = ['id', 'filename_disk'];
-    let assets = await directus.request(readFiles({ fields, limit: 100 }));
-
-    while (assets.length < assetCount) {
-      const nextAssets = await directus.request(
-        readFiles({
-          fields,
-          offset: assets.length,
-          limit: 100,
-        }),
-      );
-      assets = [...assets, ...nextAssets];
-    }
-
-    return assets;
-  }
-
-  private async downloadAsset(
-    backupDir: string,
-    fileId: string,
-    directusToken: string,
-  ) {
-    const res = await fetch(`http://localhost:8055/assets/${fileId}`, {
-      headers: {
-        Authorization: `Bearer ${directusToken}`,
-      },
-    });
-
-    if (res.ok) {
-      const path = join(backupDir, fileId);
-      const fileStream = fs.createWriteStream(path, {
-        flags: 'wx',
-      });
-      await finished(
-        Readable.fromWeb(res.body as ReadableStream<any>).pipe(fileStream),
-      );
-    } else {
-      throw new Error(res.statusText);
     }
   }
 
