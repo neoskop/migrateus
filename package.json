@@ -43,6 +43,7 @@
     "nest-winston": "1.10.0",
     "node-which": "1.0.0",
     "p-limit": "5.0.0",
+    "portfinder": "1.0.32",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "shelljs": "0.8.5",

@@ -23,7 +23,9 @@ export abstract class BackupPerformer<T extends Environment> {
       this.databaseConfig = this.getDatabaseConfig();
       await this.setupDirectusUser();
       this.performMysqlDump();
-      await this.directusAssetService.backupAssets(backupDir);
+      await this.afterMysqlDump();
+      const directusPort = await this.getDirectusPort();
+      await this.directusAssetService.backupAssets(directusPort, backupDir);
       this.createBackupArchive(backupDir, backupFile);
     } catch (error) {
       this.logger.error(error);
@@ -35,6 +37,10 @@ export abstract class BackupPerformer<T extends Environment> {
   }
 
   protected abstract setup(environment: T, backupDir: string): Promise<void>;
+
+  protected async afterMysqlDump() {}
+
+  protected abstract getDirectusPort(): Promise<number>;
 
   protected abstract cleanUp(): Promise<void>;
 
@@ -60,7 +66,9 @@ export abstract class BackupPerformer<T extends Environment> {
     const output = this.executeInMigrateusContainer(command.join(' '));
 
     if (output.code !== 0) {
-      throw new Error(output.stderr);
+      throw new Error(
+        `Execution of SQL failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 
@@ -74,13 +82,15 @@ export abstract class BackupPerformer<T extends Environment> {
       `-u${user}`,
       `-p${password}`,
       name,
-      '>/backup/backup.sql',
+      '>/tmp/backup.sql',
     ].join(' ');
 
     const output = this.executeInMigrateusContainer(command);
 
     if (output.code !== 0) {
-      throw new Error(`Backup failed: ${output.stderr}`);
+      throw new Error(
+        `Backup failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 

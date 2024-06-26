@@ -37,6 +37,10 @@ export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
     await this.ensureDirectusContainerIsRunning();
   }
 
+  protected async getDirectusPort(): Promise<number> {
+    return 8055;
+  }
+
   protected async cleanUp() {
     this.cleanUpMigrateusContainer();
   }
@@ -51,7 +55,7 @@ export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
       'docker container create',
       `--name migrateus-${nanoid(6)}`,
       '-v',
-      `${backupDir}:/backup`,
+      `${backupDir}:/tmp`,
     ];
 
     for (const networkName of Object.keys(
