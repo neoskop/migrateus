@@ -5,6 +5,7 @@ import { WinstonModule } from 'nest-winston';
 import { ConfigModule } from './config/config.module.js';
 import * as winston from 'winston';
 import { BackupDbModule } from './backup-db/backup-db.module.js';
+import { DirectusModule } from './directus/directus.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { BackupDbModule } from './backup-db/backup-db.module.js';
     BackupDbModule,
     RestoreDbModule,
     ConfigModule,
+    DirectusModule,
   ],
   controllers: [],
   providers: [],

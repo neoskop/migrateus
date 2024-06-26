@@ -4,8 +4,17 @@ Schema Migrations and DB Back-up and Restore for Directus
 
 ## Installation
 
-1. Download the latest release from the [releases page](https://github.com/neoskop/migrateus/releases)
-2. Extract the binary to a directory and add it to your PATH
+Install as a global package with
+
+```bash
+npm install -g migrateus
+```
+
+or run via `npx`
+
+```bash
+npx migrateus
+```
 
 ## Usage
 
