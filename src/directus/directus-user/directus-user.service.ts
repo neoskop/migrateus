@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { v4 as uuidv4 } from 'uuid';
-import { MysqlExecutor } from './mysql-executor.type.js';
+import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
 import argon2 from 'argon2';
 
 @Injectable()
@@ -35,6 +35,15 @@ export class DirectusUserService {
     );
     await execSql(
       `DELETE FROM directus_roles WHERE id = '${this.roleId}' LIMIT 1`,
+    );
+  }
+
+  public async cleanUp(execSql: MysqlExecutor) {
+    await execSql(
+      `DELETE FROM directus_users WHERE email LIKE 'migrateus%' LIMIT 1`,
+    );
+    await execSql(
+      `DELETE FROM directus_roles WHERE name LIKE 'migrateus%' LIMIT 1`,
     );
   }
 }

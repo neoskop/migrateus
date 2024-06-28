@@ -6,6 +6,12 @@ import { ConfigModule } from './config/config.module.js';
 import * as winston from 'winston';
 import { BackupDbModule } from './backup-db/backup-db.module.js';
 import { DirectusModule } from './directus/directus.module.js';
+import { CleanModule } from './clean/clean.module.js';
+import { SqlModule } from './sql/sql.module.js';
+import { ContainerModule } from './container/container.module.js';
+import { K8sModule } from './k8s/k8s.module.js';
+import { DockerModule } from './docker/docker.module.js';
+import { EnvironmentModule } from './environment/environment.module.js';
 
 @Module({
   imports: [
@@ -32,6 +38,12 @@ import { DirectusModule } from './directus/directus.module.js';
     RestoreDbModule,
     ConfigModule,
     DirectusModule,
+    CleanModule,
+    SqlModule,
+    ContainerModule,
+    K8sModule,
+    DockerModule,
+    EnvironmentModule,
   ],
   controllers: [],
   providers: [],

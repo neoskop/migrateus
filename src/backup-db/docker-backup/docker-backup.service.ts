@@ -4,82 +4,40 @@ import shell from 'shelljs';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
-import { DirectusUserService } from '../../directus/directus-user/directus-user.service.js';
-import { nanoid } from 'nanoid';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
 import { BackupPerformer } from '../backup-performer.js';
-import { DatabaseConfig } from '../database-config.interface.js';
-
-type ContainerConfig = {
-  NetworkSettings: { Networks: string[] };
-  Config: { Env: string[] };
-  State: { Running: boolean };
-  Id: string;
-};
+import { SqlService } from '../../sql/sql.service.js';
+import { DockerContainerService } from '../../container/docker-container/docker-container.service.js';
+import { DockerService } from '../../docker/docker.service.js';
 
 @Injectable()
-export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
-  private migrateusContainerId: string;
-  private containerConfig: ContainerConfig;
-
+export class DockerBackupService extends BackupPerformer {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
-    directusUserService: DirectusUserService,
+    sqlService: SqlService,
     directusAssetService: DirectusAssetService,
+    private readonly dockerContainerService: DockerContainerService,
+    private readonly dockerService: DockerService,
   ) {
-    super(logger, directusUserService, directusAssetService);
+    super(logger, directusAssetService, sqlService, dockerContainerService);
   }
 
-  protected async setup(environment: DockerEnvironment, backupDir: string) {
-    this.containerConfig = this.getContainerConfig(environment);
+  protected async setup(backupDir: string) {
+    this.logger.info('1');
+    this.dockerService.setup();
+    this.logger.info('2');
     await this.ensureDatabaseContainerIsRunning();
-    this.startMigrateusContainer(backupDir);
+    this.logger.info('3');
     await this.ensureDirectusContainerIsRunning();
+    this.logger.info('4');
+    this.dockerContainerService.mount = backupDir;
   }
 
   protected async getDirectusPort(): Promise<number> {
     return 8055;
   }
 
-  protected async cleanUp() {
-    this.cleanUpMigrateusContainer();
-  }
-
-  private cleanUpMigrateusContainer() {
-    shell.exec(`docker stop ${this.migrateusContainerId}`, { silent: true });
-    shell.exec(`docker rm ${this.migrateusContainerId}`, { silent: true });
-  }
-
-  private startMigrateusContainer(backupDir: string) {
-    const command = [
-      'docker container create',
-      `--name migrateus-${nanoid(6)}`,
-      '-v',
-      `${backupDir}:/tmp`,
-    ];
-
-    for (const networkName of Object.keys(
-      this.containerConfig.NetworkSettings.Networks,
-    )) {
-      command.push('--network', networkName);
-    }
-
-    command.push('mysql');
-    command.push('/bin/bash -c "while true ; do sleep 1 ; done"');
-
-    this.migrateusContainerId = shell
-      .exec(command.join(' '), {
-        silent: true,
-      })
-      .stdout.trim();
-
-    shell.exec(`docker start ${this.migrateusContainerId}`, { silent: true });
-  }
-
   private async ensureDatabaseContainerIsRunning() {
-    const networkNames = Object.keys(
-      this.containerConfig.NetworkSettings.Networks,
-    );
     const containersOutput = shell.exec('docker ps -a --format json', {
       silent: true,
     }).stdout;
@@ -91,13 +49,13 @@ export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
       containers
         .filter(({ Networks }: { Networks: string }) =>
           Networks.split(',').some((network: string) =>
-            networkNames.includes(network),
+            this.dockerService.networks.includes(network),
           ),
         )
         .filter(({ State }: { State: string }) => State !== 'running')
         .filter(({ Names }: { Names: string }) =>
           Names.split(',').some((Name: string) =>
-            Name.includes(this.getDockerEnvValue('DB_HOST')),
+            Name.includes(this.dockerService.databaseConfig.host),
           ),
         )
         .map(({ ID }: { ID: string }) => {
@@ -111,50 +69,16 @@ export class DockerBackupService extends BackupPerformer<DockerEnvironment> {
   }
 
   private async ensureDirectusContainerIsRunning() {
-    if (this.containerConfig.State.Running) {
+    if (this.dockerService.containerConfig.State.Running) {
       return;
     }
 
     this.logger.debug(
-      `Starting Directus container ${chalk.bold(this.containerConfig.Id)} since it is not running`,
+      `Starting Directus container ${chalk.bold(this.dockerService.containerConfig.Id)} since it is not running`,
     );
-    shell.exec(`docker start ${this.containerConfig.Id}`, { silent: true });
+    shell.exec(`docker start ${this.dockerService.containerConfig.Id}`, {
+      silent: true,
+    });
     return new Promise((resolve) => setTimeout(resolve, 10000));
-  }
-
-  private getContainerConfig(environment: DockerEnvironment) {
-    const inspectOutput = shell.exec(
-      `docker inspect ${environment.containerName}`,
-      { silent: true },
-    );
-    return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
-  }
-
-  protected getDatabaseConfig(): DatabaseConfig {
-    return {
-      host: this.getDockerEnvValue('DB_HOST'),
-      port: this.getDockerEnvValue('DB_PORT'),
-      name: this.getDockerEnvValue('DB_DATABASE'),
-      user: this.getDockerEnvValue('DB_USER'),
-      password: this.getDockerEnvValue('DB_PASSWORD'),
-    };
-  }
-
-  protected executeInMigrateusContainer(command: string) {
-    const fullCommand = `docker exec ${this.migrateusContainerId} /bin/bash -c "${command}"`;
-    this.logger.debug(`Executing command: ${fullCommand}`);
-    return shell.exec(fullCommand, { silent: true });
-  }
-
-  private getDockerEnvValue(name: string) {
-    const variable = this.containerConfig.Config.Env.find((env: string) =>
-      env.startsWith(name),
-    );
-
-    if (!variable) {
-      throw new Error(`Environment variable ${name} not found`);
-    }
-
-    return variable.split('=')[1];
   }
 }
