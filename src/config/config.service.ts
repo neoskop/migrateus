@@ -13,6 +13,7 @@ export class ConfigService {
   private config: Config = {
     environments: [],
   };
+  public noAssets = false;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,

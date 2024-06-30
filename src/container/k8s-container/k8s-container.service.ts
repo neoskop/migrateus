@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import shell, { ShellString } from 'shelljs';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
-import { K8sEnvironment } from '../../config/environment.interface.js';
 
 @Injectable()
 export class K8sContainerService extends ContainerService {
@@ -42,15 +41,15 @@ export class K8sContainerService extends ContainerService {
   }
 
   public cleanUpAll(): void {
-    shell
-      .exec(`kubectl get pods -oname`)
+    const resources = shell
+      .exec(`kubectl get pods -oname`, { silent: true })
       .stdout.split('\n')
-      .filter((line: string) => {
-        line.startsWith(`pod/migrateus-`);
-      })
-      .forEach((resource: string) => {
-        shell.exec(`kubectl delete ${resource}`, { silent: true });
-      });
+      .filter((line: string) => line.startsWith(`pod/migrateus-`));
+
+    if (resources.length > 0) {
+      this.logger.debug(`Deleting ${chalk.bold(resources.length)} pods`);
+      shell.exec(`kubectl delete ${resources.join(' ')}`, { silent: true });
+    }
   }
 
   public execute(command: string): ShellString {

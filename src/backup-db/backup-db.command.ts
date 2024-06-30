@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { Command, InquirerService } from 'nest-commander';
+import { Option, Command, InquirerService } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -31,6 +31,14 @@ export class BackupDbCommand extends MigrateusCommand {
     private readonly backupDbService: BackupDbService,
   ) {
     super(logger, config);
+  }
+
+  @Option({
+    flags: '-n, --no-assets',
+    description: "Don't backup assets",
+  })
+  setNoAssets() {
+    this.config.noAssets = true;
   }
 
   async run(params: string[], options?: BasicCommandOptions): Promise<void> {

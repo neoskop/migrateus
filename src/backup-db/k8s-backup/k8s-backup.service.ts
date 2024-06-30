@@ -10,6 +10,8 @@ import portfinder from 'portfinder';
 import { ChildProcess, spawn } from 'child_process';
 import { SqlService } from '../../sql/sql.service.js';
 import { K8sContainerService } from '../../container/k8s-container/k8s-container.service.js';
+import { K8sService } from '../../k8s/k8s.service.js';
+import { ConfigService } from '../../config/config.service.js';
 
 @Injectable()
 export class K8sBackupService extends BackupPerformer {
@@ -22,12 +24,21 @@ export class K8sBackupService extends BackupPerformer {
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
     private readonly kubernetesContainerService: K8sContainerService,
+    private readonly k8sService: K8sService,
+    config: ConfigService,
   ) {
-    super(logger, directusAssetService, sqlService, kubernetesContainerService);
+    super(
+      logger,
+      directusAssetService,
+      sqlService,
+      kubernetesContainerService,
+      config,
+    );
   }
 
   protected async setup(backupDir: string): Promise<void> {
     this.backupDir = backupDir;
+    this.k8sService.setup();
   }
 
   protected async afterMysqlDump(): Promise<void> {

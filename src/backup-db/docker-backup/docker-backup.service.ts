@@ -9,6 +9,7 @@ import { BackupPerformer } from '../backup-performer.js';
 import { SqlService } from '../../sql/sql.service.js';
 import { DockerContainerService } from '../../container/docker-container/docker-container.service.js';
 import { DockerService } from '../../docker/docker.service.js';
+import { ConfigService } from '../../config/config.service.js';
 
 @Injectable()
 export class DockerBackupService extends BackupPerformer {
@@ -18,18 +19,21 @@ export class DockerBackupService extends BackupPerformer {
     directusAssetService: DirectusAssetService,
     private readonly dockerContainerService: DockerContainerService,
     private readonly dockerService: DockerService,
+    config: ConfigService,
   ) {
-    super(logger, directusAssetService, sqlService, dockerContainerService);
+    super(
+      logger,
+      directusAssetService,
+      sqlService,
+      dockerContainerService,
+      config,
+    );
   }
 
   protected async setup(backupDir: string) {
-    this.logger.info('1');
     this.dockerService.setup();
-    this.logger.info('2');
     await this.ensureDatabaseContainerIsRunning();
-    this.logger.info('3');
     await this.ensureDirectusContainerIsRunning();
-    this.logger.info('4');
     this.dockerContainerService.mount = backupDir;
   }
 

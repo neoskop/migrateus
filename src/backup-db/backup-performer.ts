@@ -3,6 +3,9 @@ import shell from 'shelljs';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
+import { join } from 'node:path';
+import chalk from 'chalk';
+import { ConfigService } from '../config/config.service.js';
 
 export abstract class BackupPerformer {
   constructor(
@@ -10,6 +13,7 @@ export abstract class BackupPerformer {
     private readonly directusAssetService: DirectusAssetService,
     private readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
+    private readonly config: ConfigService,
   ) {}
 
   public async backup(backupFile: string) {
@@ -22,7 +26,13 @@ export abstract class BackupPerformer {
       this.sqlService.performMysqlDump(this.containerService);
       await this.afterMysqlDump();
       const directusPort = await this.getDirectusPort();
-      await this.directusAssetService.backupAssets(directusPort, backupDir);
+
+      if (this.config.noAssets) {
+        this.logger.debug('Skipping backup of assets');
+      } else {
+        await this.directusAssetService.backupAssets(directusPort, backupDir);
+      }
+
       this.createBackupArchive(backupDir, backupFile);
     } catch (error) {
       this.logger.error(error);
@@ -49,9 +59,17 @@ export abstract class BackupPerformer {
   }
 
   private createBackupArchive(backupDir: string, backupFile: string) {
-    shell.exec(`tar -czf ${backupFile} ${backupDir}/*`, {
+    const targetPath = join(shell.pwd().stdout, backupFile);
+    const ouput = shell.exec(`tar -czf ${targetPath} *`, {
       silent: true,
+      cwd: backupDir,
     });
+
+    if (ouput.code !== 0) {
+      throw new Error(
+        `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(ouput.stderr)}`,
+      );
+    }
   }
 
   private deleteTemporaryDirectory(backupDir: string) {
