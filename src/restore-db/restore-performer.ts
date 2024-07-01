@@ -3,11 +3,10 @@ import shell from 'shelljs';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
-import { join } from 'node:path';
-import chalk from 'chalk';
 import { ConfigService } from '../config/config.service.js';
+import chalk from 'chalk';
 
-export abstract class BackupPerformer {
+export abstract class RestorePerformer {
   constructor(
     protected readonly logger: Logger,
     private readonly directusAssetService: DirectusAssetService,
@@ -16,30 +15,23 @@ export abstract class BackupPerformer {
     private readonly config: ConfigService,
   ) {}
 
-  public async backup(backupFile: string) {
+  public async restore(backupFile: string) {
     const backupDir = this.createTemporaryDirectory();
 
     try {
+      this.extractBackupArchive(backupDir, backupFile);
       await this.setup(backupDir);
       this.containerService.setup();
-      this.sqlService.performMysqlDump(this.containerService);
-      await this.afterMysqlDump();
-
-      if (this.config.noAssets) {
-        this.logger.debug('Skipping backup of assets');
-      } else {
-        await this.sqlService.setupDirectusUser(this.containerService);
-        const directusPort = await this.getDirectusPort();
-        await this.directusAssetService.backupAssets(directusPort, backupDir);
-      }
-
-      this.createBackupArchive(backupDir, backupFile);
+      await this.beforeMysqlDumpRestore();
+      this.sqlService.restoreMysqlDump(this.containerService);
+      await this.sqlService.setupDirectusUser(this.containerService);
+      const directusPort = await this.getDirectusPort();
+      // TODO: implement restoring of assets
+      // await this.directusAssetService.restoreAssets(directusPort, backupDir);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(error.message || error);
     } finally {
-      if (!this.config.noAssets) {
-        await this.sqlService.cleanUpDirectusUser(this.containerService);
-      }
+      await this.sqlService.cleanUpDirectusUser(this.containerService);
       await this.cleanUp();
       this.containerService.cleanUp();
       this.deleteTemporaryDirectory(backupDir);
@@ -48,30 +40,24 @@ export abstract class BackupPerformer {
 
   protected abstract setup(backupDir: string): Promise<void>;
 
-  protected async afterMysqlDump() {}
+  protected async beforeMysqlDumpRestore() {}
 
   protected abstract getDirectusPort(): Promise<number>;
 
   protected async cleanUp(): Promise<void> {}
 
   private createTemporaryDirectory() {
-    return shell
+    const tempDir = shell
       .exec('mktemp -d --suffix=-migrateus', { silent: true })
       .stdout.trim();
+    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
+    return tempDir;
   }
 
-  private createBackupArchive(backupDir: string, backupFile: string) {
-    const targetPath = join(shell.pwd().stdout, backupFile);
-    const ouput = shell.exec(`tar -czf ${targetPath} *`, {
+  private extractBackupArchive(backupDir: string, backupFile: string) {
+    shell.exec(`tar -xf ${backupFile} -C ${backupDir}`, {
       silent: true,
-      cwd: backupDir,
     });
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(ouput.stderr)}`,
-      );
-    }
   }
 
   private deleteTemporaryDirectory(backupDir: string) {

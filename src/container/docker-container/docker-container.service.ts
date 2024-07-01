@@ -27,7 +27,7 @@ export class DockerContainerService extends ContainerService {
     ];
 
     if (this.mount) {
-      command.push('--mount', `type=bind,source=${this.mount},target=/backup`);
+      command.push('--mount', `type=bind,source=${this.mount},target=/tmp`);
     }
 
     for (const network of this.dockerService.networks) {
@@ -36,6 +36,10 @@ export class DockerContainerService extends ContainerService {
 
     command.push('mysql');
     command.push('/bin/bash -c "sleep infinity"');
+
+    this.logger.debug(
+      `Creating container with command: ${highlight(command.join(' '), { language: 'bash' })}`,
+    );
 
     this.migrateusContainerId = shell
       .exec(command.join(' '), {

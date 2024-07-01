@@ -55,6 +55,27 @@ export class SqlService {
     }
   }
 
+  public async restoreMysqlDump(containerService: ContainerService) {
+    const { host, port, user, password, name } = this.databaseConfig;
+    const command = [
+      'mysql',
+      `-h${host}`,
+      `-P${port}`,
+      `-u${user}`,
+      `-p${password}`,
+      name,
+      '</tmp/backup.sql',
+    ].join(' ');
+
+    const output = containerService.execute(command);
+
+    if (output.code !== 0) {
+      throw new Error(
+        `Backup failed with status code ${output.code}: ${output.stderr}`,
+      );
+    }
+  }
+
   private async exceuteSql(sql: string, containerService: ContainerService) {
     const { host, port, user, password, name } = this.databaseConfig;
     const command = [

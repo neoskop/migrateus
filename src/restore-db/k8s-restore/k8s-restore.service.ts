@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
-import { BackupPerformer } from '../backup-performer.js';
 import shell from 'shelljs';
 import chalk from 'chalk';
 import portfinder from 'portfinder';
@@ -11,9 +10,10 @@ import { SqlService } from '../../sql/sql.service.js';
 import { K8sContainerService } from '../../container/k8s-container/k8s-container.service.js';
 import { K8sService } from '../../k8s/k8s.service.js';
 import { ConfigService } from '../../config/config.service.js';
+import { RestorePerformer } from '../restore-performer.js';
 
 @Injectable()
-export class K8sBackupService extends BackupPerformer {
+export class K8sRestoreService extends RestorePerformer {
   private backupDir: string;
   private directusPort: number;
   private directusPortForward: ChildProcess;
@@ -40,9 +40,9 @@ export class K8sBackupService extends BackupPerformer {
     this.k8sService.setup();
   }
 
-  protected async afterMysqlDump(): Promise<void> {
+  protected async beforeMysqlDumpRestore(): Promise<void> {
     const ouput = shell.exec(
-      `kubectl cp ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql ${this.backupDir}/backup.sql`,
+      `kubectl cp ${this.backupDir}/backup.sql ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql`,
       { silent: true },
     );
 

@@ -1,11 +1,14 @@
 import { Inject } from '@nestjs/common';
-import { Command, InquirerService } from 'nest-commander';
+import { Option, Command, InquirerService } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
 import { RestoreDbAnswers } from './restore-db-answers.interface.js';
+import { DockerRestoreService } from './docker-restore/docker-restore.service.js';
+import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
+import { EnvironmentService } from '../environment/environment.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -27,8 +30,19 @@ export class RestoreDbCommand extends MigrateusCommand {
     @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
     config: ConfigService,
     private readonly inquirer: InquirerService,
+    private readonly dockerRestoreService: DockerRestoreService,
+    private readonly k8sRestoreService: K8sRestoreService,
+    private readonly environmentService: EnvironmentService,
   ) {
     super(logger, config);
+  }
+
+  @Option({
+    flags: '-n, --no-assets',
+    description: "Don't backup assets",
+  })
+  setNoAssets() {
+    this.config.noAssets = true;
   }
 
   async run(params: string[], options?: BasicCommandOptions): Promise<void> {
@@ -48,6 +62,14 @@ export class RestoreDbCommand extends MigrateusCommand {
     this.logger.debug(
       `Restoring the DB from local file ${chalk.bold(from)} to environment ${chalk.bold(to)}`,
     );
-    this.logger.error(`Not implemented yet`);
+
+    const environment = await this.config.getEnvironment(to);
+    this.environmentService.environment = environment;
+
+    if (environment.platform === 'docker') {
+      await this.dockerRestoreService.restore(from);
+    } else {
+      await this.k8sRestoreService.restore(from);
+    }
   }
 }

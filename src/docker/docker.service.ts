@@ -22,6 +22,9 @@ export class DockerService {
 
   public setup() {
     this.containerConfig = this.getContainerConfig();
+    this.logger.debug(
+      `Container config: ${highlight(JSON.stringify(this.containerConfig), { language: 'json' })}`,
+    );
     this.networks = Object.keys(this.containerConfig.NetworkSettings.Networks);
     this.logger.debug(
       `Setting database config: ${highlight(JSON.stringify(this.databaseConfig), { language: 'json' })}`,
@@ -34,6 +37,13 @@ export class DockerService {
       `docker inspect ${(this.environmentService.environment as DockerEnvironment).containerName}`,
       { silent: true },
     );
+
+    if (inspectOutput.code !== 0) {
+      throw new Error(
+        `Failed to get container config with code ${inspectOutput.code}: ${inspectOutput.stderr}`,
+      );
+    }
+
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
   }
 
