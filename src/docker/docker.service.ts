@@ -7,6 +7,7 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class DockerService {
@@ -23,7 +24,7 @@ export class DockerService {
     this.containerConfig = this.getContainerConfig();
     this.networks = Object.keys(this.containerConfig.NetworkSettings.Networks);
     this.logger.debug(
-      `Setting database config: ${JSON.stringify(this.databaseConfig)}`,
+      `Setting database config: ${highlight(JSON.stringify(this.databaseConfig), { language: 'json' })}`,
     );
     this.sqlService.databaseConfig = this.databaseConfig;
   }

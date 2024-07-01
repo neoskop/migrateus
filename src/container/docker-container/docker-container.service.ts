@@ -6,6 +6,7 @@ import { nanoid } from 'nanoid/non-secure';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
 import { DockerService } from '../../docker/docker.service.js';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class DockerContainerService extends ContainerService {
@@ -59,13 +60,11 @@ export class DockerContainerService extends ContainerService {
   }
 
   public execute(command: string): ShellString {
+    const fullCommand = `docker exec ${this.migrateusContainerId} /bin/bash -c "${command}"`;
     this.logger.debug(
-      `Executing ${chalk.bold.blueBright('docker')} exec ${chalk.bold(this.migrateusContainerId)} /bin/bash -c "${chalk.bold.yellowBright(command)}"`,
+      `Executing ${highlight(fullCommand, { language: 'bash' })}`,
     );
-    return shell.exec(
-      `docker exec ${this.migrateusContainerId} /bin/bash -c "${command}"`,
-      { silent: true },
-    );
+    return shell.exec(fullCommand, { silent: true });
   }
 
   private removeContainer(container: string) {

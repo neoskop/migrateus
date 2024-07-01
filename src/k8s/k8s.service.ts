@@ -6,6 +6,7 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class K8sService {
@@ -70,7 +71,9 @@ export class K8sService {
       name: envMap['DB_DATABASE'],
     };
 
-    this.logger.debug(`Database config: ${JSON.stringify(result)}`);
+    this.logger.debug(
+      `Database config: ${highlight(JSON.stringify(result), { language: 'json' })}`,
+    );
     return result;
   }
 }

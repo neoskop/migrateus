@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
-import { highlight } from 'sql-highlight';
+import { highlight } from 'cli-highlight';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
@@ -67,7 +67,9 @@ export class SqlService {
       '-e',
       `\\"${sql}\\"`,
     ];
-    this.logger.debug(`Executing SQL: ${highlight(sql)}`);
+    this.logger.debug(
+      `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,
+    );
     const output = containerService.execute(command.join(' '));
 
     if (output.code !== 0) {

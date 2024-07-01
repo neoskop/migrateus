@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import shell, { ShellString } from 'shelljs';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class K8sContainerService extends ContainerService {
@@ -54,7 +55,7 @@ export class K8sContainerService extends ContainerService {
 
   public execute(command: string): ShellString {
     this.logger.debug(
-      `Executing ${chalk.bold(command)} in pod/${chalk.bold(this.migrateusPodName)}`,
+      `Executing ${highlight(command, { language: 'bash' })} in pod/${chalk.bold(this.migrateusPodName)}`,
     );
     return shell.exec(
       `kubectl exec ${this.migrateusPodName} -- bash -c "${command}"`,
