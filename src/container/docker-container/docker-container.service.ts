@@ -55,16 +55,27 @@ export class DockerContainerService extends ContainerService {
   }
 
   public cleanUpAll(): void {
-    shell
+    const containers = shell
       .exec(`docker ps -a -f name=migrateus --format '{{.Names}}'`, {
         silent: true,
       })
       .stdout.split('\n')
-      .forEach(this.removeContainer);
+      .join(' ');
+
+    if (containers.length > 0) {
+      this.removeContainer(containers);
+    }
   }
 
   public execute(command: string): ShellString {
-    const fullCommand = `docker exec ${this.migrateusContainerId} /bin/bash -c "${command}"`;
+    const fullCommand = [
+      'docker',
+      'exec',
+      this.migrateusContainerId,
+      '/bin/bash',
+      '-c',
+      `"${command.replaceAll(/\n/g, ' ')}"`,
+    ].join(' ');
     this.logger.debug(
       `Executing ${highlight(fullCommand, { language: 'bash' })}`,
     );
@@ -72,6 +83,9 @@ export class DockerContainerService extends ContainerService {
   }
 
   private removeContainer(container: string) {
+    this.logger.debug(
+      `Deleting container${container.includes(' ') ? 's' : ''} ${chalk.bold(container)}`,
+    );
     shell.exec(`docker stop ${container}`, { silent: true });
     shell.exec(`docker rm ${container}`, { silent: true });
   }

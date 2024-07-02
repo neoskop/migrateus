@@ -1,1 +1,1 @@
-export type MysqlExecutor = (sql: string) => Promise<void>;
+export type MysqlExecutor = (sql: string) => Promise<string>;

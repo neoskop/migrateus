@@ -31,6 +31,9 @@ export class DirectusUserService {
 
   public async removeUser(execSql: MysqlExecutor) {
     await execSql(
+      `UPDATE directus_files SET modified_by = null WHERE modified_by = '${this.userId}'`,
+    );
+    await execSql(
       `DELETE FROM directus_users WHERE id = '${this.userId}' LIMIT 1`,
     );
     await execSql(
@@ -39,11 +42,21 @@ export class DirectusUserService {
   }
 
   public async cleanUp(execSql: MysqlExecutor) {
-    await execSql(
-      `DELETE FROM directus_users WHERE email LIKE 'migrateus%' LIMIT 1`,
-    );
-    await execSql(
-      `DELETE FROM directus_roles WHERE name LIKE 'migrateus%' LIMIT 1`,
-    );
+    const userIds = (
+      await execSql(
+        `SELECT id from directus_users WHERE email LIKE 'migrateus%'`,
+      )
+    )
+      .split('\n')
+      .filter(Boolean);
+
+    if (userIds.length > 0) {
+      await execSql(
+        `UPDATE directus_files SET modified_by = null WHERE modified_by IN (${userIds.map((userId) => `'${userId}'`).join(',')})`,
+      );
+    }
+
+    await execSql(`DELETE FROM directus_users WHERE email LIKE 'migrateus%'`);
+    await execSql(`DELETE FROM directus_roles WHERE name LIKE 'migrateus%'`);
   }
 }

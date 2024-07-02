@@ -5,6 +5,7 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { ContainerService } from '../container/container.service.js';
+import chalk from 'chalk';
 
 @Injectable()
 export class SqlService {
@@ -42,6 +43,7 @@ export class SqlService {
       `-P${port}`,
       `-u${user}`,
       `-p${password}`,
+      '--databases',
       name,
       '>/tmp/backup.sql',
     ].join(' ');
@@ -70,13 +72,47 @@ export class SqlService {
     const output = containerService.execute(command);
 
     if (output.code !== 0) {
-      throw new Error(
-        `Backup failed with status code ${output.code}: ${output.stderr}`,
-      );
+      const errorMessage = `Restore failed with status code ${output.code}: ${output.stderr}`;
+      throw new Error(errorMessage);
     }
+
+    const defaultCollation = this.exceuteSql(
+      "SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='directus';",
+      containerService,
+    )
+      .split('\n')
+      .slice(1)
+      .join(' ');
+
+    this.logger.debug(
+      `Setting default collation to ${chalk.bold(defaultCollation)}`,
+    );
+    const tableNames = this.exceuteSql(
+      "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='directus' AND TABLE_TYPE='BASE TABLE'",
+      containerService,
+    )
+      .split('\n')
+      .slice(1)
+      .filter(Boolean);
+
+    const alterStatements = tableNames.map((tableName) => {
+      return (
+        'ALTER TABLE \\\\\\`' +
+        tableName +
+        '\\\\\\` CONVERT TO CHARACTER SET utf8mb4 COLLATE ' +
+        defaultCollation
+      );
+    });
+
+    this.exceuteSql(
+      'SET foreign_key_checks = 0; ' +
+        alterStatements.join(';') +
+        '; SET foreign_key_checks = 1',
+      containerService,
+    );
   }
 
-  private async exceuteSql(sql: string, containerService: ContainerService) {
+  private exceuteSql(sql: string, containerService: ContainerService) {
     const { host, port, user, password, name } = this.databaseConfig;
     const command = [
       'mysql',
@@ -98,5 +134,7 @@ export class SqlService {
         `Execution of SQL failed with status code ${output.code}: ${output.stderr}`,
       );
     }
+
+    return output.stdout;
   }
 }
