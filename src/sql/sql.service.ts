@@ -77,7 +77,15 @@ export class SqlService {
     }
 
     const defaultCollation = this.exceuteSql(
-      "SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='directus';",
+      `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
+      containerService,
+    )
+      .split('\n')
+      .slice(1)
+      .join(' ');
+
+    const defaultCharacterSetName = this.exceuteSql(
+      `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
       containerService,
     )
       .split('\n')
@@ -88,7 +96,7 @@ export class SqlService {
       `Setting default collation to ${chalk.bold(defaultCollation)}`,
     );
     const tableNames = this.exceuteSql(
-      "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='directus' AND TABLE_TYPE='BASE TABLE'",
+      `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${name}' AND TABLE_TYPE='BASE TABLE'`,
       containerService,
     )
       .split('\n')
@@ -99,7 +107,9 @@ export class SqlService {
       return (
         'ALTER TABLE \\\\\\`' +
         tableName +
-        '\\\\\\` CONVERT TO CHARACTER SET utf8mb4 COLLATE ' +
+        '\\\\\\` CONVERT TO CHARACTER SET ' +
+        defaultCharacterSetName +
+        ' COLLATE ' +
         defaultCollation
       );
     });
