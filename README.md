@@ -1,5 +1,7 @@
 # Migrateus
 
+<img src="./migrateus.jpg" width="300">
+
 Schema Migrations and DB Back-up and Restore for Directus
 
 ## Installation
