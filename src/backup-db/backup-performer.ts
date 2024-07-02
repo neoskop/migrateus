@@ -6,6 +6,8 @@ import { ContainerService } from '../container/container.service.js';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import { ConfigService } from '../config/config.service.js';
+import { mkdtemp } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 
 export abstract class BackupPerformer {
   constructor(
@@ -17,7 +19,7 @@ export abstract class BackupPerformer {
   ) {}
 
   public async backup(backupFile: string) {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = await this.createTemporaryDirectory();
 
     try {
       await this.setup(backupDir);
@@ -54,10 +56,10 @@ export abstract class BackupPerformer {
 
   protected async cleanUp(): Promise<void> {}
 
-  private createTemporaryDirectory() {
-    return shell
-      .exec('mktemp -d --suffix=-migrateus', { silent: true })
-      .stdout.trim();
+  private async createTemporaryDirectory() {
+    const tempDir = await mkdtemp(join(tmpdir(), 'migrateus-'));
+    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
+    return tempDir;
   }
 
   private createBackupArchive(backupDir: string, backupFile: string) {

@@ -5,6 +5,9 @@ import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
+import { mkdtemp } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 export abstract class RestorePerformer {
   constructor(
@@ -16,7 +19,7 @@ export abstract class RestorePerformer {
   ) {}
 
   public async restore(backupFile: string) {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = await this.createTemporaryDirectory();
 
     try {
       this.extractBackupArchive(backupDir, backupFile);
@@ -46,10 +49,8 @@ export abstract class RestorePerformer {
 
   protected async cleanUp(): Promise<void> {}
 
-  private createTemporaryDirectory() {
-    const tempDir = shell
-      .exec('mktemp -d --suffix=-migrateus', { silent: true })
-      .stdout.trim();
+  private async createTemporaryDirectory() {
+    const tempDir = await mkdtemp(join(tmpdir(), 'migrateus-'));
     this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
     return tempDir;
   }
