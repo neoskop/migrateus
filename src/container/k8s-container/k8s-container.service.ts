@@ -20,7 +20,7 @@ export class K8sContainerService extends ContainerService {
 
   public setup(): void {
     const output = shell.exec(
-      `kubectl run ${this.migrateusPodName} --image=mysql -- bash -c "sleep infinity"`,
+      `kubectl run ${this.migrateusPodName} --image=bitnami/mysql:5.7.43 -- bash -c "sleep infinity"`,
       { silent: true },
     );
 

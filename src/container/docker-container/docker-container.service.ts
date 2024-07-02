@@ -34,7 +34,7 @@ export class DockerContainerService extends ContainerService {
       command.push('--network', network);
     }
 
-    command.push('mysql');
+    command.push('bitnami/mysql:5.7.43');
     command.push('/bin/bash -c "sleep infinity"');
 
     this.logger.debug(
