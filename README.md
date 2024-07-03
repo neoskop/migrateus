@@ -2,7 +2,7 @@
 
 <img src="./migrateus.jpg" width="300">
 
-Schema Migrations and DB Back-up and Restore for Directus
+Schema Migrations and DB Back-up and Restore for Directus running on Kubernetes or Docker.
 
 ## Installation
 
@@ -22,18 +22,44 @@ npx migrateus
 
 ### Configuration
 
-Create a `migrateus.yaml` file in the current directory. For example:
+Migrateus needs you to describe the different environments in a YAML config file.
+For that, create a `migrateus.yaml` file in the current directory. For example:
 
 ```yaml
 environments:
   - name: local
     type: docker
     containerName: directus
+    credentials:
+      - email: devops@neoskop.de
+        token: foo
+        password: bar
   - name: dev
     type: k8s
     namespace: directus
     context: foo-dev
 ```
+
+An environment takes the following options:
+
+| Name            | Type                | Description                                                   |
+| --------------- | ------------------- | ------------------------------------------------------------- |
+| `name`          | `string`            | The name used on the command-line or in selections            |
+| `type`          | `"docker" \| "k8s"` | The platform type of the environment                          |
+| `containerName` | `string`            | Only if `type=docker`, The name of the Directus container     |
+| `context`       | `string`            | Only if `type=k8s`, the context name in your [kubeconfig][1]  |
+| `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
+| `credentials`   | `object[]`          | Credentials to enforce during restore                         |
+
+To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
+
+```conf
+TOKEN=foo
+PASSWORD=bar
+```
+
+> [!TIP]
+> You can customize the path to the config file with the `-c <path>` flag and to the .env file with the `-e <path>` flag
 
 ### Schema Diff
 
@@ -66,3 +92,5 @@ $ migrateus completion-script >> ~/.bashrc
 ## License
 
 See [License](LICENSE).
+
+[1]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/

@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { DockerEnvironment } from '../../config/environment.interface.js';
 import shell from 'shelljs';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -8,8 +7,8 @@ import { DirectusAssetService } from '../../directus/directus-asset/directus-ass
 import { SqlService } from '../../sql/sql.service.js';
 import { DockerContainerService } from '../../container/docker-container/docker-container.service.js';
 import { DockerService } from '../../docker/docker.service.js';
-import { ConfigService } from '../../config/config.service.js';
 import { RestorePerformer } from '../restore-performer.js';
+import { EnvironmentService } from '../../environment/environment.service.js';
 
 @Injectable()
 export class DockerRestoreService extends RestorePerformer {
@@ -19,14 +18,14 @@ export class DockerRestoreService extends RestorePerformer {
     directusAssetService: DirectusAssetService,
     private readonly dockerContainerService: DockerContainerService,
     private readonly dockerService: DockerService,
-    config: ConfigService,
+    environmentService: EnvironmentService,
   ) {
     super(
       logger,
       directusAssetService,
       sqlService,
       dockerContainerService,
-      config,
+      environmentService,
     );
   }
 

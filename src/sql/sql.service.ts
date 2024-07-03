@@ -6,6 +6,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { ContainerService } from '../container/container.service.js';
 import chalk from 'chalk';
+import { Credential } from '../directus/directus-user/credential.type.js';
 
 @Injectable()
 export class SqlService {
@@ -30,6 +31,19 @@ export class SqlService {
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {
     await this.directusUserService.cleanUp((sql) =>
+      this.exceuteSql.bind(this)(sql, containerService),
+    );
+  }
+
+  public async setCredentials(
+    credentials: Credential[],
+    containerService: ContainerService,
+  ) {
+    if (!credentials || credentials.length === 0) {
+      return;
+    }
+
+    await this.directusUserService.setCredentials(credentials, (sql) =>
       this.exceuteSql.bind(this)(sql, containerService),
     );
   }
@@ -132,7 +146,7 @@ export class SqlService {
       `-p${password}`,
       name,
       '-e',
-      `\\"${sql}\\"`,
+      `\\"${sql.replaceAll(/\$/g, '\\\\\\$')}\\"`,
     ];
     this.logger.debug(
       `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,

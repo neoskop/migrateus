@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import { v4 as uuidv4 } from 'uuid';
 import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
 import argon2 from 'argon2';
+import { Credential } from './credential.type.js';
 
 @Injectable()
 export class DirectusUserService {
@@ -39,6 +40,26 @@ export class DirectusUserService {
     await execSql(
       `DELETE FROM directus_roles WHERE id = '${this.roleId}' LIMIT 1`,
     );
+  }
+
+  public async setCredentials(
+    credentials: Credential[],
+    execSql: MysqlExecutor,
+  ) {
+    for (const credential of credentials) {
+      if (credential.token) {
+        await execSql(
+          `UPDATE directus_users SET token = '${credential.token}' WHERE email = '${credential.email}'`,
+        );
+      }
+
+      if (credential.password) {
+        const hash = await argon2.hash(credential.password);
+        await execSql(
+          `UPDATE directus_users SET password = '${hash}' WHERE email = '${credential.email}'`,
+        );
+      }
+    }
   }
 
   public async cleanUp(execSql: MysqlExecutor) {

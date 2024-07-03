@@ -84,7 +84,11 @@ export class DockerContainerService extends ContainerService {
 
   private removeContainer(container: string) {
     this.logger.debug(
-      `Deleting container${container.includes(' ') ? 's' : ''} ${chalk.bold(container)}`,
+      `Deleting container${container.includes(' ') ? 's' : ''} ${container
+        .split(' ')
+        .filter(Boolean)
+        .map((name) => chalk.bold(name))
+        .join(', ')}`,
     );
     shell.exec(`docker stop ${container}`, { silent: true });
     shell.exec(`docker rm ${container}`, { silent: true });

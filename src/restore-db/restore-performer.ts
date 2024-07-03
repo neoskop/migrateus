@@ -3,12 +3,11 @@ import shell from 'shelljs';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
-import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
-import { mkdtemp } from 'node:fs/promises';
 import { join } from 'node:path';
-import { tmpdir } from 'node:os';
 import fs from 'node:fs';
+import tmp from 'tmp';
+import { EnvironmentService } from '../environment/environment.service.js';
 
 export abstract class RestorePerformer {
   constructor(
@@ -16,7 +15,7 @@ export abstract class RestorePerformer {
     private readonly directusAssetService: DirectusAssetService,
     private readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
-    private readonly config: ConfigService,
+    private readonly environmentService: EnvironmentService,
   ) {}
 
   public async restore(backupFile: string) {
@@ -29,6 +28,10 @@ export abstract class RestorePerformer {
       await this.beforeMysqlDumpRestore();
       await this.sqlService.restoreMysqlDump(this.containerService);
       await this.sqlService.setupDirectusUser(this.containerService);
+      await this.sqlService.setCredentials(
+        this.environmentService.environment.credentials,
+        this.containerService,
+      );
       const directusPort = await this.getDirectusPort();
       await this.directusAssetService.restoreAssets(directusPort, backupDir);
     } catch (error) {
@@ -50,7 +53,7 @@ export abstract class RestorePerformer {
   protected async cleanUp(): Promise<void> {}
 
   private async createTemporaryDirectory() {
-    const tempDir = await mkdtemp(join(tmpdir(), 'migrateus-'));
+    const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
     this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
     return tempDir;
   }
@@ -110,6 +113,7 @@ export abstract class RestorePerformer {
   }
 
   private deleteTemporaryDirectory(backupDir: string) {
+    this.logger.debug(`Deleting temporary directory ${chalk.bold(backupDir)}`);
     shell.rm('-rf', backupDir);
   }
 }

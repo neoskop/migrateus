@@ -2,6 +2,10 @@ environments:
   - name: local
     platform: docker
     containerName: directus-directus-1
+    credentials:
+      - email: devops@neoskop.de
+        token: $TOKEN
+        password: $PASSWORD
   - name: dev
     platform: k8s
     context: foo-dev
