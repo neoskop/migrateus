@@ -73,7 +73,7 @@ Where `from` is the `name` of the environment to compare and `to` is the `name` 
 
 If you don't specify either of those options, Migrateus will ask you for them.
 
-> [!WARN]
+> [!WARNING]
 > To successfully perform a schema diff both Directus instances should have the same version. Therefore, Migrateus will exit with an error if they don't.
 
 ### Backup DB
