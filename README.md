@@ -25,7 +25,7 @@ npx migrateus
 Migrateus needs you to describe the different environments in a YAML config file.
 For that, create a `migrateus.yaml` file in the current directory. For example:
 
-```yaml
+```yml
 environments:
   - name: local
     type: docker
@@ -53,7 +53,7 @@ An environment takes the following options:
 
 To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
 
-```conf
+```dotenv
 TOKEN=foo
 PASSWORD=bar
 ```
