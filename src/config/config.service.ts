@@ -7,6 +7,7 @@ import { Logger } from 'winston';
 import chalk from 'chalk';
 import dotenv from 'dotenv';
 import { highlight } from 'cli-highlight';
+import { RedactService } from '../redact/redact.service.js';
 
 @Injectable()
 export class ConfigService {
@@ -20,6 +21,7 @@ export class ConfigService {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    private readonly redactService: RedactService,
   ) {}
 
   private async loadConfigFile() {
@@ -34,6 +36,7 @@ export class ConfigService {
         (_match, name) => envConfig[name] || '',
       );
       this.config = yaml.load(subsitutedConfig) as Config;
+      this.redactCredentials();
       this.logger.debug(
         `Loaded Migrateus config: ${highlight(JSON.stringify(this.config), { language: 'json' })}`,
       );
@@ -45,6 +48,18 @@ export class ConfigService {
         process.exit(1);
       } else {
         throw err;
+      }
+    }
+  }
+  private redactCredentials() {
+    for (const env of this.config.environments) {
+      if (!env.credentials) {
+        continue;
+      }
+
+      for (const credential of env.credentials) {
+        this.redactService.addRedaction(credential.password);
+        this.redactService.addRedaction(credential.token);
       }
     }
   }

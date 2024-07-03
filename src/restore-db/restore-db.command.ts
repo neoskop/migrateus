@@ -9,6 +9,7 @@ import { RestoreDbAnswers } from './restore-db-answers.interface.js';
 import { DockerRestoreService } from './docker-restore/docker-restore.service.js';
 import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
+import { RedactService } from '../redact/redact.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -33,8 +34,9 @@ export class RestoreDbCommand extends MigrateusCommand {
     private readonly dockerRestoreService: DockerRestoreService,
     private readonly k8sRestoreService: K8sRestoreService,
     private readonly environmentService: EnvironmentService,
+    protected readonly redactService: RedactService,
   ) {
-    super(logger, config);
+    super(logger, config, redactService);
   }
 
   @Option({

@@ -7,15 +7,22 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { ContainerService } from '../container/container.service.js';
 import chalk from 'chalk';
 import { Credential } from '../directus/directus-user/credential.type.js';
+import { RedactService } from '../redact/redact.service.js';
 
 @Injectable()
 export class SqlService {
-  public databaseConfig: DatabaseConfig;
+  private _databaseConfig: DatabaseConfig;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
+    private readonly redactService: RedactService,
   ) {}
+
+  public set databaseConfig(config: DatabaseConfig) {
+    this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
+    this._databaseConfig = config;
+  }
 
   public async setupDirectusUser(containerService: ContainerService) {
     await this.directusUserService.setupUser((sql) =>
@@ -49,7 +56,7 @@ export class SqlService {
   }
 
   public async performMysqlDump(containerService: ContainerService) {
-    const { host, port, user, password, name } = this.databaseConfig;
+    const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysqldump',
       '--no-tablespaces',
@@ -72,7 +79,7 @@ export class SqlService {
   }
 
   public async restoreMysqlDump(containerService: ContainerService) {
-    const { host, port, user, password, name } = this.databaseConfig;
+    const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysql',
       `-h${host}`,
@@ -137,7 +144,7 @@ export class SqlService {
   }
 
   private exceuteSql(sql: string, containerService: ContainerService) {
-    const { host, port, user, password, name } = this.databaseConfig;
+    const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysql',
       `-h${host}`,

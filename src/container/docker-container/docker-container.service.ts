@@ -7,6 +7,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
 import { DockerService } from '../../docker/docker.service.js';
 import { highlight } from 'cli-highlight';
+import os from 'node:os';
 
 @Injectable()
 export class DockerContainerService extends ContainerService {
@@ -21,9 +22,11 @@ export class DockerContainerService extends ContainerService {
   }
 
   public setup(): void {
+    const userInfo = os.userInfo();
     const command = [
       'docker container create',
       `--name migrateus-${nanoid(6)}`,
+      `--user ${userInfo.uid}:${userInfo.gid}`,
     ];
 
     if (this.mount) {

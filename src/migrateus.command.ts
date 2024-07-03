@@ -1,6 +1,7 @@
 import { CommandRunner, Option } from 'nest-commander';
 import { Logger } from 'winston';
 import { ConfigService } from './config/config.service.js';
+import { RedactService } from './redact/redact.service.js';
 
 export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
@@ -8,6 +9,7 @@ export abstract class MigrateusCommand extends CommandRunner {
   constructor(
     protected readonly logger: Logger,
     protected readonly config: ConfigService,
+    protected readonly redactService: RedactService,
   ) {
     super();
   }
@@ -37,5 +39,13 @@ export abstract class MigrateusCommand extends CommandRunner {
   })
   setEnvFile(envFilePath: string) {
     this.config.envFilePath = envFilePath;
+  }
+
+  @Option({
+    flags: '-s, --show-secrets',
+    description: 'Show secrets in debug logs',
+  })
+  setShowSecrets() {
+    this.redactService.enabled = false;
   }
 }

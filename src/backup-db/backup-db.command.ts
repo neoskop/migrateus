@@ -7,6 +7,7 @@ import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
 import { BackupDbAnswers } from './backup-db-answers.interface.js';
 import { BackupDbService } from './backup-db.service.js';
+import { RedactService } from '../redact/redact.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -29,8 +30,9 @@ export class BackupDbCommand extends MigrateusCommand {
     config: ConfigService,
     private readonly inquirer: InquirerService,
     private readonly backupDbService: BackupDbService,
+    protected readonly redactService: RedactService,
   ) {
-    super(logger, config);
+    super(logger, config, redactService);
   }
 
   @Option({

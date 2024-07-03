@@ -6,6 +6,7 @@ import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import { SchemaDiffAnswers } from './schema-diff-answers.interface.js';
 import chalk from 'chalk';
+import { RedactService } from '../redact/redact.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -27,8 +28,9 @@ export class SchemaDiffCommand extends MigrateusCommand {
     @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
     config: ConfigService,
     private readonly inquirer: InquirerService,
+    protected readonly redactService: RedactService,
   ) {
-    super(logger, config);
+    super(logger, config, redactService);
   }
 
   async run(params: string[], options?: BasicCommandOptions): Promise<void> {

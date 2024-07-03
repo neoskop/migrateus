@@ -23,7 +23,7 @@ export abstract class BackupPerformer {
     try {
       await this.setup(backupDir);
       this.containerService.setup();
-      this.sqlService.performMysqlDump(this.containerService);
+      await this.sqlService.performMysqlDump(this.containerService);
       await this.afterMysqlDump();
 
       if (this.config.noAssets) {
@@ -36,7 +36,7 @@ export abstract class BackupPerformer {
 
       this.createBackupArchive(backupDir, backupFile);
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(error.message || error);
     } finally {
       if (!this.config.noAssets) {
         await this.sqlService.cleanUpDirectusUser(this.containerService);
@@ -76,6 +76,7 @@ export abstract class BackupPerformer {
   }
 
   private deleteTemporaryDirectory(backupDir: string) {
+    this.logger.debug(`Removing temporary directory ${chalk.bold(backupDir)}`);
     shell.rm('-rf', backupDir);
   }
 }

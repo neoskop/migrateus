@@ -7,6 +7,7 @@ import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
 import { CleanService } from './clean.service.js';
 import { CleanAnswers } from './clean-answers.interface.js';
+import { RedactService } from '../redact/redact.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -28,8 +29,9 @@ export class CleanCommand extends MigrateusCommand {
     config: ConfigService,
     private readonly inquirer: InquirerService,
     private readonly cleanService: CleanService,
+    protected readonly redactService: RedactService,
   ) {
-    super(logger, config);
+    super(logger, config, redactService);
   }
 
   async run(params: string[], options?: BasicCommandOptions): Promise<void> {

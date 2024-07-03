@@ -12,26 +12,33 @@ import { ContainerModule } from './container/container.module.js';
 import { K8sModule } from './k8s/k8s.module.js';
 import { DockerModule } from './docker/docker.module.js';
 import { EnvironmentModule } from './environment/environment.module.js';
+import { RedactModule } from './redact/redact.module.js';
+import { RedactService } from './redact/redact.service.js';
 
 @Module({
   imports: [
-    WinstonModule.forRoot({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format((info) => ({
-              ...info,
-              level: info.level.toUpperCase(),
-            }))(),
-            winston.format.colorize(),
-            winston.format.errors({ stack: true }),
-            winston.format.splat(),
-            winston.format.printf(
-              ({ level, message }) => `[${level}]: ${message}`,
+    WinstonModule.forRootAsync({
+      useFactory: (redactService: RedactService) => ({
+        transports: [
+          new winston.transports.Console({
+            format: winston.format.combine(
+              winston.format((info) => ({
+                ...info,
+                level: info.level.toUpperCase(),
+              }))(),
+              winston.format.colorize(),
+              winston.format.errors({ stack: true }),
+              winston.format.splat(),
+              winston.format.printf(
+                ({ level, message }) =>
+                  `[${level}]: ${redactService.redact(message)}`,
+              ),
             ),
-          ),
-        }),
-      ],
+          }),
+        ],
+      }),
+      inject: [RedactService],
+      imports: [RedactModule],
     }),
     SchemaDiffModule,
     BackupDbModule,
@@ -44,6 +51,7 @@ import { EnvironmentModule } from './environment/environment.module.js';
     K8sModule,
     DockerModule,
     EnvironmentModule,
+    RedactModule,
   ],
   controllers: [],
   providers: [],

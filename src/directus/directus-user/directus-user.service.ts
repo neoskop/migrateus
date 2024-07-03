@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
 import argon2 from 'argon2';
 import { Credential } from './credential.type.js';
+import { RedactService } from '../../redact/redact.service.js';
 
 @Injectable()
 export class DirectusUserService {
@@ -13,7 +14,10 @@ export class DirectusUserService {
   private roleId = uuidv4();
   private userId = uuidv4();
 
-  constructor() {}
+  constructor(private readonly redactService: RedactService) {
+    this.redactService.addRedaction(this.password);
+    this.redactService.addRedaction(this.token);
+  }
 
   public async setupUser(execSql: MysqlExecutor) {
     await execSql(
