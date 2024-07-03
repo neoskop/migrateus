@@ -59,25 +59,48 @@ PASSWORD=bar
 ```
 
 > [!TIP]
-> You can customize the path to the config file with the `-c <path>` flag and to the .env file with the `-e <path>` flag
+> You can customize the path to the config file with the `--config <path> | -c <path>` flag and to the .env file with the `--env <path> | -e <path>` flag
 
 ### Schema Diff
 
-1. Run the `migrateus schema-diff` command
-2. Confirm the schema diff
-3. The tool will create a backup of the current schema and save it in the `migrations` directory
+To compare schema and apply schema changes interactively run the following command:
+
+```bash
+$ migrateus schema-diff [options] <from> <to>
+```
+
+Where `from` is the `name` of the environment to compare and `to` is the `name` of the environment to apply changes to.
+
+If you don't specify either of those options, Migrateus will ask you for them.
+
+> [!WARN]
+> To successfully perform a schema diff both Directus instances should have the same version. Therefore, Migrateus will exit with an error if they don't.
 
 ### Backup DB
 
-1. Run the `migrateus backup-db` command
-2. Confirm the backup location
-3. The tool will create a backup of the database and save it in the specified location
+To create a local backup of the database, run the following command:
+
+```bash
+$ migrateus backup-db [options] <from> <to>
+```
+
+Where `from` is the `name` of the environment to back-up and `to` is the path to the backup tgz file.
+
+If assets should not be backed up, use the `--no-assets | -n` flag.
+
+If you don't specify either of those options, Migrateus will ask you for them resp. suggest values.
 
 ### Restore DB
 
-1. Run the `migrateus restore-db` command
-2. Select the backup to restore
-3. The tool will restore the database from the selected backup
+To restort a database from a local backup, run the following command:
+
+```bash
+$ migrateus restore-db [options] <from> <to>
+```
+
+Where `from` is the path to the backup tgz file to restore and `to` is the `name` of the environment to restore to.
+
+If you don't specify either of those options, Migrateus will ask you for them.
 
 ### Help
 
