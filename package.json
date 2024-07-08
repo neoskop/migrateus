@@ -46,7 +46,7 @@
     "nest-commander": "3.14.0",
     "nest-winston": "1.10.0",
     "node-which": "1.0.0",
-    "p-limit": "6.0.0",
+    "p-limit": "6.1.0",
     "portfinder": "1.0.32",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
