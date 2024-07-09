@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { RedactOptions } from './redact-options.interface.js';
 import { Redaction } from './redaction.interface.js';
+import chalk from 'chalk';
 
 @Injectable()
 export class RedactService {
-  private readonly REDACTION = '[REDACTED]';
+  private readonly REDACTION = chalk.bgGrey('[REDACTED]');
   private readonly EXCEPTIONS = ['directus'];
   private redactions: Redaction[] = [];
   public enabled = true;

@@ -7,6 +7,7 @@ import { ConfigService } from '../config/config.service.js';
 import { SchemaDiffAnswers } from './schema-diff-answers.interface.js';
 import chalk from 'chalk';
 import { RedactService } from '../redact/redact.service.js';
+import { SchemaDiffService } from './schema-diff.service.js';
 
 interface BasicCommandOptions {
   string?: string;
@@ -29,11 +30,12 @@ export class SchemaDiffCommand extends MigrateusCommand {
     config: ConfigService,
     private readonly inquirer: InquirerService,
     protected readonly redactService: RedactService,
+    private readonly schemaDiffService: SchemaDiffService,
   ) {
     super(logger, config, redactService);
   }
 
-  async run(params: string[], options?: BasicCommandOptions): Promise<void> {
+  async run(params: string[], _options?: BasicCommandOptions): Promise<void> {
     let [from, to] = params;
 
     if (!from || !to) {
@@ -50,6 +52,6 @@ export class SchemaDiffCommand extends MigrateusCommand {
     this.logger.debug(
       `Performing schema diff from ${chalk.bold(from)} to ${chalk.bold(to)}`,
     );
-    this.logger.error(`Not implemented yet`);
+    this.schemaDiffService.diff(from, to);
   }
 }

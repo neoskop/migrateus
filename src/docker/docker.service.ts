@@ -8,6 +8,7 @@ import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { highlight } from 'cli-highlight';
+import chalk from 'chalk';
 
 @Injectable()
 export class DockerService {
@@ -20,7 +21,7 @@ export class DockerService {
     private readonly sqlService: SqlService,
   ) {}
 
-  public setup() {
+  public async setup() {
     this.containerConfig = this.getContainerConfig();
     this.logger.debug(
       `Container config: ${highlight(JSON.stringify(this.containerConfig), { language: 'json' })}`,
@@ -30,6 +31,18 @@ export class DockerService {
       `Setting database config: ${highlight(JSON.stringify(this.databaseConfig), { language: 'json' })}`,
     );
     this.sqlService.databaseConfig = this.databaseConfig;
+    await this.ensureDatabaseContainerIsRunning();
+    await this.ensureDirectusContainerIsRunning();
+  }
+
+  public get databaseConfig(): DatabaseConfig {
+    return {
+      host: this.getDockerEnvValue('DB_HOST'),
+      port: this.getDockerEnvValue('DB_PORT'),
+      name: this.getDockerEnvValue('DB_DATABASE'),
+      user: this.getDockerEnvValue('DB_USER'),
+      password: this.getDockerEnvValue('DB_PASSWORD'),
+    };
   }
 
   private getContainerConfig() {
@@ -47,16 +60,6 @@ export class DockerService {
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
   }
 
-  public get databaseConfig(): DatabaseConfig {
-    return {
-      host: this.getDockerEnvValue('DB_HOST'),
-      port: this.getDockerEnvValue('DB_PORT'),
-      name: this.getDockerEnvValue('DB_DATABASE'),
-      user: this.getDockerEnvValue('DB_USER'),
-      password: this.getDockerEnvValue('DB_PASSWORD'),
-    };
-  }
-
   private getDockerEnvValue(name: string) {
     const variable = this.containerConfig.Config.Env.find((env: string) =>
       env.startsWith(name),
@@ -67,5 +70,50 @@ export class DockerService {
     }
 
     return variable.split('=')[1];
+  }
+
+  private async ensureDatabaseContainerIsRunning() {
+    const containersOutput = shell.exec('docker ps -a --format json', {
+      silent: true,
+    }).stdout;
+    const containers = containersOutput
+      .split('\n')
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    return Promise.all(
+      containers
+        .filter(({ Networks }: { Networks: string }) =>
+          Networks.split(',').some((network: string) =>
+            this.networks.includes(network),
+          ),
+        )
+        .filter(({ State }: { State: string }) => State !== 'running')
+        .filter(({ Names }: { Names: string }) =>
+          Names.split(',').some((Name: string) =>
+            Name.includes(this.databaseConfig.host),
+          ),
+        )
+        .map(({ ID }: { ID: string }) => {
+          this.logger.debug(
+            `Starting database container ${chalk.bold(ID)} since it is not running`,
+          );
+          shell.exec(`docker start ${ID}`, { silent: true });
+          return new Promise((resolve) => setTimeout(resolve, 10000));
+        }),
+    );
+  }
+
+  private async ensureDirectusContainerIsRunning() {
+    if (this.containerConfig.State.Running) {
+      return;
+    }
+
+    this.logger.debug(
+      `Starting Directus container ${chalk.bold(this.containerConfig.Id)} since it is not running`,
+    );
+    shell.exec(`docker start ${this.containerConfig.Id}`, {
+      silent: true,
+    });
+    return new Promise((resolve) => setTimeout(resolve, 10000));
   }
 }

@@ -5,18 +5,16 @@ import { DirectusAssetService } from '../../directus/directus-asset/directus-ass
 import { BackupPerformer } from '../backup-performer.js';
 import shell from 'shelljs';
 import chalk from 'chalk';
-import portfinder from 'portfinder';
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess } from 'child_process';
 import { SqlService } from '../../sql/sql.service.js';
 import { K8sContainerService } from '../../container/k8s-container/k8s-container.service.js';
 import { K8sService } from '../../k8s/k8s.service.js';
 import { ConfigService } from '../../config/config.service.js';
+import { PortForwardService } from '../../k8s/port-forward/port-forward.service.js';
 
 @Injectable()
 export class K8sBackupService extends BackupPerformer {
   private backupDir: string;
-  private directusPort: number;
-  private directusPortForward: ChildProcess;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
@@ -25,6 +23,7 @@ export class K8sBackupService extends BackupPerformer {
     private readonly kubernetesContainerService: K8sContainerService,
     private readonly k8sService: K8sService,
     config: ConfigService,
+    private readonly portForwardService: PortForwardService,
   ) {
     super(
       logger,
@@ -54,31 +53,10 @@ export class K8sBackupService extends BackupPerformer {
   }
 
   protected async getDirectusPort(): Promise<number> {
-    this.directusPort = await portfinder.getPortPromise();
-    const podName = shell
-      .exec(`kubectl get pod -l app.kubernetes.io/name=directus -oname`, {
-        silent: true,
-      })
-      .stdout.split('\n')[0];
-    this.logger.debug(
-      `Forwarding local port ${chalk.bold(this.directusPort)} to ${chalk.bold('8055')} in ${chalk.bold(podName)}`,
-    );
-
-    this.directusPortForward = spawn(
-      'kubectl',
-      ['port-forward', podName, `${this.directusPort}:8055`],
-      {
-        stdio: ['ignore', 'ignore', 'ignore'],
-        detached: true,
-      },
-    );
-
-    this.directusPortForward.unref();
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    return this.directusPort;
+    return this.portForwardService.forward();
   }
 
   protected async cleanUp(): Promise<void> {
-    this.directusPortForward.kill('SIGKILL');
+    return this.portForwardService.stop();
   }
 }

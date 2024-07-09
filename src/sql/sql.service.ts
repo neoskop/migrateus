@@ -21,6 +21,10 @@ export class SqlService {
 
   public set databaseConfig(config: DatabaseConfig) {
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
+    this.redactService.addRedaction(config.password);
+    this.logger.debug(
+      `Database config: ${highlight(JSON.stringify(config), { language: 'json' })}`,
+    );
     this._databaseConfig = config;
   }
 

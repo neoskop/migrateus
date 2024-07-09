@@ -29,6 +29,7 @@
   "dependencies": {
     "@1password/op-js": "0.1.13",
     "@directus/sdk": "16.1.1",
+    "@inquirer/expand": "2.1.14",
     "@kubernetes/client-node": "0.21.0",
     "@nestjs/common": "^10.3.10",
     "@nestjs/core": "^10.3.10",
