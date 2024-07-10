@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Migrations for Directus",
   "author": "Arne Diekmann <diekmann@neoskop.de>",
-  "private": true,
+  "publishConfig": {
+    "access": "restricted"
+  },
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
