@@ -8,12 +8,7 @@ import { SchemaDiffAnswers } from './schema-diff-answers.interface.js';
 import chalk from 'chalk';
 import { RedactService } from '../redact/redact.service.js';
 import { SchemaDiffService } from './schema-diff.service.js';
-
-interface BasicCommandOptions {
-  string?: string;
-  boolean?: boolean;
-  number?: number;
-}
+import { DependenciesService } from '../dependencies/dependencies.service.js';
 
 @Command({
   name: 'schema-diff',
@@ -31,11 +26,12 @@ export class SchemaDiffCommand extends MigrateusCommand {
     private readonly inquirer: InquirerService,
     protected readonly redactService: RedactService,
     private readonly schemaDiffService: SchemaDiffService,
+    protected readonly dependenciesService: DependenciesService,
   ) {
-    super(logger, config, redactService);
+    super(logger, config, redactService, dependenciesService);
   }
 
-  async run(params: string[], _options?: BasicCommandOptions): Promise<void> {
+  async execute(params: string[]): Promise<void> {
     let [from, to] = params;
 
     if (!from || !to) {

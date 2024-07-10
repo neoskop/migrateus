@@ -8,6 +8,7 @@ import { SqlModule } from '../sql/sql.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
 import { DockerModule } from '../docker/docker.module.js';
+import { DependenciesModule } from '../dependencies/dependencies.module.js';
 
 @Module({
   providers: [CleanService, CleanCommand, CleanQuestions],
@@ -18,6 +19,7 @@ import { DockerModule } from '../docker/docker.module.js';
     EnvironmentModule,
     K8sModule,
     DockerModule,
+    DependenciesModule,
   ],
 })
 export class CleanModule {}

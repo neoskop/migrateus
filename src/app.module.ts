@@ -14,6 +14,7 @@ import { DockerModule } from './docker/docker.module.js';
 import { EnvironmentModule } from './environment/environment.module.js';
 import { RedactModule } from './redact/redact.module.js';
 import { RedactService } from './redact/redact.service.js';
+import { DependenciesModule } from './dependencies/dependencies.module.js';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { RedactService } from './redact/redact.service.js';
     DockerModule,
     EnvironmentModule,
     RedactModule,
+    DependenciesModule,
   ],
   controllers: [],
   providers: [],

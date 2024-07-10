@@ -10,12 +10,7 @@ import { DockerRestoreService } from './docker-restore/docker-restore.service.js
 import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { RedactService } from '../redact/redact.service.js';
-
-interface BasicCommandOptions {
-  string?: string;
-  boolean?: boolean;
-  number?: number;
-}
+import { DependenciesService } from '../dependencies/dependencies.service.js';
 
 @Command({
   name: 'restore-db',
@@ -35,8 +30,9 @@ export class RestoreDbCommand extends MigrateusCommand {
     private readonly k8sRestoreService: K8sRestoreService,
     private readonly environmentService: EnvironmentService,
     protected readonly redactService: RedactService,
+    protected readonly dependenciesService: DependenciesService,
   ) {
-    super(logger, config, redactService);
+    super(logger, config, redactService, dependenciesService);
   }
 
   @Option({
@@ -47,7 +43,7 @@ export class RestoreDbCommand extends MigrateusCommand {
     this.config.noAssets = true;
   }
 
-  async run(params: string[], options?: BasicCommandOptions): Promise<void> {
+  async execute(params: string[]): Promise<void> {
     let [from, to] = params;
 
     if (!from || !to) {

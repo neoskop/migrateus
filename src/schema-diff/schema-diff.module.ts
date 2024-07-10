@@ -9,6 +9,7 @@ import { DirectusModule } from '../directus/directus.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { ContainerModule } from '../container/container.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
+import { DependenciesModule } from '../dependencies/dependencies.module.js';
 
 @Module({
   providers: [SchemaDiffCommand, SchemaDiffQuestions, SchemaDiffService],
@@ -20,6 +21,7 @@ import { EnvironmentModule } from '../environment/environment.module.js';
     SqlModule,
     ContainerModule,
     EnvironmentModule,
+    DependenciesModule,
   ],
 })
 export class SchemaDiffModule {}

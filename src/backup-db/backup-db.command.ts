@@ -8,12 +8,7 @@ import chalk from 'chalk';
 import { BackupDbAnswers } from './backup-db-answers.interface.js';
 import { BackupDbService } from './backup-db.service.js';
 import { RedactService } from '../redact/redact.service.js';
-
-interface BasicCommandOptions {
-  string?: string;
-  boolean?: boolean;
-  number?: number;
-}
+import { DependenciesService } from '../dependencies/dependencies.service.js';
 
 @Command({
   name: 'backup-db',
@@ -31,8 +26,9 @@ export class BackupDbCommand extends MigrateusCommand {
     private readonly inquirer: InquirerService,
     private readonly backupDbService: BackupDbService,
     protected readonly redactService: RedactService,
+    protected readonly dependenciesService: DependenciesService,
   ) {
-    super(logger, config, redactService);
+    super(logger, config, redactService, dependenciesService);
   }
 
   @Option({
@@ -43,7 +39,7 @@ export class BackupDbCommand extends MigrateusCommand {
     this.config.noAssets = true;
   }
 
-  async run(params: string[], options?: BasicCommandOptions): Promise<void> {
+  async execute(params: string[]): Promise<void> {
     let [from, to] = params;
 
     if (!from || !to) {

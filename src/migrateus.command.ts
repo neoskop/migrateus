@@ -2,6 +2,7 @@ import { CommandRunner, Option } from 'nest-commander';
 import { Logger } from 'winston';
 import { ConfigService } from './config/config.service.js';
 import { RedactService } from './redact/redact.service.js';
+import { DependenciesService } from './dependencies/dependencies.service.js';
 
 export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
@@ -10,8 +11,10 @@ export abstract class MigrateusCommand extends CommandRunner {
     protected readonly logger: Logger,
     protected readonly config: ConfigService,
     protected readonly redactService: RedactService,
+    protected readonly dependenciesService: DependenciesService,
   ) {
     super();
+    dependenciesService.check();
   }
 
   @Option({
@@ -47,5 +50,12 @@ export abstract class MigrateusCommand extends CommandRunner {
   })
   setShowSecrets() {
     this.redactService.enabled = false;
+  }
+
+  abstract execute(params: string[]): Promise<void>;
+
+  async run(params: string[]): Promise<void> {
+    await this.dependenciesService.check();
+    await this.execute(params);
   }
 }
