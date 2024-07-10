@@ -1,5 +1,5 @@
 {
-  "name": "migrateus",
+  "name": "@neoskop/migrateus",
   "version": "0.0.1",
   "description": "Migrations for Directus",
   "author": "Arne Diekmann <diekmann@neoskop.de>",
@@ -27,7 +27,6 @@
     "release": "npm run gv && npm run build && npm publish"
   },
   "dependencies": {
-    "@1password/op-js": "0.1.13",
     "@directus/sdk": "16.1.1",
     "@inquirer/expand": "2.1.14",
     "@kubernetes/client-node": "0.21.0",

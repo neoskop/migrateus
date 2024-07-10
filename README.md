@@ -9,13 +9,13 @@ Schema Migrations and DB Back-up and Restore for Directus running on Kubernetes 
 Install as a global package with
 
 ```bash
-npm install -g migrateus
+npm install -g @neoskop/migrateus
 ```
 
 or run via `npx`
 
 ```bash
-npx migrateus
+npx --package=@neoskop/migrateus migrateus
 ```
 
 ## Usage
