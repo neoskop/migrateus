@@ -38,6 +38,7 @@ export abstract class BackupPerformer {
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
+      this.logger.info('Cleaning up');
       if (!this.config.noAssets) {
         await this.sqlService.cleanUpDirectusUser(this.containerService);
       }

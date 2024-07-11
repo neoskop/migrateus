@@ -49,7 +49,7 @@ export class SchemaDiffService {
       >(schemaDiff(snapshot, true));
 
       if (diffResponse.status === 204) {
-        console.log(
+        this.logger.info(
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
         );
       } else {
@@ -77,15 +77,16 @@ export class SchemaDiffService {
           diffResponse.diff.relations.length;
 
         if (changes > 0) {
-          console.log(`Will apply ${chalk.bold(changes)} changes!`);
+          this.logger.info(`Will apply ${chalk.bold(changes)} changes!`);
           await this.applyDiff(toClient, diffResponse);
         } else {
-          console.log(`No changes to apply! Bye!`);
+          this.logger.info(`No changes to apply!`);
         }
       }
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
+      this.logger.info('Cleaning up');
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
       this.portForwardService.stop();

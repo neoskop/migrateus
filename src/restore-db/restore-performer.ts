@@ -37,6 +37,7 @@ export abstract class RestorePerformer {
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
+      this.logger.info('Cleaning up');
       await this.sqlService.cleanUpDirectusUser(this.containerService);
       await this.cleanUp();
       this.containerService.cleanUp();
