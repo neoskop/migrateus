@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2024-07-15
+
+### 🚀 Features
+
+- *(schema-diff)* Compare server version before attempting a schema diff
+
+### 📚 Documentation
+
+- *(TODO)* Add new tasks for even more polishing 🫠
+
 ## [0.3.0] - 2024-07-15
 
 ### 🚀 Features
@@ -15,6 +25,10 @@ All notable changes to this project will be documented in this file.
 ### 📚 Documentation
 
 - *(TODO)* Add entry for kubelogin quality-of-life feature
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 0.3.0
 
 ## [0.2.0] - 2024-07-15
 
