@@ -112,6 +112,10 @@ For more information on any command, run `migrateus <command> --help`
 $ migrateus completion-script >> ~/.bashrc
 ```
 
+## Changelog
+
+See [Changelog](CHANGELOG.md).
+
 ## License
 
 See [License](LICENSE).

@@ -27,7 +27,8 @@
     "watch": "nodemon --ext ts --watch 'src/**/*.ts' --exec 'npm run build'",
     "gv": "genversion --esm src/version.ts",
     "release": "npm run gv && npm run build && npm publish",
-    "jscpd": "jscpd --pattern=**/*.ts src/"
+    "jscpd": "jscpd --pattern=**/*.ts src/",
+    "update-changelog": "git-cliff -o --tag $version"
   },
   "dependencies": {
     "@directus/sdk": "16.1.1",
@@ -76,6 +77,7 @@
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-prettier": "^5.0.0",
     "genversion": "3.2.0",
+    "git-cliff": "2.4.0",
     "jest": "^29.7.0",
     "jscpd": "4.0.5",
     "nest-commander-schematics": "3.0.0",
