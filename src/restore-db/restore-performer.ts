@@ -52,6 +52,7 @@ export abstract class RestorePerformer {
       await this.cleanUp();
       await this.containerService.cleanUp();
       await this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
     }
   }
 
