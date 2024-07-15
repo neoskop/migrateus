@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2024-07-15
+
+### 🚀 Features
+
+- Allow overriding of container docker image via `-i | --image`
+
+### 🐛 Bug Fixes
+
+- *(restore-db)* Fix being stuck in clean-up
+
+### 📚 Documentation
+
+- *(TODO)* Add entry for kubelogin quality-of-life feature
+
 ## [0.2.0] - 2024-07-15
 
 ### 🚀 Features
@@ -11,6 +25,10 @@ All notable changes to this project will be documented in this file.
 ### 🐛 Bug Fixes
 
 - *(schema-diff)* Fix schema diff by awaiting necessary statements
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 0.2.0
 
 ## [0.1.0] - 2024-07-15
 
