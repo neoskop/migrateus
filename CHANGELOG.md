@@ -2,12 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.0.5] - 2024-07-15
 
 ### 🚀 Features
 
 - Add jscpd for duplicate code detection
 - Use better logging for clean up ops
+- Add git cliff for changelogs
 
 ### 🐛 Bug Fixes
 
