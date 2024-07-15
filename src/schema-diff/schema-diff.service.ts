@@ -116,7 +116,7 @@ export class SchemaDiffService {
 
     if (env.platform === 'k8s') {
       containerService = new K8sContainerService(this.logger);
-      this.k8sService.setup();
+      await this.k8sService.setup();
       port = await this.portForwardService.forward();
     } else {
       containerService = new DockerContainerService(
@@ -126,7 +126,7 @@ export class SchemaDiffService {
       await this.dockerService.setup();
     }
 
-    containerService.setup();
+    await containerService.setup();
     this.containerServices[name] = containerService;
     await this.sqlService.setupDirectusUser(containerService);
     return this.directus.getClient(port, this.directusUserService.token);
