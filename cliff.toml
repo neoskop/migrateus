@@ -67,6 +67,7 @@ commit_parsers = [
   { message = "^chore\\(deps.*\\)", skip = true },
   { message = "^chore\\(pr\\)", skip = true },
   { message = "^chore\\(pull\\)", skip = true },
+  { message = "^chore: release", skip = true },
   { message = "^chore|^ci", group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
   { body = ".*security", group = "<!-- 8 -->🛡️ Security" },
   { message = "^revert", group = "<!-- 9 -->◀️ Revert" },
@@ -78,7 +79,7 @@ filter_commits = false
 # regex for matching git tags
 # tag_pattern = "v[0-9].*"
 # regex for skipping tags
-# skip_tags = ""
+skip_tags = "0\\.0\\.3"
 # regex for ignoring tags
 # ignore_tags = ""
 # sort the tags topologically
