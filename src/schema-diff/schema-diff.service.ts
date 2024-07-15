@@ -7,6 +7,7 @@ import {
   schemaDiff,
   SchemaDiffOutput,
   schemaSnapshot,
+  serverInfo,
 } from '@directus/sdk';
 import chalk from 'chalk';
 import expand from '@inquirer/expand';
@@ -22,6 +23,7 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import confirm from '@inquirer/confirm';
+import semver from 'semver';
 
 @Injectable()
 export class SchemaDiffService {
@@ -43,8 +45,8 @@ export class SchemaDiffService {
     try {
       const fromClient = await this.setupDirectusClient(from);
       const toClient = await this.setupDirectusClient(to);
+      await this.checkVersions(from, fromClient, to, toClient);
       const snapshot = await fromClient.request(schemaSnapshot());
-      // TODO: Compare server versions
       const diffResponse = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
@@ -95,6 +97,26 @@ export class SchemaDiffService {
     }
   }
 
+  private async checkVersions(
+    fromName: string,
+    fromClient: RestClient<any>,
+    toName: string,
+    toClient: RestClient<any>,
+  ) {
+    const fromVersion = await this.getDirectusVersion(fromClient);
+    const toVersion = await this.getDirectusVersion(toClient);
+
+    if (fromVersion !== toVersion) {
+      throw new Error(
+        `Directus server versions mismatch. ${chalk.bold(fromName)} has ${semver.lt(fromVersion, toVersion) ? chalk.red(fromVersion) : chalk.green(fromVersion)}, while ${chalk.bold(toName)} has ${semver.lt(toVersion, fromVersion) ? chalk.red(toVersion) : chalk.green(toVersion)}`,
+      );
+    }
+  }
+
+  private async getDirectusVersion(client: RestClient<any>) {
+    return (await client.request<{ version: string }>(serverInfo())).version;
+  }
+
   private async doubleCheck(changes: number) {
     const environment = this.environmentService.environment;
 
@@ -115,14 +137,14 @@ export class SchemaDiffService {
     this.environmentService.environment = env;
 
     if (env.platform === 'k8s') {
-      this.k8sService.setup();
+      await this.k8sService.setup();
     } else {
       await this.dockerService.setup();
     }
 
     const containerService = this.containerServices[name];
     await this.sqlService.cleanUpDirectusUser(containerService);
-    containerService.cleanUp();
+    await containerService.cleanUp();
   }
 
   private async setupDirectusClient(name: string): Promise<RestClient<any>> {
