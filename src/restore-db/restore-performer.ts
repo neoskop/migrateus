@@ -8,6 +8,8 @@ import { join } from 'node:path';
 import fs from 'node:fs';
 import tmp from 'tmp';
 import { EnvironmentService } from '../environment/environment.service.js';
+import { exec } from '../util/exec.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 export abstract class RestorePerformer {
   constructor(
@@ -16,16 +18,20 @@ export abstract class RestorePerformer {
     private readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly environmentService: EnvironmentService,
+    private readonly progressService: ProgressService,
   ) {}
 
   public async restore(backupFile: string) {
     const backupDir = await this.createTemporaryDirectory();
 
     try {
+      this.progressService.advance('📦 Extract backup archive');
       await this.extractBackupArchive(backupDir, backupFile);
       await this.setup(backupDir);
-      this.containerService.setup();
+      this.progressService.advance('🚀 Set-up Migrateus container');
+      await this.containerService.setup();
       await this.beforeMysqlDumpRestore();
+      this.progressService.advance('🔄 Restore database dump');
       await this.sqlService.restoreMysqlDump(this.containerService);
       await this.sqlService.setupDirectusUser(this.containerService);
       await this.sqlService.setCredentials(
@@ -33,11 +39,16 @@ export abstract class RestorePerformer {
         this.containerService,
       );
       const directusPort = await this.getDirectusPort();
-      await this.directusAssetService.restoreAssets(directusPort, backupDir);
+      this.progressService.advance('🖼️ Restoring assets');
+      await this.directusAssetService.restoreAssets(
+        directusPort,
+        backupDir,
+        this.progressService.updateText.bind(this.progressService),
+      );
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
-      this.logger.info('Cleaning up');
+      this.progressService.advance('🛁 Clean-up');
       await this.sqlService.cleanUpDirectusUser(this.containerService);
       await this.cleanUp();
       this.containerService.cleanUp();
@@ -60,7 +71,7 @@ export abstract class RestorePerformer {
   }
 
   private async extractBackupArchive(backupDir: string, backupFile: string) {
-    shell.exec(`tar -xf ${backupFile} -C ${backupDir}`, {
+    await exec(`tar -xf ${backupFile} -C ${backupDir}`, {
       silent: true,
     });
 

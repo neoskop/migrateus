@@ -6,6 +6,7 @@ import shell, { ShellString } from 'shelljs';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
 import { highlight } from 'cli-highlight';
+import { exec } from '../../util/exec.js';
 
 @Injectable()
 export class K8sContainerService extends ContainerService {
@@ -18,10 +19,28 @@ export class K8sContainerService extends ContainerService {
     this.migrateusPodName = `migrateus-${customAlphabet('abcdef1234567890')(6)}`;
   }
 
-  public setup(): void {
-    const output = shell.exec(
-      `kubectl run ${this.migrateusPodName} --image=bitnami/mysql:5.7.43 -- bash -c "sleep infinity"`,
-      { silent: true },
+  public async setup() {
+    const podSpec = {
+      apiVersion: 'v1',
+      kind: 'Pod',
+      metadata: { name: this.migrateusPodName },
+      spec: {
+        terminationGracePeriodSeconds: 0,
+        containers: [
+          {
+            name: 'mysql',
+            image: 'bitnami/mysql:5.7.43',
+            command: ['bash', '-c', 'sleep infinity'],
+          },
+        ],
+      },
+    };
+
+    const output = await exec(
+      `echo '${JSON.stringify(podSpec)}' | kubectl apply -f -`,
+      {
+        silent: true,
+      },
     );
 
     if (output.code !== 0) {
@@ -30,18 +49,18 @@ export class K8sContainerService extends ContainerService {
       );
     }
 
-    shell.exec(
+    await exec(
       `kubectl wait --for=condition=ready pod ${this.migrateusPodName}`,
       { silent: true },
     );
   }
 
-  public cleanUp(): void {
+  public async cleanUp() {
     this.logger.debug(`Deleting pod ${chalk.bold(this.migrateusPodName)}`);
-    shell.exec(`kubectl delete pod ${this.migrateusPodName}`, { silent: true });
+    await exec(`kubectl delete pod ${this.migrateusPodName}`, { silent: true });
   }
 
-  public cleanUpAll(): void {
+  public async cleanUpAll() {
     const resources = shell
       .exec(`kubectl get pods -oname`, { silent: true })
       .stdout.split('\n')
@@ -49,15 +68,15 @@ export class K8sContainerService extends ContainerService {
 
     if (resources.length > 0) {
       this.logger.debug(`Deleting ${chalk.bold(resources.length)} pods`);
-      shell.exec(`kubectl delete ${resources.join(' ')}`, { silent: true });
+      await exec(`kubectl delete ${resources.join(' ')}`, { silent: true });
     }
   }
 
-  public execute(command: string): ShellString {
+  public async execute(command: string) {
     this.logger.debug(
       `Executing ${highlight(command, { language: 'bash' })} in pod/${chalk.bold(this.migrateusPodName)}`,
     );
-    return shell.exec(
+    return await exec(
       `kubectl exec ${this.migrateusPodName} -- bash -c "${command}"`,
       {
         silent: true,

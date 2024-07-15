@@ -9,6 +9,7 @@ import { BackupDbAnswers } from './backup-db-answers.interface.js';
 import { BackupDbService } from './backup-db.service.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Command({
   name: 'backup-db',
@@ -27,8 +28,9 @@ export class BackupDbCommand extends MigrateusCommand {
     private readonly backupDbService: BackupDbService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
+    protected readonly progressService: ProgressService,
   ) {
-    super(logger, config, redactService, dependenciesService);
+    super(logger, config, redactService, dependenciesService, progressService);
   }
 
   @Option({

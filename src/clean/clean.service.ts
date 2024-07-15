@@ -6,6 +6,7 @@ import { ConfigService } from '../config/config.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sService } from '../k8s/k8s.service.js';
 import { DockerService } from '../docker/docker.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Injectable()
 export class CleanService {
@@ -17,24 +18,47 @@ export class CleanService {
     private readonly sqlService: SqlService,
     private readonly config: ConfigService,
     private readonly environmentService: EnvironmentService,
+    private readonly progressService: ProgressService,
   ) {}
 
-  public async clean(envName: string) {
-    const environment = await this.config.getEnvironment(envName);
+  public async clean(environmentName: string) {
+    const environment = await this.config.getEnvironment(environmentName);
     this.environmentService.environment = environment;
 
-    if (environment.platform === 'k8s') {
-      this.k8sService.setup();
-      this.k8sContainerService.setup();
-      await this.sqlService.cleanUpAllDirectusUsers(this.k8sContainerService);
-      this.k8sContainerService.cleanUpAll();
-    } else {
-      this.dockerService.setup();
-      this.dockerContainerService.setup();
-      await this.sqlService.cleanUpAllDirectusUsers(
-        this.dockerContainerService,
-      );
-      this.dockerContainerService.cleanUpAll();
+    try {
+      const cleaningFunction =
+        environment.platform === 'k8s' ? this.cleanK8s : this.cleanDocker;
+      await cleaningFunction.call(this);
+    } catch (error) {
+      this.progressService.fail(error);
     }
+  }
+
+  private async cleanDocker() {
+    this.progressService.advance(
+      '🔍 Gathering info on and starting containers',
+    );
+    await this.dockerService.setup();
+    this.progressService.advance('🚀 Set-up Migrateus container');
+    await this.dockerContainerService.setup();
+    this.progressService.advance('🛁 Clean-up all Directus users');
+    await this.sqlService.cleanUpAllDirectusUsers(this.dockerContainerService);
+    this.progressService.advance('🗑️ Remove old Migrateus containers');
+    await this.dockerContainerService.cleanUpAll();
+    this.progressService.finish();
+  }
+
+  private async cleanK8s() {
+    this.progressService.advance(
+      '🔑 Set Kubernetes context and gather database credentials',
+    );
+    await this.k8sService.setup();
+    this.progressService.advance('🚀 Set-up Migrateus pod');
+    await this.k8sContainerService.setup();
+    this.progressService.advance('🛁 Clean-up all Directus users');
+    await this.sqlService.cleanUpAllDirectusUsers(this.k8sContainerService);
+    this.progressService.advance('🗑️ Remove old Migrateus pods');
+    await this.k8sContainerService.cleanUpAll();
+    this.progressService.finish();
   }
 }

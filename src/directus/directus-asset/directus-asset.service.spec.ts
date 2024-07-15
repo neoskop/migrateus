@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DirectusAssetService } from './directus-asset.service';
+import { DirectusAssetService } from './directus-asset.service.js';
 
 describe('DirectusAssetService', () => {
   let service: DirectusAssetService;

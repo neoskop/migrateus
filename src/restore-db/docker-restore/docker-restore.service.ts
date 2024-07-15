@@ -7,6 +7,7 @@ import { DockerContainerService } from '../../container/docker-container/docker-
 import { DockerService } from '../../docker/docker.service.js';
 import { RestorePerformer } from '../restore-performer.js';
 import { EnvironmentService } from '../../environment/environment.service.js';
+import { ProgressService } from '../../progress/progress.service.js';
 
 @Injectable()
 export class DockerRestoreService extends RestorePerformer {
@@ -17,6 +18,7 @@ export class DockerRestoreService extends RestorePerformer {
     private readonly dockerContainerService: DockerContainerService,
     private readonly dockerService: DockerService,
     environmentService: EnvironmentService,
+    progressService: ProgressService,
   ) {
     super(
       logger,
@@ -24,6 +26,7 @@ export class DockerRestoreService extends RestorePerformer {
       sqlService,
       dockerContainerService,
       environmentService,
+      progressService,
     );
   }
 

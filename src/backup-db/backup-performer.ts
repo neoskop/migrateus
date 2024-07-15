@@ -7,6 +7,10 @@ import { join } from 'node:path';
 import chalk from 'chalk';
 import { ConfigService } from '../config/config.service.js';
 import tmp from 'tmp';
+import { exec } from '../util/exec.js';
+import { ProgressService } from '../progress/progress.service.js';
+import fs from 'node:fs';
+import prettyBytes from 'pretty-bytes';
 
 export abstract class BackupPerformer {
   constructor(
@@ -15,6 +19,7 @@ export abstract class BackupPerformer {
     private readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly config: ConfigService,
+    private readonly progressService: ProgressService,
   ) {}
 
   public async backup(backupFile: string) {
@@ -22,7 +27,9 @@ export abstract class BackupPerformer {
 
     try {
       await this.setup(backupDir);
-      this.containerService.setup();
+      this.progressService.advance('🚀 Set-up Migrateus container');
+      await this.containerService.setup();
+      this.progressService.advance('💾 Dump database');
       await this.sqlService.performMysqlDump(this.containerService);
       await this.afterMysqlDump();
 
@@ -31,20 +38,40 @@ export abstract class BackupPerformer {
       } else {
         await this.sqlService.setupDirectusUser(this.containerService);
         const directusPort = await this.getDirectusPort();
-        await this.directusAssetService.backupAssets(directusPort, backupDir);
+        this.progressService.advance('🖼️ Downloading assets');
+        const failedDownloads = await this.directusAssetService.backupAssets(
+          directusPort,
+          backupDir,
+          this.progressService.updateText.bind(this.progressService),
+        );
+
+        if (failedDownloads.length > 0) {
+          this.progressService.warn(
+            `Failed to download ${chalk.bold(failedDownloads.length)} assets`,
+          );
+
+          for (const asset of failedDownloads) {
+            this.logger.debug(
+              `Failed to download asset ${chalk.bold(asset.id)}: ${chalk.bold(asset.filename_disk)}`,
+            );
+          }
+        }
       }
 
-      this.createBackupArchive(backupDir, backupFile);
+      this.progressService.advance('📦 Create backup archive');
+      const size = await this.createBackupArchive(backupDir, backupFile);
+      this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
     } catch (error) {
-      this.logger.error(error.message || error);
+      this.progressService.fail(error);
     } finally {
-      this.logger.info('Cleaning up');
+      this.progressService.advance('🛁 Clean-up');
       if (!this.config.noAssets) {
         await this.sqlService.cleanUpDirectusUser(this.containerService);
       }
       await this.cleanUp();
       this.containerService.cleanUp();
       this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
     }
   }
 
@@ -62,9 +89,9 @@ export abstract class BackupPerformer {
     return tempDir;
   }
 
-  private createBackupArchive(backupDir: string, backupFile: string) {
+  private async createBackupArchive(backupDir: string, backupFile: string) {
     const targetPath = join(shell.pwd().stdout, backupFile);
-    const ouput = shell.exec(`tar -czf ${targetPath} *`, {
+    const ouput = await exec(`tar -czf ${targetPath} *`, {
       silent: true,
       cwd: backupDir,
     });
@@ -74,10 +101,14 @@ export abstract class BackupPerformer {
         `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(ouput.stderr)}`,
       );
     }
+
+    const { size } = await fs.promises.stat(targetPath);
+    const prettySize = prettyBytes(size);
+    return prettySize;
   }
 
-  private deleteTemporaryDirectory(backupDir: string) {
+  private async deleteTemporaryDirectory(backupDir: string) {
     this.logger.debug(`Removing temporary directory ${chalk.bold(backupDir)}`);
-    shell.rm('-rf', backupDir);
+    await exec(`rm -rf ${backupDir}`, { silent: true });
   }
 }

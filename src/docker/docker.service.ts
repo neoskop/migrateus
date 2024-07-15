@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerConfig } from './container-config.type.js';
 import { EnvironmentService } from '../environment/environment.service.js';
-import shell from 'shelljs';
 import { DockerEnvironment } from '../config/environment.interface.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
@@ -9,6 +8,7 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
+import { exec } from '../util/exec.js';
 
 @Injectable()
 export class DockerService {
@@ -22,7 +22,7 @@ export class DockerService {
   ) {}
 
   public async setup() {
-    this.containerConfig = this.getContainerConfig();
+    this.containerConfig = await this.getContainerConfig();
     this.logger.debug(
       `Container config: ${highlight(JSON.stringify(this.containerConfig), { language: 'json' })}`,
     );
@@ -45,8 +45,8 @@ export class DockerService {
     };
   }
 
-  private getContainerConfig() {
-    const inspectOutput = shell.exec(
+  private async getContainerConfig() {
+    const inspectOutput = await exec(
       `docker inspect ${(this.environmentService.environment as DockerEnvironment).containerName}`,
       { silent: true },
     );
@@ -73,9 +73,11 @@ export class DockerService {
   }
 
   private async ensureDatabaseContainerIsRunning() {
-    const containersOutput = shell.exec('docker ps -a --format json', {
-      silent: true,
-    }).stdout;
+    const containersOutput = (
+      await exec('docker ps -a --format json', {
+        silent: true,
+      })
+    ).stdout;
     const containers = containersOutput
       .split('\n')
       .filter(Boolean)
@@ -93,12 +95,12 @@ export class DockerService {
             Name.includes(this.databaseConfig.host),
           ),
         )
-        .map(({ ID }: { ID: string }) => {
+        .map(async ({ ID }: { ID: string }) => {
           this.logger.debug(
             `Starting database container ${chalk.bold(ID)} since it is not running`,
           );
-          shell.exec(`docker start ${ID}`, { silent: true });
-          return new Promise((resolve) => setTimeout(resolve, 10000));
+          await exec(`docker start ${ID}`, { silent: true });
+          await new Promise((resolve) => setTimeout(resolve, 10000));
         }),
     );
   }
@@ -111,7 +113,7 @@ export class DockerService {
     this.logger.debug(
       `Starting Directus container ${chalk.bold(this.containerConfig.Id)} since it is not running`,
     );
-    shell.exec(`docker start ${this.containerConfig.Id}`, {
+    await exec(`docker start ${this.containerConfig.Id}`, {
       silent: true,
     });
     return new Promise((resolve) => setTimeout(resolve, 10000));

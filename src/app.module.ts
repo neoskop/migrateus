@@ -15,6 +15,7 @@ import { EnvironmentModule } from './environment/environment.module.js';
 import { RedactModule } from './redact/redact.module.js';
 import { RedactService } from './redact/redact.service.js';
 import { DependenciesModule } from './dependencies/dependencies.module.js';
+import { ProgressModule } from './progress/progress.module.js';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { DependenciesModule } from './dependencies/dependencies.module.js';
     EnvironmentModule,
     RedactModule,
     DependenciesModule,
+    ProgressModule,
   ],
   controllers: [],
   providers: [],

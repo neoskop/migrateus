@@ -10,6 +10,7 @@ import { SqlModule } from '../sql/sql.module.js';
 import { ContainerModule } from '../container/container.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
+import { ProgressModule } from '../progress/progress.module.js';
 
 @Module({
   providers: [SchemaDiffCommand, SchemaDiffQuestions, SchemaDiffService],
@@ -22,6 +23,7 @@ import { DependenciesModule } from '../dependencies/dependencies.module.js';
     ContainerModule,
     EnvironmentModule,
     DependenciesModule,
+    ProgressModule,
   ],
 })
 export class SchemaDiffModule {}

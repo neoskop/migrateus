@@ -3,6 +3,7 @@ import { Logger } from 'winston';
 import { ConfigService } from './config/config.service.js';
 import { RedactService } from './redact/redact.service.js';
 import { DependenciesService } from './dependencies/dependencies.service.js';
+import { ProgressService } from './progress/progress.service.js';
 
 export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
@@ -12,6 +13,7 @@ export abstract class MigrateusCommand extends CommandRunner {
     protected readonly config: ConfigService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
+    protected readonly progressService: ProgressService,
   ) {
     super();
     dependenciesService.check();
@@ -24,6 +26,7 @@ export abstract class MigrateusCommand extends CommandRunner {
   setVerbose() {
     this.verbose = true;
     this.logger.level = 'debug';
+    this.progressService.useSpinner = false;
   }
 
   @Option({

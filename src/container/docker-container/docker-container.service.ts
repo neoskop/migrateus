@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { DockerService } from '../../docker/docker.service.js';
 import { highlight } from 'cli-highlight';
 import os from 'node:os';
+import { exec } from '../../util/exec.js';
 
 @Injectable()
 export class DockerContainerService extends ContainerService {
@@ -21,7 +22,7 @@ export class DockerContainerService extends ContainerService {
     super();
   }
 
-  public setup(): void {
+  public async setup() {
     const userInfo = os.userInfo();
     const command = [
       'docker container create',
@@ -50,27 +51,28 @@ export class DockerContainerService extends ContainerService {
       })
       .stdout.trim();
 
-    shell.exec(`docker start ${this.migrateusContainerId}`, { silent: true });
+    await exec(`docker start ${this.migrateusContainerId}`, { silent: true });
   }
 
-  public cleanUp(): void {
-    this.removeContainer(this.migrateusContainerId);
+  public async cleanUp() {
+    await this.removeContainer(this.migrateusContainerId);
   }
 
-  public cleanUpAll(): void {
-    const containers = shell
-      .exec(`docker ps -a -f name=migrateus --format '{{.Names}}'`, {
+  public async cleanUpAll() {
+    const containers = (
+      await exec(`docker ps -a -f name=migrateus --format '{{.Names}}'`, {
         silent: true,
       })
-      .stdout.split('\n')
+    ).stdout
+      .split('\n')
       .join(' ');
 
     if (containers.length > 0) {
-      this.removeContainer(containers);
+      await this.removeContainer(containers);
     }
   }
 
-  public execute(command: string): ShellString {
+  public async execute(command: string) {
     const fullCommand = [
       'docker',
       'exec',
@@ -82,10 +84,10 @@ export class DockerContainerService extends ContainerService {
     this.logger.debug(
       `Executing ${highlight(fullCommand, { language: 'bash' })}`,
     );
-    return shell.exec(fullCommand, { silent: true });
+    return await exec(fullCommand, { silent: true });
   }
 
-  private removeContainer(container: string) {
+  private async removeContainer(container: string) {
     this.logger.debug(
       `Deleting container${container.includes(' ') ? 's' : ''} ${container
         .split(' ')
@@ -93,7 +95,6 @@ export class DockerContainerService extends ContainerService {
         .map((name) => chalk.bold(name))
         .join(', ')}`,
     );
-    shell.exec(`docker stop ${container}`, { silent: true });
-    shell.exec(`docker rm ${container}`, { silent: true });
+    await exec(`docker rm -f ${container}`, { silent: true });
   }
 }

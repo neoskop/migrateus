@@ -7,6 +7,7 @@ import { SqlService } from '../../sql/sql.service.js';
 import { DockerContainerService } from '../../container/docker-container/docker-container.service.js';
 import { DockerService } from '../../docker/docker.service.js';
 import { ConfigService } from '../../config/config.service.js';
+import { ProgressService } from '../../progress/progress.service.js';
 
 @Injectable()
 export class DockerBackupService extends BackupPerformer {
@@ -17,6 +18,7 @@ export class DockerBackupService extends BackupPerformer {
     private readonly dockerContainerService: DockerContainerService,
     private readonly dockerService: DockerService,
     config: ConfigService,
+    progressService: ProgressService,
   ) {
     super(
       logger,
@@ -24,6 +26,7 @@ export class DockerBackupService extends BackupPerformer {
       sqlService,
       dockerContainerService,
       config,
+      progressService,
     );
   }
 

@@ -9,6 +9,7 @@ import chalk from 'chalk';
 import { RedactService } from '../redact/redact.service.js';
 import { SchemaDiffService } from './schema-diff.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Command({
   name: 'schema-diff',
@@ -27,8 +28,9 @@ export class SchemaDiffCommand extends MigrateusCommand {
     protected readonly redactService: RedactService,
     private readonly schemaDiffService: SchemaDiffService,
     protected readonly dependenciesService: DependenciesService,
+    protected readonly progressService: ProgressService,
   ) {
-    super(logger, config, redactService, dependenciesService);
+    super(logger, config, redactService, dependenciesService, progressService);
   }
 
   async execute(params: string[]): Promise<void> {

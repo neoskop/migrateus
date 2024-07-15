@@ -11,6 +11,7 @@ import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Command({
   name: 'restore-db',
@@ -31,8 +32,9 @@ export class RestoreDbCommand extends MigrateusCommand {
     private readonly environmentService: EnvironmentService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
+    protected readonly progressService: ProgressService,
   ) {
-    super(logger, config, redactService, dependenciesService);
+    super(logger, config, redactService, dependenciesService, progressService);
   }
 
   @Option({

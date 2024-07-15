@@ -9,6 +9,7 @@ import { CleanService } from './clean.service.js';
 import { CleanAnswers } from './clean-answers.interface.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Command({
   name: 'clean',
@@ -26,8 +27,9 @@ export class CleanCommand extends MigrateusCommand {
     private readonly cleanService: CleanService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
+    protected readonly progressService: ProgressService,
   ) {
-    super(logger, config, redactService, dependenciesService);
+    super(logger, config, redactService, dependenciesService, progressService);
   }
 
   async execute(params: string[]): Promise<void> {

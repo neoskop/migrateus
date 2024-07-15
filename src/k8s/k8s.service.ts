@@ -6,6 +6,7 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import { exec } from '../util/exec.js';
 
 @Injectable()
 export class K8sService {
@@ -15,17 +16,17 @@ export class K8sService {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {}
 
-  public setup() {
-    this.setDefaultContext();
-    this.sqlService.databaseConfig = this.databaseConfig;
+  public async setup() {
+    await this.setDefaultContext();
+    this.sqlService.databaseConfig = await this.retrieveDatabaseConfig();
   }
 
-  private setDefaultContext() {
+  private async setDefaultContext() {
     const context = (this.environmentService.environment as K8sEnvironment)
       .context;
     const namespace = (this.environmentService.environment as K8sEnvironment)
       .namespace;
-    const useContextOutput = shell.exec(
+    const useContextOutput = await exec(
       `kubectl config use-context ${context}`,
       { silent: true },
     );
@@ -36,7 +37,7 @@ export class K8sService {
       );
     }
 
-    const setContestOutput = shell.exec(
+    const setContestOutput = await exec(
       `kubectl config set-context --current --namespace=${namespace} --context=${context}`,
       { silent: true },
     );
@@ -48,9 +49,10 @@ export class K8sService {
     }
   }
 
-  protected get databaseConfig(): DatabaseConfig {
+  protected async retrieveDatabaseConfig() {
     const deployManifest = JSON.parse(
-      shell.exec(`kubectl get deploy directus -ojson`, { silent: true }).stdout,
+      (await exec(`kubectl get deploy directus -ojson`, { silent: true }))
+        .stdout,
     );
 
     const directusContainer = deployManifest.spec.template.spec.containers.find(

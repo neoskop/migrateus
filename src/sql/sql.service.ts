@@ -68,12 +68,11 @@ export class SqlService {
       `-P${port}`,
       `-u${user}`,
       `-p${password}`,
-      '--databases',
       name,
       '>/tmp/backup.sql',
     ].join(' ');
 
-    const output = containerService.execute(command);
+    const output = await containerService.execute(command);
 
     if (output.code !== 0) {
       throw new Error(
@@ -94,24 +93,28 @@ export class SqlService {
       '</tmp/backup.sql',
     ].join(' ');
 
-    const output = containerService.execute(command);
+    const output = await containerService.execute(command);
 
     if (output.code !== 0) {
       const errorMessage = `Restore failed with status code ${output.code}: ${output.stderr}`;
       throw new Error(errorMessage);
     }
 
-    const defaultCollation = this.exceuteSql(
-      `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
-      containerService,
+    const defaultCollation = (
+      await this.exceuteSql(
+        `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
+        containerService,
+      )
     )
       .split('\n')
       .slice(1)
       .join(' ');
 
-    const defaultCharacterSetName = this.exceuteSql(
-      `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
-      containerService,
+    const defaultCharacterSetName = (
+      await this.exceuteSql(
+        `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
+        containerService,
+      )
     )
       .split('\n')
       .slice(1)
@@ -120,9 +123,11 @@ export class SqlService {
     this.logger.debug(
       `Setting default collation to ${chalk.bold(defaultCollation)}`,
     );
-    const tableNames = this.exceuteSql(
-      `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${name}' AND TABLE_TYPE='BASE TABLE'`,
-      containerService,
+    const tableNames = (
+      await this.exceuteSql(
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${name}' AND TABLE_TYPE='BASE TABLE'`,
+        containerService,
+      )
     )
       .split('\n')
       .slice(1)
@@ -147,7 +152,7 @@ export class SqlService {
     );
   }
 
-  private exceuteSql(sql: string, containerService: ContainerService) {
+  private async exceuteSql(sql: string, containerService: ContainerService) {
     const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysql',
@@ -162,7 +167,7 @@ export class SqlService {
     this.logger.debug(
       `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,
     );
-    const output = containerService.execute(command.join(' '));
+    const output = await containerService.execute(command.join(' '));
 
     if (output.code !== 0) {
       throw new Error(

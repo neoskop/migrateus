@@ -14,7 +14,6 @@ import fs from 'node:fs';
 import { join, parse } from 'node:path';
 import { finished } from 'node:stream/promises';
 import pLimit from 'p-limit';
-import cliProgress from 'cli-progress';
 import chalk from 'chalk';
 import { DirectusUserService } from '../directus-user/directus-user.service.js';
 import { DirectusService } from '../directus.service.js';
@@ -22,6 +21,8 @@ import { mkdir } from 'node:fs/promises';
 import { glob } from 'glob';
 import { fileTypeFromFile } from 'file-type';
 import mime from 'mime';
+import { ProgressBar } from '../../progress/progress-bar.js';
+import { ProgressBarUpdater } from '../../progress/progress-bar-updater.type.js';
 
 @Injectable()
 export class DirectusAssetService {
@@ -33,23 +34,25 @@ export class DirectusAssetService {
     private readonly directusService: DirectusService,
   ) {}
 
-  public async restoreAssets(directusPort: number, backupDir: string) {
+  public async restoreAssets(
+    directusPort: number,
+    backupDir: string,
+    updater: ProgressBarUpdater,
+  ) {
     const assets = await this.getAllLocalAssets(backupDir);
     const directus = this.directusService.getClient(
       directusPort,
       this.directusUserService.token,
     );
     this.logger.debug(`Found ${chalk.bold(assets.length)} assets to restore`);
-    const progressBar = new cliProgress.SingleBar({
-      etaBuffer: 50,
-      format:
-        'Restoring assets |' +
-        chalk.green('{bar}') +
-        '| {percentage}% || {value}/{total}',
-      hideCursor: true,
+    const progressBar = new ProgressBar({
+      total: assets.length,
+      updater,
+      prefix: '🖼️ Restoring assets',
+      color: chalk.green,
     });
 
-    progressBar.start(assets.length, 0);
+    progressBar.start();
     const failedUploads = [];
 
     await Promise.all(
@@ -104,23 +107,25 @@ export class DirectusAssetService {
     return glob(`${assetBackupDir}/**/*`, {});
   }
 
-  public async backupAssets(directusPort: number, backupDir: string) {
+  public async backupAssets(
+    directusPort: number,
+    backupDir: string,
+    updater: ProgressBarUpdater,
+  ) {
     const assets = await this.getAllRemoteAssets(directusPort);
     this.logger.debug(`Found ${chalk.bold(assets.length)} assets to backup`);
     const assetBackupDir = this.getAssetBackupDir(backupDir);
     this.logger.debug(`Creating directory ${chalk.bold(assetBackupDir)}`);
     await mkdir(assetBackupDir, { recursive: true });
 
-    const progressBar = new cliProgress.SingleBar({
-      etaBuffer: 50,
-      format:
-        'Downloading assets |' +
-        chalk.cyan('{bar}') +
-        '| {percentage}% || {value}/{total}',
-      hideCursor: true,
+    const progressBar = new ProgressBar({
+      total: assets.length,
+      updater,
+      prefix: '🖼️ Downloading assets',
+      color: chalk.blue,
     });
 
-    progressBar.start(assets.length, 0);
+    progressBar.start();
     const failedDownloads = [];
 
     await Promise.all(
@@ -142,18 +147,7 @@ export class DirectusAssetService {
     );
 
     progressBar.stop();
-
-    if (failedDownloads.length > 0) {
-      this.logger.warn(
-        `Failed to download ${chalk.bold(failedDownloads.length)} assets`,
-      );
-
-      for (const asset of failedDownloads) {
-        this.logger.debug(
-          `Failed to download asset ${chalk.bold(asset.id)}: ${chalk.bold(asset.filename_disk)}`,
-        );
-      }
-    }
+    return failedDownloads;
   }
 
   private getAssetBackupDir(backupDir: string) {
@@ -195,7 +189,9 @@ export class DirectusAssetService {
       }
       return assets;
     } catch (error) {
-      this.logger.error(`Failed to get assets: ${JSON.stringify(error)}`);
+      this.logger.error(
+        `Failed to get assets: ${error.message || JSON.stringify(error)}`,
+      );
       return [];
     }
   }
