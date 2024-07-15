@@ -2,11 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2024-07-15
+
+### 🚀 Features
+
+- Add `doubleCheck` flag for critical environments
+
+### 🐛 Bug Fixes
+
+- *(schema-diff)* Fix schema diff by awaiting necessary statements
+
 ## [0.1.0] - 2024-07-15
 
 ### 🚀 Features
 
 - Add ora as a nicer way to display progress when running without verbose flag
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 0.1.0
 
 ## [0.0.5] - 2024-07-15
 
