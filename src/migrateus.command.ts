@@ -4,6 +4,9 @@ import { ConfigService } from './config/config.service.js';
 import { RedactService } from './redact/redact.service.js';
 import { DependenciesService } from './dependencies/dependencies.service.js';
 import { ProgressService } from './progress/progress.service.js';
+import { ContainerService } from './container/container.service.js';
+import chalk from 'chalk';
+import { ContainerModule } from './container/container.module.js';
 
 export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
@@ -14,6 +17,7 @@ export abstract class MigrateusCommand extends CommandRunner {
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
     protected readonly progressService: ProgressService,
+    protected readonly containerServices: ContainerService[],
   ) {
     super();
     dependenciesService.check();
@@ -53,6 +57,25 @@ export abstract class MigrateusCommand extends CommandRunner {
   })
   setShowSecrets() {
     this.redactService.enabled = false;
+  }
+
+  @Option({
+    flags: '-i, --image <docker-image>',
+    description: 'Set Docker image for Migrateus container',
+    defaultValue: ContainerModule.DEFAULT_IMAGE,
+  })
+  setImage(dockerImage: string) {
+    this.logger.debug(
+      'Using Docker image: ' +
+        chalk.bold(dockerImage) +
+        ' for container services ' +
+        this.containerServices
+          .map((container) => chalk.bold(container.constructor.name))
+          .join(', '),
+    );
+    this.containerServices.forEach(
+      (container) => (container.image = dockerImage),
+    );
   }
 
   abstract execute(params: string[]): Promise<void>;

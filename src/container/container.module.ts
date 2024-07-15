@@ -5,8 +5,18 @@ import { DockerModule } from '../docker/docker.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
 
 @Module({
-  providers: [DockerContainerService, K8sContainerService],
-  exports: [DockerContainerService, K8sContainerService],
+  providers: [
+    DockerContainerService,
+    K8sContainerService,
+    {
+      provide: 'ContainerServices',
+      useFactory: (docker, k8s) => [docker, k8s],
+      inject: [DockerContainerService, K8sContainerService],
+    },
+  ],
+  exports: [DockerContainerService, K8sContainerService, 'ContainerServices'],
   imports: [DockerModule, K8sModule],
 })
-export class ContainerModule {}
+export class ContainerModule {
+  public static DEFAULT_IMAGE = 'bitnami/mysql:5.7';
+}

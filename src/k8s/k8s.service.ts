@@ -1,8 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import shell from 'shelljs';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sEnvironment } from '../config/environment.interface.js';
-import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';

@@ -1,5 +1,4 @@
 import { Logger } from 'winston';
-import shell from 'shelljs';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
@@ -51,8 +50,8 @@ export abstract class RestorePerformer {
       this.progressService.advance('🛁 Clean-up');
       await this.sqlService.cleanUpDirectusUser(this.containerService);
       await this.cleanUp();
-      this.containerService.cleanUp();
-      this.deleteTemporaryDirectory(backupDir);
+      await this.containerService.cleanUp();
+      await this.deleteTemporaryDirectory(backupDir);
     }
   }
 
@@ -124,8 +123,8 @@ export abstract class RestorePerformer {
     await fd.close();
   }
 
-  private deleteTemporaryDirectory(backupDir: string) {
+  private async deleteTemporaryDirectory(backupDir: string) {
     this.logger.debug(`Deleting temporary directory ${chalk.bold(backupDir)}`);
-    shell.rm('-rf', backupDir);
+    await exec('rm -rf ' + backupDir);
   }
 }

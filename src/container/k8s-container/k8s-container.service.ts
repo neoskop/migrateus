@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { ContainerService } from '../container.service.js';
 import { Logger } from 'winston';
 import chalk from 'chalk';
-import shell, { ShellString } from 'shelljs';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
 import { highlight } from 'cli-highlight';
@@ -29,7 +28,7 @@ export class K8sContainerService extends ContainerService {
         containers: [
           {
             name: 'mysql',
-            image: 'bitnami/mysql:5.7.43',
+            image: this.image,
             command: ['bash', '-c', 'sleep infinity'],
           },
         ],
@@ -61,9 +60,10 @@ export class K8sContainerService extends ContainerService {
   }
 
   public async cleanUpAll() {
-    const resources = shell
-      .exec(`kubectl get pods -oname`, { silent: true })
-      .stdout.split('\n')
+    const resources = (
+      await exec(`kubectl get pods -oname`, { silent: true })
+    ).stdout
+      .split('\n')
       .filter((line: string) => line.startsWith(`pod/migrateus-`));
 
     if (resources.length > 0) {

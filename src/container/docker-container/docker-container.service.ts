@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerService } from '../container.service.js';
-import shell, { ShellString } from 'shelljs';
 import { Logger } from 'winston';
 import { nanoid } from 'nanoid/non-secure';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -38,20 +37,34 @@ export class DockerContainerService extends ContainerService {
       command.push('--network', network);
     }
 
-    command.push('bitnami/mysql:5.7.43');
+    command.push(this.image);
     command.push('/bin/bash -c "sleep infinity"');
 
     this.logger.debug(
       `Creating container with command: ${highlight(command.join(' '), { language: 'bash' })}`,
     );
 
-    this.migrateusContainerId = shell
-      .exec(command.join(' '), {
-        silent: true,
-      })
-      .stdout.trim();
+    const createOutput = await exec(command.join(' '), {
+      silent: true,
+    });
 
-    await exec(`docker start ${this.migrateusContainerId}`, { silent: true });
+    if (createOutput.code !== 0) {
+      throw new Error(
+        `Failed to create container with code ${createOutput.code}: ${createOutput.stderr}`,
+      );
+    }
+
+    this.migrateusContainerId = createOutput.stdout.trim();
+
+    const output = await exec(`docker start ${this.migrateusContainerId}`, {
+      silent: true,
+    });
+
+    if (output.code !== 0) {
+      throw new Error(
+        `Failed to start container with code ${output.code}: ${output.stderr}`,
+      );
+    }
   }
 
   public async cleanUp() {
