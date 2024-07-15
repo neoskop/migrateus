@@ -50,6 +50,7 @@ An environment takes the following options:
 | `context`       | `string`            | Only if `type=k8s`, the context name in your [kubeconfig][1]  |
 | `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
 | `credentials`   | `object[]`          | Credentials to enforce during restore                         |
+| `doubleCheck`   | `boolean`           | Whether to ask before restores / schema diffs                 |
 
 To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
 

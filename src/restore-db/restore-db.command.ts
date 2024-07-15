@@ -12,6 +12,7 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
 import { ProgressService } from '../progress/progress.service.js';
+import confirm from '@inquirer/confirm';
 
 @Command({
   name: 'restore-db',
@@ -59,12 +60,24 @@ export class RestoreDbCommand extends MigrateusCommand {
       from = answers.from || answers.fromManual;
       to = answers.to;
     }
+
+    const environment = await this.config.getEnvironment(to);
+    this.environmentService.environment = environment;
+
     this.logger.debug(
       `Restoring the DB from local file ${chalk.bold(from)} to environment ${chalk.bold(to)}`,
     );
 
-    const environment = await this.config.getEnvironment(to);
-    this.environmentService.environment = environment;
+    if (environment.doubleCheck) {
+      const answer = await confirm({
+        message: `Are you sure you want ${chalk.red('REPLACE')} the database in the environment ${chalk.red(to)}?`,
+        default: false,
+      });
+
+      if (!answer) {
+        process.exit(0);
+      }
+    }
 
     if (environment.platform === 'docker') {
       await this.dockerRestoreService.restore(from);

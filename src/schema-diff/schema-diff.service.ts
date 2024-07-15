@@ -21,6 +21,7 @@ import { ContainerService } from '../container/container.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
+import confirm from '@inquirer/confirm';
 
 @Injectable()
 export class SchemaDiffService {
@@ -77,6 +78,7 @@ export class SchemaDiffService {
           diffResponse.diff.relations.length;
 
         if (changes > 0) {
+          await this.doubleCheck(changes);
           this.logger.info(`Will apply ${chalk.bold(changes)} changes!`);
           await this.applyDiff(toClient, diffResponse);
         } else {
@@ -90,6 +92,21 @@ export class SchemaDiffService {
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
       this.portForwardService.stop();
+    }
+  }
+
+  private async doubleCheck(changes: number) {
+    const environment = this.environmentService.environment;
+
+    if (environment.doubleCheck) {
+      const answer = await confirm({
+        message: `Are you sure you want to apply ${chalk.red(changes)} changes to the environment ${chalk.red(environment.name)}?`,
+        default: false,
+      });
+
+      if (!answer) {
+        process.exit(0);
+      }
     }
   }
 

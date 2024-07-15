@@ -50,6 +50,6 @@ export class SchemaDiffCommand extends MigrateusCommand {
     this.logger.debug(
       `Performing schema diff from ${chalk.bold(from)} to ${chalk.bold(to)}`,
     );
-    this.schemaDiffService.diff(from, to);
+    await this.schemaDiffService.diff(from, to);
   }
 }

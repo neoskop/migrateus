@@ -55,6 +55,7 @@ export class BackupDbCommand extends MigrateusCommand {
       from = answers.from;
       to = answers.to;
     }
+
     this.logger.debug(
       `Backup up the DB from environment ${chalk.bold(from)} to the local file ${chalk.bold(to)}`,
     );

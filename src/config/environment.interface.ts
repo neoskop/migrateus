@@ -4,6 +4,7 @@ export interface Environment {
   name: string;
   platform: 'docker' | 'k8s';
   credentials?: Credential[];
+  doubleCheck?: boolean;
 }
 
 export interface K8sEnvironment extends Environment {
