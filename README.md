@@ -38,6 +38,11 @@ environments:
     type: k8s
     namespace: directus
     context: foo-dev
+  - name: live
+    type: k8s
+    namespace: directus
+    context: foo-live
+    doubleCheck: true
 ```
 
 An environment takes the following options:
