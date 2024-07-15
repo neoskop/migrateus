@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0] - 2024-07-15
+
+### 🚀 Features
+
+- Add ora as a nicer way to display progress when running without verbose flag
+
 ## [0.0.5] - 2024-07-15
 
 ### 🚀 Features
@@ -20,6 +26,10 @@ All notable changes to this project will be documented in this file.
 - Update TODO.md
 - Update TODO.md
 - Update TODO.md
+
+### ⚙️ Miscellaneous Tasks
+
+- Release 0.0.5
 
 ## [0.0.4] - 2024-07-10
 
