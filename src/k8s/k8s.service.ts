@@ -19,6 +19,10 @@ export class K8sService {
     this.sqlService.databaseConfig = await this.retrieveDatabaseConfig();
   }
 
+  public async restartDirectus() {
+    await exec('kubectl rollout restart deploy directus', { silent: true });
+  }
+
   private async setDefaultContext() {
     const context = (this.environmentService.environment as K8sEnvironment)
       .context;

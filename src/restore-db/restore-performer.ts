@@ -46,6 +46,7 @@ export abstract class RestorePerformer {
         backupDir,
         this.progressService.updateText.bind(this.progressService),
       );
+
       if (this.environmentService.environment.settings) {
         this.progressService.advance('🔧 Updating project settings');
         await this.directusSettingService.updateSettings(
@@ -53,6 +54,9 @@ export abstract class RestorePerformer {
           this.environmentService.environment.settings,
         );
       }
+
+      this.progressService.advance('🔄 Restarting Directus');
+      await this.restartDirectus();
     } catch (error) {
       this.progressService.fail(error);
     } finally {
@@ -70,6 +74,8 @@ export abstract class RestorePerformer {
   protected async beforeMysqlDumpRestore() {}
 
   protected abstract getDirectusPort(): Promise<number>;
+
+  protected abstract restartDirectus(): Promise<void>;
 
   protected async cleanUp(): Promise<void> {}
 

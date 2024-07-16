@@ -41,4 +41,8 @@ export class DockerRestoreService extends RestorePerformer {
   protected async getDirectusPort(): Promise<number> {
     return 8055;
   }
+
+  protected async restartDirectus(): Promise<void> {
+    await this.dockerService.restartDirectus();
+  }
 }

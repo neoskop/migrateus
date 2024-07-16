@@ -118,4 +118,8 @@ export class DockerService {
     });
     return new Promise((resolve) => setTimeout(resolve, 10000));
   }
+
+  public async restartDirectus() {
+    await exec(`docker restart ${this.containerConfig.Id}`, { silent: true });
+  }
 }
