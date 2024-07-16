@@ -30,6 +30,9 @@ environments:
   - name: local
     type: docker
     containerName: directus
+    settings:
+      project_title: foobar
+      project_descriptor: local
     credentials:
       - email: devops@neoskop.de
         token: foo
@@ -56,6 +59,7 @@ An environment takes the following options:
 | `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
 | `credentials`   | `object[]`          | Credentials to enforce during restore                         |
 | `doubleCheck`   | `boolean`           | Whether to ask before restores / schema diffs                 |
+| `settings`      | `object`            | Specify Directus [project settings][2]                        |
 
 To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
 
@@ -127,3 +131,4 @@ See [Changelog](CHANGELOG.md).
 See [License](LICENSE).
 
 [1]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+[2]: https://docs.directus.io/reference/system/settings.html#the-settings-object

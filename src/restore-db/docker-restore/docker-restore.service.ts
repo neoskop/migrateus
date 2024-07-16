@@ -8,6 +8,7 @@ import { DockerService } from '../../docker/docker.service.js';
 import { RestorePerformer } from '../restore-performer.js';
 import { EnvironmentService } from '../../environment/environment.service.js';
 import { ProgressService } from '../../progress/progress.service.js';
+import { DirectusSettingService } from '../../directus/directus-setting/directus-setting.service.js';
 
 @Injectable()
 export class DockerRestoreService extends RestorePerformer {
@@ -15,6 +16,7 @@ export class DockerRestoreService extends RestorePerformer {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
+    directusSettingService: DirectusSettingService,
     private readonly dockerContainerService: DockerContainerService,
     private readonly dockerService: DockerService,
     environmentService: EnvironmentService,
@@ -23,6 +25,7 @@ export class DockerRestoreService extends RestorePerformer {
     super(
       logger,
       directusAssetService,
+      directusSettingService,
       sqlService,
       dockerContainerService,
       environmentService,

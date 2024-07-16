@@ -11,6 +11,7 @@ import { EnvironmentService } from '../../environment/environment.service.js';
 import { PortForwardService } from '../../k8s/port-forward/port-forward.service.js';
 import { exec } from '../../util/exec.js';
 import { ProgressService } from '../../progress/progress.service.js';
+import { DirectusSettingService } from '../../directus/directus-setting/directus-setting.service.js';
 
 @Injectable()
 export class K8sRestoreService extends RestorePerformer {
@@ -20,6 +21,7 @@ export class K8sRestoreService extends RestorePerformer {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
+    directusSettingService: DirectusSettingService,
     private readonly kubernetesContainerService: K8sContainerService,
     private readonly k8sService: K8sService,
     environmentService: EnvironmentService,
@@ -29,6 +31,7 @@ export class K8sRestoreService extends RestorePerformer {
     super(
       logger,
       directusAssetService,
+      directusSettingService,
       sqlService,
       kubernetesContainerService,
       environmentService,

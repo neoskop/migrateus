@@ -9,11 +9,13 @@ import tmp from 'tmp';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { exec } from '../util/exec.js';
 import { ProgressService } from '../progress/progress.service.js';
+import { DirectusSettingService } from '../directus/directus-setting/directus-setting.service.js';
 
 export abstract class RestorePerformer {
   constructor(
     protected readonly logger: Logger,
     private readonly directusAssetService: DirectusAssetService,
+    private readonly directusSettingService: DirectusSettingService,
     private readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly environmentService: EnvironmentService,
@@ -44,6 +46,13 @@ export abstract class RestorePerformer {
         backupDir,
         this.progressService.updateText.bind(this.progressService),
       );
+      if (this.environmentService.environment.settings) {
+        this.progressService.advance('🔧 Updating project settings');
+        await this.directusSettingService.updateSettings(
+          directusPort,
+          this.environmentService.environment.settings,
+        );
+      }
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
