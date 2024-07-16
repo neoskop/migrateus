@@ -19,7 +19,12 @@ export class RedactService {
   }
 
   public redact(text: string): string {
-    if (!this.enabled || !text || text.length === 0) {
+    if (
+      !this.enabled ||
+      !text ||
+      typeof text !== 'string' ||
+      text.length === 0
+    ) {
       return text;
     }
 

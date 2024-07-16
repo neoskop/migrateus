@@ -16,6 +16,7 @@ import { RedactModule } from './redact/redact.module.js';
 import { RedactService } from './redact/redact.service.js';
 import { DependenciesModule } from './dependencies/dependencies.module.js';
 import { ProgressModule } from './progress/progress.module.js';
+import { highlight } from 'cli-highlight';
 
 @Module({
   imports: [
@@ -31,10 +32,17 @@ import { ProgressModule } from './progress/progress.module.js';
               winston.format.colorize(),
               winston.format.errors({ stack: true }),
               winston.format.splat(),
-              winston.format.printf(
-                ({ level, message }) =>
-                  `[${level}]: ${redactService.redact(message)}`,
-              ),
+              winston.format.printf(({ level, message }) => {
+                if (typeof message === 'object') {
+                  message = highlight(JSON.stringify(message, null, 2), {
+                    language: 'json',
+                  });
+                } else if (typeof message === 'string') {
+                  message = redactService.redact(message);
+                }
+
+                return `[${level}]: ${message}`;
+              }),
             ),
           }),
         ],
