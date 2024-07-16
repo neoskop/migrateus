@@ -28,7 +28,7 @@ For that, create a `migrateus.yaml` file in the current directory. For example:
 ```yml
 environments:
   - name: local
-    type: docker
+    platform: docker
     containerName: directus
     settings:
       project_title: foobar
@@ -38,11 +38,11 @@ environments:
         token: foo
         password: bar
   - name: dev
-    type: k8s
+    platform: k8s
     namespace: directus
     context: foo-dev
   - name: live
-    type: k8s
+    platform: k8s
     namespace: directus
     context: foo-live
     doubleCheck: true
@@ -53,7 +53,7 @@ An environment takes the following options:
 | Name            | Type                | Description                                                   |
 | --------------- | ------------------- | ------------------------------------------------------------- |
 | `name`          | `string`            | The name used on the command-line or in selections            |
-| `type`          | `"docker" \| "k8s"` | The platform type of the environment                          |
+| `platform`      | `"docker" \| "k8s"` | The platform type of the environment                          |
 | `containerName` | `string`            | Only if `type=docker`, The name of the Directus container     |
 | `context`       | `string`            | Only if `type=k8s`, the context name in your [kubeconfig][1]  |
 | `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
