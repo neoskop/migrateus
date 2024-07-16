@@ -71,12 +71,10 @@ export class ProgressService {
   }
 
   public updateText(newText: string) {
-    if (this.useSpinner) {
-      this.spinner.text = newText;
-    } else {
-      const cursorUp = process.platform === 'win32' ? '\x1B[2A' : '\x1B[A';
-      const clearLine = process.platform === 'win32' ? '\r\x1B[2K' : '\r\x1B[K';
-      console.error(`${cursorUp}${clearLine}${newText}`);
+    if (!this.useSpinner) {
+      return;
     }
+
+    this.spinner.text = newText;
   }
 }

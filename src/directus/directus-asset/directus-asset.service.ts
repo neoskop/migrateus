@@ -23,6 +23,7 @@ import { fileTypeFromFile } from 'file-type';
 import mime from 'mime';
 import { ProgressBar } from '../../progress/progress-bar.js';
 import { ProgressBarUpdater } from '../../progress/progress-bar-updater.type.js';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class DirectusAssetService {
@@ -53,7 +54,7 @@ export class DirectusAssetService {
     });
 
     progressBar.start();
-    const failedUploads = [];
+    const failedUploads: { path: string; error: Error }[] = [];
 
     await Promise.all(
       assets.map((asset) =>
@@ -61,7 +62,7 @@ export class DirectusAssetService {
           try {
             await this.uploadAsset(directus, asset);
           } catch (error) {
-            failedUploads.push(asset);
+            failedUploads.push({ path: asset, error });
           }
           progressBar.increment();
         }),
@@ -75,9 +76,14 @@ export class DirectusAssetService {
         `Failed to restore ${chalk.bold(failedUploads.length)} assets`,
       );
 
-      for (const asset of failedUploads) {
+      for (const failedUpload of failedUploads) {
+        const errorMessage =
+          failedUpload.error.message ||
+          highlight(JSON.stringify(failedUpload.error, null, 2), {
+            language: 'json',
+          });
         this.logger.debug(
-          `Failed to restore asset ${chalk.bold(asset.id)}: ${chalk.bold(asset.filename_disk)}`,
+          `Failed to restore asset ${chalk.bold(failedUpload.path)}: ${errorMessage}`,
         );
       }
     }

@@ -5,6 +5,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DirectusService } from '../directus.service.js';
 import { DirectusUserService } from '../directus-user/directus-user.service.js';
 import { updateSettings } from '@directus/sdk';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class DirectusSettingService {
@@ -20,6 +21,9 @@ export class DirectusSettingService {
       this.directusUserService.token,
     );
 
+    this.logger.debug(
+      `Updating settings: ${highlight(JSON.stringify(settings), { language: 'json' })}`,
+    );
     await directus.request(updateSettings(settings));
   }
 }
