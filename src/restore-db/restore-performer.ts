@@ -54,7 +54,7 @@ export abstract class RestorePerformer {
         );
       }
     } catch (error) {
-      this.logger.error(error.message || error);
+      this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');
       await this.sqlService.cleanUpDirectusUser(this.containerService);
