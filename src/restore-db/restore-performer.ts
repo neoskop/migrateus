@@ -41,11 +41,17 @@ export abstract class RestorePerformer {
       );
       const directusPort = await this.getDirectusPort();
       this.progressService.advance('🖼️ Restoring assets');
-      await this.directusAssetService.restoreAssets(
+      const failedUploads = await this.directusAssetService.restoreAssets(
         directusPort,
         backupDir,
         this.progressService.updateText.bind(this.progressService),
       );
+
+      if (failedUploads > 0) {
+        this.progressService.warn(
+          `Failed to upload ${chalk.bold(failedUploads)} assets.`,
+        );
+      }
 
       if (this.environmentService.environment.settings) {
         this.progressService.advance('🔧 Updating project settings');

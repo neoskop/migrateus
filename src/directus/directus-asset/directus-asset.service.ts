@@ -72,10 +72,6 @@ export class DirectusAssetService {
     progressBar.stop();
 
     if (failedUploads.length > 0) {
-      this.logger.warn(
-        `Failed to restore ${chalk.bold(failedUploads.length)} assets`,
-      );
-
       for (const failedUpload of failedUploads) {
         const errorMessage =
           failedUpload.error.message ||
@@ -87,6 +83,8 @@ export class DirectusAssetService {
         );
       }
     }
+
+    return failedUploads.length;
   }
 
   private async uploadAsset(directus: RestClient<any>, assetPath: string) {

@@ -3,6 +3,7 @@ import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
 import ora, { Ora } from 'ora';
 import chalk from 'chalk';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class ProgressService {
@@ -63,7 +64,7 @@ export class ProgressService {
   public fail(error: Error) {
     if (this.useSpinner) {
       this.spinner.fail(
-        `${this.currentMessage} failed: ${chalk.red(error.message)}`,
+        `${this.currentMessage} failed: ${chalk.red(error.message || highlight(JSON.stringify(error, null, 2), { language: 'json' }))}`,
       );
     } else {
       this.logger.error(error);
