@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2024-07-16
+
+### 🚀 Features
+
+- *(restore-db)* Allow overriding of project settings after restore
+- *(restore-db)* Restart Directus instances after restore for more consistency
+- Add better debug logs for Directus SDK calls and restoring of assets
+
+### 🐛 Bug Fixes
+
+- *(restore-db)* Fix concurrency issue with collation harmonization
+- *(logging)* Handle non-string arguments correctly
+- *(restore-db)* Fix failure display in restores without `-v` flag
+- *(restore-db)* Better logs when running without `-v` flag
+
+### 📚 Documentation
+
+- *(README)* Add `doubleCheck` to example YAML
+- *(TODO)* Add task for checking versions when backing up the db
+
+### ⚙️ Miscellaneous Tasks
+
+- Update `git cliff` settings for more brevity in the changelog
+
 ## [0.4.0] - 2024-07-15
 
 ### 🚀 Features
