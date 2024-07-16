@@ -144,7 +144,7 @@ export class SqlService {
       );
     });
 
-    this.exceuteSql(
+    await this.exceuteSql(
       'SET foreign_key_checks = 0; ' +
         alterStatements.join(';') +
         '; SET foreign_key_checks = 1',
