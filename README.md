@@ -68,6 +68,16 @@ TOKEN=foo
 PASSWORD=bar
 ```
 
+if you want to put `.env` under version control, you can also use 1Password references like so:
+
+```dotenv
+TOKEN=op://<vault>/<item>/<key>
+PASSWORD=op:///<vault>/<item>/<key>
+```
+
+The tool will in that case ask whether to inject these credentials and also asks for the password to your vault in case `eval $(op signin)` was not executed
+in the terminal beforehand.
+
 > [!TIP]
 > You can customize the path to the config file with the `--config <path> | -c <path>` flag and to the .env file with the `--env <path> | -e <path>` flag
 
