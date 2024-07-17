@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2024-07-17
+
+### 🚀 Features
+
+- Add automatic 1Password injection with .env file
+
+### ⚙️ Miscellaneous Tasks
+
+- *(git-cliff)* Filter duplicate commits
+
 ## [0.5.1] - 2024-07-17
 
 ### 🐛 Bug Fixes
@@ -93,8 +103,6 @@ All notable changes to this project will be documented in this file.
 
 ### 📚 Documentation
 
-- Update TODO.md
-- Update TODO.md
 - Update TODO.md
 
 ## [0.0.4] - 2024-07-10
