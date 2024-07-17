@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2024-07-17
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v3.1.15
+- *(deps)* Update dependency @inquirer/expand to v2.1.15
+- *(deps)* Update dependency semver to v7.6.3
+
+### 📚 Documentation
+
+- *(README)* Change `type` to `platform`
+
 ## [0.5.0] - 2024-07-16
 
 ### 🚀 Features
