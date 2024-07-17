@@ -8,12 +8,15 @@ import chalk from 'chalk';
 import dotenv from 'dotenv';
 import { highlight } from 'cli-highlight';
 import { RedactService } from '../redact/redact.service.js';
+import password from '@inquirer/password';
+import confirm from '@inquirer/confirm';
+import { OnepasswordService } from '../onepassword/onepassword.service.js';
+import which from 'which';
 
 @Injectable()
 export class ConfigService {
   public configPath: string = './migrateus.yaml';
   public envFilePath = './.env';
-  private loadingConfigAttempted = false;
   private config: Config = {
     environments: [],
   };
@@ -22,9 +25,10 @@ export class ConfigService {
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly redactService: RedactService,
+    private readonly onepasswordService: OnepasswordService,
   ) {}
 
-  private async loadConfigFile() {
+  public async loadConfigFile() {
     try {
       const configFileContents = await fs.promises.readFile(
         this.configPath,
@@ -66,10 +70,34 @@ export class ConfigService {
 
   private async loadEnvFile() {
     try {
-      const envFileContents = await fs.promises.readFile(
+      let envFileContents = await fs.promises.readFile(
         this.envFilePath,
         'utf8',
       );
+
+      if (envFileContents.includes('op://') && (await which('op'))) {
+        const replaceOpCredentials = await confirm({
+          message:
+            'The .env file seems to contain 1Password references. Do you want to replace them now?',
+        });
+
+        if (!replaceOpCredentials) {
+          process.exit(1);
+        }
+
+        if (!this.onepasswordService.isLoggedIn()) {
+          const opPassword = await password({
+            message: 'Enter your 1Password account password',
+          });
+
+          await this.onepasswordService.login(opPassword);
+        }
+
+        envFileContents = await this.onepasswordService.inject(
+          this.envFilePath,
+        );
+      }
+
       return dotenv.parse(envFileContents);
     } catch (err: any) {
       if (err.code === 'ENOENT') {
@@ -84,18 +112,10 @@ export class ConfigService {
   }
 
   public async getEnvironments() {
-    if (!this.loadingConfigAttempted) {
-      await this.loadConfigFile();
-      this.loadingConfigAttempted = true;
-    }
     return this.config.environments;
   }
 
   public async getEnvironment(name: string) {
-    if (!this.loadingConfigAttempted) {
-      await this.loadConfigFile();
-      this.loadingConfigAttempted = true;
-    }
     return this.config.environments.find((env) => env.name === name);
   }
 }

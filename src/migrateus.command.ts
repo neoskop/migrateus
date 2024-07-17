@@ -82,6 +82,7 @@ export abstract class MigrateusCommand extends CommandRunner {
 
   async run(params: string[]): Promise<void> {
     await this.dependenciesService.check();
+    await this.config.loadConfigFile();
     await this.execute(params);
   }
 }

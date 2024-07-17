@@ -17,6 +17,7 @@ import { RedactService } from './redact/redact.service.js';
 import { DependenciesModule } from './dependencies/dependencies.module.js';
 import { ProgressModule } from './progress/progress.module.js';
 import { highlight } from 'cli-highlight';
+import { OnepasswordModule } from './onepassword/onepassword.module.js';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { highlight } from 'cli-highlight';
     RedactModule,
     DependenciesModule,
     ProgressModule,
+    OnepasswordModule,
   ],
   controllers: [],
   providers: [],

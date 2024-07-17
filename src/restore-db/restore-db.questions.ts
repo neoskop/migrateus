@@ -1,7 +1,7 @@
 import { QuestionSet, Question, ChoicesFor, WhenFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { RestoreDbAnswers } from './restore-db-answers.interface.js';
-import { Glob, glob } from 'glob';
+import { Glob } from 'glob';
 
 @QuestionSet({ name: 'restore-db-questions' })
 export class RestoreDbQuestions {
