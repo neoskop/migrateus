@@ -101,7 +101,7 @@ export class ConfigService {
               })),
             });
           } else {
-            account = this.onepasswordService.getAvailableAccounts()[0];
+            account = (await this.onepasswordService.getAvailableAccounts())[0];
           }
 
           const opPassword = await password({
