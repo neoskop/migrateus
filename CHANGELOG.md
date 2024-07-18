@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2024-07-18
+
+### 🚀 Features
+
+- Handle multiple 1password accounts
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency file-type to v19.2.0
+- Fix 1password login
+
+### 📚 Documentation
+
+- *(README)* Update for `op` support in `.env`
+
 ## [0.6.0] - 2024-07-17
 
 ### 🚀 Features
