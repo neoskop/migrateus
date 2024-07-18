@@ -10,8 +10,10 @@ import { highlight } from 'cli-highlight';
 import { RedactService } from '../redact/redact.service.js';
 import password from '@inquirer/password';
 import confirm from '@inquirer/confirm';
+import select from '@inquirer/select';
 import { OnepasswordService } from '../onepassword/onepassword.service.js';
 import which from 'which';
+import { OnepasswordAccount } from '../onepassword/onepassword-account.interface.js';
 
 @Injectable()
 export class ConfigService {
@@ -86,11 +88,27 @@ export class ConfigService {
         }
 
         if (!this.onepasswordService.isLoggedIn()) {
+          let account: OnepasswordAccount;
+
+          if (await this.onepasswordService.hasMultipleAccounts()) {
+            account = await select({
+              message: 'Select your 1Password account',
+              choices: (
+                await this.onepasswordService.getAvailableAccounts()
+              ).map((account) => ({
+                name: `${account.url} (${account.email})`,
+                value: account,
+              })),
+            });
+          } else {
+            account = this.onepasswordService.getAvailableAccounts()[0];
+          }
+
           const opPassword = await password({
-            message: 'Enter your 1Password account password',
+            message: `Enter the password for ${account.email} at ${account.url}`,
           });
 
-          await this.onepasswordService.login(opPassword);
+          await this.onepasswordService.login(opPassword, account);
         }
 
         envFileContents = await this.onepasswordService.inject(
@@ -99,14 +117,15 @@ export class ConfigService {
       }
 
       return dotenv.parse(envFileContents);
-    } catch (err: any) {
-      if (err.code === 'ENOENT') {
+    } catch (error) {
+      if (error.code === 'ENOENT') {
         this.logger.debug(
           `Env file not found: ${chalk.bold(this.envFilePath)}`,
         );
         return {};
       } else {
-        throw err;
+        this.logger.error(error.message);
+        process.exit(1);
       }
     }
   }
