@@ -14,11 +14,16 @@ import select from '@inquirer/select';
 import { OnepasswordService } from '../onepassword/onepassword.service.js';
 import which from 'which';
 import { OnepasswordAccount } from '../onepassword/onepassword-account.interface.js';
+import { glob } from 'glob';
+import path from 'node:path';
+import { exec } from '../util/exec.js';
 
 @Injectable()
 export class ConfigService {
-  public configPath: string = './migrateus.yaml';
+  public configFilePattern = './migrateus.{yaml,yml}';
+  public configFilePath: string = null;
   public envFilePath = './.env';
+  public envTemplateFilePattern = './{.env,env}.tpl';
   private config: Config = {
     environments: [],
   };
@@ -31,11 +36,26 @@ export class ConfigService {
   ) {}
 
   public async loadConfigFile() {
+    let configFilePath = this.configFilePath;
+
     try {
+      if (!configFilePath) {
+        configFilePath = await this.findFirstFileForPattern(
+          this.configFilePattern,
+        );
+
+        if (!configFilePath) {
+          throw new Error(
+            `Config file not found for glob pattern ${chalk.bold(this.configFilePattern)}`,
+          );
+        }
+      }
+
       const configFileContents = await fs.promises.readFile(
-        this.configPath,
+        configFilePath,
         'utf8',
       );
+      await this.injectEnvFile();
       const envConfig = await this.loadEnvFile();
       const subsitutedConfig = configFileContents.replaceAll(
         /\$(\w+)/g,
@@ -49,7 +69,7 @@ export class ConfigService {
     } catch (err: any) {
       if (err.code === 'ENOENT') {
         this.logger.error(
-          `Config file not found: ${chalk.bold(this.configPath)}`,
+          `Config file not found: ${chalk.bold(configFilePath)}`,
         );
         process.exit(1);
       } else {
@@ -57,6 +77,108 @@ export class ConfigService {
       }
     }
   }
+
+  private async fileExists(path: string) {
+    try {
+      await fs.promises.access(path, fs.constants.F_OK);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async injectEnvFile() {
+    if (await this.fileExists(this.envFilePath)) {
+      this.logger.debug(
+        `Env file already exists: ${chalk.bold(this.envFilePath)}`,
+      );
+      return;
+    }
+
+    const envTemplateFile = await this.findFirstFileForPattern(
+      this.envTemplateFilePattern,
+    );
+
+    if (!envTemplateFile) {
+      this.logger.debug(
+        `Env template file does not exist for pattern: ${chalk.bold(this.envTemplateFilePattern)}`,
+      );
+      return;
+    }
+
+    const envTemplateFileContents = await fs.promises.readFile(
+      envTemplateFile,
+      'utf8',
+    );
+
+    const envFileContents = await this.processOnePasswordReferences({
+      message: `The template ${envTemplateFile} file contains 1Password references. Inject those into ${this.envFilePath}?`,
+      fileContents: envTemplateFileContents,
+      filePath: envTemplateFile,
+      exitOnReject: false,
+    });
+
+    if (!envFileContents) {
+      return;
+    }
+
+    await fs.promises.writeFile(this.envFilePath, envFileContents);
+    await this.checkDotenvIsIgnored();
+  }
+
+  private async checkDotenvIsIgnored() {
+    const hasGitCli = await which('git');
+
+    if (!hasGitCli) {
+      return;
+    }
+
+    const envFileDir = path.dirname(this.envFilePath);
+    const isInGitRepo = await this.isInGitRepository(envFileDir);
+
+    if (!isInGitRepo) {
+      this.logger.warn(
+        `Env file directory ${chalk.bold(envFileDir)} is not in a Git repository. Skipping check to see if it's ignored.`,
+      );
+      return;
+    }
+
+    const isIgnored = await this.isFileIgnored(this.envFilePath);
+
+    if (isIgnored) {
+      this.logger.debug(
+        `Env file ${chalk.bold(this.envFilePath)} is already ignored in Git.`,
+      );
+      return;
+    }
+
+    const basename = path.basename(this.envFilePath);
+    await fs.promises.appendFile(
+      path.join(envFileDir, '.gitignore'),
+      `${basename}\n`,
+    );
+
+    this.logger.debug(
+      `Env file ${chalk.bold(this.envFilePath)} is now ignored in Git.`,
+    );
+  }
+
+  private async isInGitRepository(dir: string) {
+    const { code } = await exec(`git rev-parse --is-inside-work-tree`, {
+      cwd: dir,
+      silent: true,
+    });
+
+    return code === 0;
+  }
+
+  private async isFileIgnored(filePath: string) {
+    const { stdout } = await exec(`git check-ignore ${filePath}`, {
+      silent: true,
+    });
+    return stdout.trim() !== '';
+  }
+
   private redactCredentials() {
     for (const env of this.config.environments) {
       if (!env.credentials) {
@@ -77,44 +199,13 @@ export class ConfigService {
         'utf8',
       );
 
-      if (envFileContents.includes('op://') && (await which('op'))) {
-        const replaceOpCredentials = await confirm({
-          message:
-            'The .env file seems to contain 1Password references. Do you want to replace them now?',
-        });
-
-        if (!replaceOpCredentials) {
-          process.exit(1);
-        }
-
-        if (!this.onepasswordService.isLoggedIn()) {
-          let account: OnepasswordAccount;
-
-          if (await this.onepasswordService.hasMultipleAccounts()) {
-            account = await select({
-              message: 'Select your 1Password account',
-              choices: (
-                await this.onepasswordService.getAvailableAccounts()
-              ).map((account) => ({
-                name: `${account.url} (${account.email})`,
-                value: account,
-              })),
-            });
-          } else {
-            account = (await this.onepasswordService.getAvailableAccounts())[0];
-          }
-
-          const opPassword = await password({
-            message: `Enter the password for ${account.email} at ${account.url}`,
-          });
-
-          await this.onepasswordService.login(opPassword, account);
-        }
-
-        envFileContents = await this.onepasswordService.inject(
-          this.envFilePath,
-        );
-      }
+      envFileContents = await this.processOnePasswordReferences({
+        message:
+          'The .env file contains 1Password references. Replace them now?',
+        fileContents: envFileContents,
+        filePath: this.envFilePath,
+        exitOnReject: true,
+      });
 
       return dotenv.parse(envFileContents);
     } catch (error) {
@@ -130,11 +221,80 @@ export class ConfigService {
     }
   }
 
+  private async processOnePasswordReferences(opts: {
+    message: string;
+    fileContents: string;
+    filePath: string;
+    exitOnReject: boolean;
+  }): Promise<string> {
+    const { message, filePath, exitOnReject } = opts;
+    let { fileContents } = opts;
+    const hasOnePasswordRefs = fileContents.includes('op://');
+    const hasOpCli = await which('op');
+
+    if (!hasOnePasswordRefs || !hasOpCli) return fileContents;
+
+    const userConsent = await confirm({
+      message,
+    });
+
+    if (!userConsent) {
+      this.logger.debug('1Password injection cancelled by the user.');
+
+      if (exitOnReject) {
+        process.exit(1);
+      } else {
+        return null;
+      }
+    }
+
+    await this.ensureOnePasswordLoggedIn();
+
+    fileContents = await this.onepasswordService.inject(filePath);
+    return fileContents;
+  }
+
+  private async ensureOnePasswordLoggedIn(): Promise<void> {
+    if (this.onepasswordService.isLoggedIn()) return;
+
+    let account: OnepasswordAccount = await this.selectOnePasswordAccount();
+    const passwordPrompt = `Enter password for ${account.email} at ${account.url}`;
+    const opPassword = await password({ message: passwordPrompt });
+
+    await this.onepasswordService.login(opPassword, account);
+  }
+
+  private async selectOnePasswordAccount(): Promise<OnepasswordAccount> {
+    const hasMultipleAccounts =
+      await this.onepasswordService.hasMultipleAccounts();
+    if (!hasMultipleAccounts) {
+      return (await this.onepasswordService.getAvailableAccounts())[0];
+    }
+
+    const accountChoices = (
+      await this.onepasswordService.getAvailableAccounts()
+    ).map((account) => ({
+      name: `${account.url} (${account.email})`,
+      value: account,
+    }));
+
+    const accountSelectionMsg = 'Select your 1Password account';
+    return await select({
+      message: accountSelectionMsg,
+      choices: accountChoices,
+    });
+  }
+
   public async getEnvironments() {
     return this.config.environments;
   }
 
   public async getEnvironment(name: string) {
     return this.config.environments.find((env) => env.name === name);
+  }
+
+  private async findFirstFileForPattern(pattern: string) {
+    const files = await glob(pattern);
+    return files.length > 0 ? files[0] : null;
   }
 }

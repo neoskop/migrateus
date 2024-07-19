@@ -36,10 +36,10 @@ export abstract class MigrateusCommand extends CommandRunner {
   @Option({
     flags: '-c, --config <path>',
     description: 'path to Migrateus config file',
-    defaultValue: './migrateus.yaml',
+    defaultValue: './migrateus.{yaml,yml}',
   })
-  setConfigFile(configPath: string) {
-    this.config.configPath = configPath;
+  setConfigFile(configFilePath: string) {
+    this.config.configFilePath = configFilePath;
   }
 
   @Option({
