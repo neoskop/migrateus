@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2024-07-19
+
+### 🚀 Features
+
+- Inject from dotenv templates to .env file and automatically git ignore file if needed
+
+### 🐛 Bug Fixes
+
+- *(clean)* Fix environment question phrasing
+
+### ⚙️ Miscellaneous Tasks
+
+- Add missing typing for js-yaml
+
 ## [0.7.0] - 2024-07-18
 
 ### 🚀 Features
