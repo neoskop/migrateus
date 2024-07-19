@@ -6,7 +6,7 @@ export class CleanQuestions {
   constructor(private readonly config: ConfigService) {}
 
   @Question({
-    message: 'What is the environment to back-up?',
+    message: 'What is the environment to clean up?',
     name: 'environment',
     type: 'list',
   })
