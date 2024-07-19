@@ -11,6 +11,7 @@ import { ContainerModule } from '../container/container.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
+import { UpdateModule } from '../update/update.module.js';
 
 @Module({
   providers: [SchemaDiffCommand, SchemaDiffQuestions, SchemaDiffService],
@@ -24,6 +25,7 @@ import { ProgressModule } from '../progress/progress.module.js';
     EnvironmentModule,
     DependenciesModule,
     ProgressModule,
+    UpdateModule,
   ],
 })
 export class SchemaDiffModule {}

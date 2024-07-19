@@ -11,6 +11,7 @@ import { SchemaDiffService } from './schema-diff.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { ContainerService } from '../container/container.service.js';
+import { UpdateService } from '../update/update.service.js';
 
 @Command({
   name: 'schema-diff',
@@ -32,6 +33,7 @@ export class SchemaDiffCommand extends MigrateusCommand {
     protected readonly progressService: ProgressService,
     @Inject('ContainerServices')
     protected readonly containerServices: ContainerService[],
+    protected readonly updateService: UpdateService,
   ) {
     super(
       logger,
@@ -40,6 +42,7 @@ export class SchemaDiffCommand extends MigrateusCommand {
       dependenciesService,
       progressService,
       containerServices,
+      updateService,
     );
   }
 

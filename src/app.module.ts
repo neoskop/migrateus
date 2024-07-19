@@ -18,6 +18,7 @@ import { DependenciesModule } from './dependencies/dependencies.module.js';
 import { ProgressModule } from './progress/progress.module.js';
 import { highlight } from 'cli-highlight';
 import { OnepasswordModule } from './onepassword/onepassword.module.js';
+import { UpdateModule } from './update/update.module.js';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { OnepasswordModule } from './onepassword/onepassword.module.js';
     DependenciesModule,
     ProgressModule,
     OnepasswordModule,
+    UpdateModule,
   ],
   controllers: [],
   providers: [],

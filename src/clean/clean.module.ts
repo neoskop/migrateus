@@ -10,6 +10,7 @@ import { K8sModule } from '../k8s/k8s.module.js';
 import { DockerModule } from '../docker/docker.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
+import { UpdateModule } from '../update/update.module.js';
 
 @Module({
   providers: [CleanService, CleanCommand, CleanQuestions],
@@ -22,6 +23,7 @@ import { ProgressModule } from '../progress/progress.module.js';
     DockerModule,
     DependenciesModule,
     ProgressModule,
+    UpdateModule,
   ],
 })
 export class CleanModule {}

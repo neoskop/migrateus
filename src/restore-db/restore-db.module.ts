@@ -12,6 +12,7 @@ import { K8sModule } from '../k8s/k8s.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
+import { UpdateModule } from '../update/update.module.js';
 
 @Module({
   providers: [
@@ -30,6 +31,7 @@ import { ProgressModule } from '../progress/progress.module.js';
     EnvironmentModule,
     DependenciesModule,
     ProgressModule,
+    UpdateModule,
   ],
 })
 export class RestoreDbModule {}

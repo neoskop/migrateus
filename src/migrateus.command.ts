@@ -7,6 +7,7 @@ import { ProgressService } from './progress/progress.service.js';
 import { ContainerService } from './container/container.service.js';
 import chalk from 'chalk';
 import { ContainerModule } from './container/container.module.js';
+import { UpdateService } from './update/update.service.js';
 
 export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
@@ -18,9 +19,9 @@ export abstract class MigrateusCommand extends CommandRunner {
     protected readonly dependenciesService: DependenciesService,
     protected readonly progressService: ProgressService,
     protected readonly containerServices: ContainerService[],
+    protected readonly updateService: UpdateService,
   ) {
     super();
-    dependenciesService.check();
   }
 
   @Option({
@@ -81,6 +82,7 @@ export abstract class MigrateusCommand extends CommandRunner {
   abstract execute(params: string[]): Promise<void>;
 
   async run(params: string[]): Promise<void> {
+    await this.updateService.checkForUpdates();
     await this.dependenciesService.check();
     await this.config.loadConfigFile();
     await this.execute(params);

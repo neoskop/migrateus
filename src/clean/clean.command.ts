@@ -11,6 +11,7 @@ import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { ContainerService } from '../container/container.service.js';
+import { UpdateService } from '../update/update.service.js';
 
 @Command({
   name: 'clean',
@@ -31,6 +32,7 @@ export class CleanCommand extends MigrateusCommand {
     protected readonly progressService: ProgressService,
     @Inject('ContainerServices')
     protected readonly containerServices: ContainerService[],
+    protected readonly updateService: UpdateService,
   ) {
     super(
       logger,
@@ -39,6 +41,7 @@ export class CleanCommand extends MigrateusCommand {
       dependenciesService,
       progressService,
       containerServices,
+      updateService,
     );
   }
 

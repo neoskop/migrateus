@@ -14,6 +14,7 @@ import { DependenciesService } from '../dependencies/dependencies.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import confirm from '@inquirer/confirm';
 import { ContainerService } from '../container/container.service.js';
+import { UpdateService } from '../update/update.service.js';
 
 @Command({
   name: 'restore-db',
@@ -37,6 +38,7 @@ export class RestoreDbCommand extends MigrateusCommand {
     protected readonly progressService: ProgressService,
     @Inject('ContainerServices')
     protected readonly containerServices: ContainerService[],
+    protected readonly updateService: UpdateService,
   ) {
     super(
       logger,
@@ -45,6 +47,7 @@ export class RestoreDbCommand extends MigrateusCommand {
       dependenciesService,
       progressService,
       containerServices,
+      updateService,
     );
   }
 

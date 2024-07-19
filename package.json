@@ -72,6 +72,7 @@
     "@types/jest": "^29.5.12",
     "@types/js-yaml": "4.0.9",
     "@types/node": "^20.14.11",
+    "@types/semver": "7.5.8",
     "@types/shelljs": "0.8.15",
     "@types/supertest": "^6.0.2",
     "@types/tmp": "0.2.6",
