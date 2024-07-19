@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2024-07-19
+
+### 🚀 Features
+
+- Check for new versions on start
+
+### ⚙️ Miscellaneous Tasks
+
+- Update deps
+
 ## [0.8.0] - 2024-07-19
 
 ### 🚀 Features
