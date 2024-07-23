@@ -1,5 +1,6 @@
 # Things To Do
 
+- [ ] Allow specification of Kubeconfig per k8s environment
 - [ ] Ensure Directus container is running when restoring DB
 - [ ] Simplify dialogs in Schema-Diff:
   - [ ] If a new Relation is declined, don't ask for its fields
