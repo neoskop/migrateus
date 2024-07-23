@@ -5,7 +5,7 @@ import chalk from 'chalk';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
 import { highlight } from 'cli-highlight';
-import { exec } from '../../util/exec.js';
+import { K8sService } from '../../k8s/k8s.service.js';
 
 @Injectable()
 export class K8sContainerService extends ContainerService {
@@ -13,6 +13,7 @@ export class K8sContainerService extends ContainerService {
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    private readonly k8sService: K8sService,
   ) {
     super();
     this.migrateusPodName = `migrateus-${customAlphabet('abcdef1234567890')(6)}`;
@@ -35,12 +36,7 @@ export class K8sContainerService extends ContainerService {
       },
     };
 
-    const output = await exec(
-      `echo '${JSON.stringify(podSpec)}' | kubectl apply -f -`,
-      {
-        silent: true,
-      },
-    );
+    const output = await this.k8sService.kubectlApply(podSpec);
 
     if (output.code !== 0) {
       throw new Error(
@@ -48,27 +44,31 @@ export class K8sContainerService extends ContainerService {
       );
     }
 
-    await exec(
-      `kubectl wait --for=condition=ready pod ${this.migrateusPodName}`,
+    await this.k8sService.kubectl(
+      `wait --for=condition=ready pod ${this.migrateusPodName}`,
       { silent: true },
     );
   }
 
   public async cleanUp() {
     this.logger.debug(`Deleting pod ${chalk.bold(this.migrateusPodName)}`);
-    await exec(`kubectl delete pod ${this.migrateusPodName}`, { silent: true });
+    await this.k8sService.kubectl(`delete pod ${this.migrateusPodName}`, {
+      silent: true,
+    });
   }
 
   public async cleanUpAll() {
     const resources = (
-      await exec(`kubectl get pods -oname`, { silent: true })
+      await this.k8sService.kubectl(`get pods -oname`, { silent: true })
     ).stdout
       .split('\n')
       .filter((line: string) => line.startsWith(`pod/migrateus-`));
 
     if (resources.length > 0) {
       this.logger.debug(`Deleting ${chalk.bold(resources.length)} pods`);
-      await exec(`kubectl delete ${resources.join(' ')}`, { silent: true });
+      await this.k8sService.kubectl(`delete ${resources.join(' ')}`, {
+        silent: true,
+      });
     }
   }
 
@@ -76,8 +76,8 @@ export class K8sContainerService extends ContainerService {
     this.logger.debug(
       `Executing ${highlight(command, { language: 'bash' })} in pod/${chalk.bold(this.migrateusPodName)}`,
     );
-    return await exec(
-      `kubectl exec ${this.migrateusPodName} -- bash -c "${command}"`,
+    return await this.k8sService.kubectl(
+      `exec ${this.migrateusPodName} -- bash -c "${command}"`,
       {
         silent: true,
       },

@@ -11,8 +11,9 @@ export interface Environment {
 
 export interface K8sEnvironment extends Environment {
   platform: 'k8s';
-  namespace: string;
-  context: string;
+  namespace?: string;
+  context?: string;
+  kubeconfig?: string;
 }
 
 export interface DockerEnvironment extends Environment {

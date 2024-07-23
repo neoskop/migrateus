@@ -154,7 +154,7 @@ export class SchemaDiffService {
     this.environmentService.environment = env;
 
     if (env.platform === 'k8s') {
-      containerService = new K8sContainerService(this.logger);
+      containerService = new K8sContainerService(this.logger, this.k8sService);
       await this.k8sService.setup();
       port = await this.portForwardService.forward();
     } else {

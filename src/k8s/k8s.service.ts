@@ -5,6 +5,8 @@ import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { exec } from '../util/exec.js';
+import { ExecOptions } from 'shelljs';
+import { spawn } from 'child_process';
 
 @Injectable()
 export class K8sService {
@@ -20,40 +22,90 @@ export class K8sService {
   }
 
   public async restartDirectus() {
-    await exec('kubectl rollout restart deploy directus', { silent: true });
+    await this.kubectl('rollout restart deploy directus', { silent: true });
+  }
+
+  public async kubectl(command: string, options: ExecOptions = {}) {
+    const environment = this.environmentService.environment as K8sEnvironment;
+    let fullCommand = `kubectl ${command}`;
+
+    if (environment.kubeconfig) {
+      fullCommand = `KUBECONFIG=${environment.kubeconfig} ${fullCommand}`;
+    }
+
+    return exec(fullCommand, options);
+  }
+
+  public async kubectlApply(spec: object) {
+    const environment = this.environmentService.environment as K8sEnvironment;
+    let fullCommand = `echo '${JSON.stringify(spec)}' | kubectl apply -f -`;
+
+    if (environment.kubeconfig) {
+      fullCommand = `KUBECONFIG=${environment.kubeconfig} ${fullCommand}`;
+    }
+
+    return exec(fullCommand, { silent: true });
+  }
+
+  portForward(
+    podName: string,
+    sourcePort: number | string,
+    targetPort: number | string,
+  ) {
+    const environment = this.environmentService.environment as K8sEnvironment;
+    let command = `kubectl`;
+
+    if (environment.kubeconfig) {
+      command = `KUBECONFIG=${environment.kubeconfig} ${command}`;
+    }
+
+    return spawn(
+      command,
+      ['port-forward', podName, `${sourcePort}:${targetPort}`],
+      {
+        stdio: ['ignore', 'ignore', 'ignore'],
+        detached: true,
+      },
+    );
   }
 
   private async setDefaultContext() {
     const context = (this.environmentService.environment as K8sEnvironment)
       .context;
-    const namespace = (this.environmentService.environment as K8sEnvironment)
-      .namespace;
-    const useContextOutput = await exec(
-      `kubectl config use-context ${context}`,
-      { silent: true },
-    );
 
-    if (useContextOutput.code !== 0) {
-      throw new Error(
-        `Failed to set default context with code ${useContextOutput.code}: ${useContextOutput.stderr}`,
+    if (context) {
+      const useContextOutput = await this.kubectl(
+        `config use-context ${context}`,
+        { silent: true },
       );
+
+      if (useContextOutput.code !== 0) {
+        throw new Error(
+          `Failed to set default context with code ${useContextOutput.code}: ${useContextOutput.stderr}`,
+        );
+      }
     }
 
-    const setContestOutput = await exec(
-      `kubectl config set-context --current --namespace=${namespace} --context=${context}`,
-      { silent: true },
-    );
+    const namespace = (this.environmentService.environment as K8sEnvironment)
+      .namespace;
 
-    if (setContestOutput.code !== 0) {
-      throw new Error(
-        `Failed to set namespace to ${namespace} of context ${context} with code ${setContestOutput.code}: ${setContestOutput.stderr}`,
+    if (namespace) {
+      const setContestOutput = await this.kubectl(
+        `config set-context --current --namespace=${namespace} --context=${context}`,
+        { silent: true },
       );
+
+      if (setContestOutput.code !== 0) {
+        throw new Error(
+          `Failed to set namespace to ${namespace} of context ${context} with code ${setContestOutput.code}: ${setContestOutput.stderr}`,
+        );
+      }
     }
   }
 
   protected async retrieveDatabaseConfig() {
     const deployManifest = JSON.parse(
-      (await exec(`kubectl get deploy directus -ojson`, { silent: true }))
+      (await this.kubectl(`get deploy directus -ojson`, { silent: true }))
         .stdout,
     );
 

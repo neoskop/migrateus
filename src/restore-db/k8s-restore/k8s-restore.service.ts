@@ -48,8 +48,8 @@ export class K8sRestoreService extends RestorePerformer {
   }
 
   protected async beforeMysqlDumpRestore(): Promise<void> {
-    const ouput = await exec(
-      `kubectl cp ${this.backupDir}/backup.sql ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql`,
+    const ouput = await this.k8sService.kubectl(
+      `cp ${this.backupDir}/backup.sql ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql`,
       { silent: true },
     );
 

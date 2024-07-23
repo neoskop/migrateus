@@ -45,8 +45,8 @@ export class K8sBackupService extends BackupPerformer {
   }
 
   protected async afterMysqlDump(): Promise<void> {
-    const ouput = await exec(
-      `kubectl cp ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql ${this.backupDir}/backup.sql`,
+    const ouput = await this.k8sService.kubectl(
+      `cp ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql ${this.backupDir}/backup.sql`,
       { silent: true },
     );
 

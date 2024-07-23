@@ -57,6 +57,7 @@ An environment takes the following options:
 | `containerName` | `string`            | Only if `type=docker`, The name of the Directus container     |
 | `context`       | `string`            | Only if `type=k8s`, the context name in your [kubeconfig][1]  |
 | `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
+| `kubeconfig`    | `string`            | Only if `type=k8s`, path to the kubeconfig file               |
 | `credentials`   | `object[]`          | Credentials to enforce during restore                         |
 | `doubleCheck`   | `boolean`           | Whether to ask before restores / schema diffs                 |
 | `settings`      | `object`            | Specify Directus [project settings][2]                        |
