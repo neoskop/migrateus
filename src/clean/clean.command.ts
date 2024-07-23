@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { Command, InquirerService } from 'nest-commander';
+import { Command, InquirerService, Option } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -33,6 +33,7 @@ export class CleanCommand extends MigrateusCommand {
     @Inject('ContainerServices')
     protected readonly containerServices: ContainerService[],
     protected readonly updateService: UpdateService,
+    private readonly configService: ConfigService,
   ) {
     super(
       logger,
@@ -54,7 +55,26 @@ export class CleanCommand extends MigrateusCommand {
       });
       environment = answers.environment;
     }
-    this.logger.debug(`Cleaning environment ${chalk.bold(environment)}`);
+
+    if (environment === 'all') {
+      this.progressService.indent = 2;
+
+      for (const environment of await this.configService.getEnvironments()) {
+        await this.cleanEnvironment(environment.name);
+      }
+    } else {
+      await this.cleanEnvironment(environment);
+    }
+  }
+
+  private async cleanEnvironment(environment: string) {
+    const logMessage = `Cleaning environment ${chalk.bold(environment)}`;
+
+    if (this.verbose) {
+      this.logger.info(logMessage);
+    } else {
+      console.log(logMessage);
+    }
 
     try {
       await this.cleanService.clean(environment);

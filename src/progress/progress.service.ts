@@ -10,6 +10,7 @@ export class ProgressService {
   public useSpinner: boolean = true;
   private spinner: Ora;
   private currentMessage: string;
+  public indent = 0;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -26,7 +27,7 @@ export class ProgressService {
     if (this.spinner) {
       this.startNewStep(message);
     } else {
-      this.spinner = ora(message).start();
+      this.spinner = ora({ indent: this.indent, text: message }).start();
     }
   }
 

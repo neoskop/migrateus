@@ -7,4 +7,3 @@
   - [ ] Better output for details (not just `console.dir` of the JSON)
 - [ ] Show kubelogin URLs to end user
 - [ ] Use `ora` in schema diffs?!
-- [ ] Add `clean-all` command to clean all envs sequentially

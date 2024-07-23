@@ -16,6 +16,8 @@ export class CleanQuestions {
 
   @ChoicesFor({ name: 'environment' })
   async environmentChoices() {
-    return (await this.config.getEnvironments()).map((env) => env.name);
+    return (await this.config.getEnvironments())
+      .map((env) => env.name)
+      .concat(['all']);
   }
 }
