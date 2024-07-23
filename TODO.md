@@ -8,5 +8,3 @@
 - [ ] Show kubelogin URLs to end user
 - [ ] Use `ora` in schema diffs?!
 - [ ] Add `clean-all` command to clean all envs sequentially
-- [ ] Save Directus version when performing a backup to a meta data file in the archive
-      and compare that to the server when restoring (asking for confirmation or warning)

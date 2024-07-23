@@ -12,6 +12,7 @@ import { PortForwardService } from '../../k8s/port-forward/port-forward.service.
 import { exec } from '../../util/exec.js';
 import { ProgressService } from '../../progress/progress.service.js';
 import { DirectusSettingService } from '../../directus/directus-setting/directus-setting.service.js';
+import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
 
 @Injectable()
 export class K8sRestoreService extends RestorePerformer {
@@ -27,6 +28,7 @@ export class K8sRestoreService extends RestorePerformer {
     environmentService: EnvironmentService,
     private readonly portForwardService: PortForwardService,
     progressService: ProgressService,
+    directusVersionService: DirectusVersionService,
   ) {
     super(
       logger,
@@ -36,6 +38,7 @@ export class K8sRestoreService extends RestorePerformer {
       kubernetesContainerService,
       environmentService,
       progressService,
+      directusVersionService,
     );
   }
 

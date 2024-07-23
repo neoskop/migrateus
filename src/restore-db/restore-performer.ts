@@ -10,6 +10,8 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { exec } from '../util/exec.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { DirectusSettingService } from '../directus/directus-setting/directus-setting.service.js';
+import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
+import { fileExists } from '../util/file-exists.js';
 
 export abstract class RestorePerformer {
   constructor(
@@ -20,6 +22,7 @@ export abstract class RestorePerformer {
     private readonly containerService: ContainerService,
     private readonly environmentService: EnvironmentService,
     private readonly progressService: ProgressService,
+    private readonly directusVersionService: DirectusVersionService,
   ) {}
 
   public async restore(backupFile: string) {
@@ -32,14 +35,20 @@ export abstract class RestorePerformer {
       this.progressService.advance('🚀 Set-up Migrateus container');
       await this.containerService.setup();
       await this.beforeMysqlDumpRestore();
+      const directusPort = await this.getDirectusPort();
+      this.progressService.advance('👤 Set-up Directus user');
+      await this.sqlService.setupDirectusUser(this.containerService);
+      this.progressService.advance('🔎 Compare Directus versions');
+      await this.compareDirectusVersions(directusPort, backupDir);
       this.progressService.advance('🔄 Restore database dump');
       await this.sqlService.restoreMysqlDump(this.containerService);
+      this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(this.containerService);
       await this.sqlService.setCredentials(
         this.environmentService.environment.credentials,
         this.containerService,
       );
-      const directusPort = await this.getDirectusPort();
+
       this.progressService.advance('🖼️ Restoring assets');
       const failedUploads = await this.directusAssetService.restoreAssets(
         directusPort,
@@ -72,6 +81,35 @@ export abstract class RestorePerformer {
       await this.containerService.cleanUp();
       await this.deleteTemporaryDirectory(backupDir);
       this.progressService.finish();
+    }
+  }
+
+  private async compareDirectusVersions(
+    directusPort: number,
+    backupDir: string,
+  ) {
+    const serverVersion =
+      await this.directusVersionService.getVersion(directusPort);
+
+    const metaFilePath = join(backupDir, 'meta.json');
+
+    if (!fileExists(metaFilePath)) {
+      return;
+    }
+
+    const backupVersion = JSON.parse(
+      await fs.promises.readFile(metaFilePath, 'utf8'),
+    ).version;
+
+    if (
+      this.directusVersionService.isDangerousMismatch(
+        serverVersion,
+        backupVersion,
+      )
+    ) {
+      throw new Error(
+        `Backup version ${chalk.bold(backupVersion)} does not match server version ${chalk.bold(serverVersion)}`,
+      );
     }
   }
 

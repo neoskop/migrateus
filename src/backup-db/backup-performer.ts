@@ -11,6 +11,7 @@ import { exec } from '../util/exec.js';
 import { ProgressService } from '../progress/progress.service.js';
 import fs from 'node:fs';
 import prettyBytes from 'pretty-bytes';
+import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
 
 export abstract class BackupPerformer {
   constructor(
@@ -20,6 +21,7 @@ export abstract class BackupPerformer {
     private readonly containerService: ContainerService,
     private readonly config: ConfigService,
     private readonly progressService: ProgressService,
+    private readonly directusVersionService: DirectusVersionService,
   ) {}
 
   public async backup(backupFile: string) {
@@ -33,11 +35,13 @@ export abstract class BackupPerformer {
       await this.sqlService.performMysqlDump(this.containerService);
       await this.afterMysqlDump();
 
+      this.progressService.advance('👤 Set-up Directus user');
+      await this.sqlService.setupDirectusUser(this.containerService);
+      const directusPort = await this.getDirectusPort();
+
       if (this.config.noAssets) {
         this.logger.debug('Skipping backup of assets');
       } else {
-        await this.sqlService.setupDirectusUser(this.containerService);
-        const directusPort = await this.getDirectusPort();
         this.progressService.advance('🖼️ Downloading assets');
         const failedDownloads = await this.directusAssetService.backupAssets(
           directusPort,
@@ -58,6 +62,8 @@ export abstract class BackupPerformer {
         }
       }
 
+      this.progressService.advance('🏷️ Save backup metadata');
+      await this.storeMetadata(directusPort, backupDir);
       this.progressService.advance('📦 Create backup archive');
       const size = await this.createBackupArchive(backupDir, backupFile);
       this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
@@ -82,6 +88,14 @@ export abstract class BackupPerformer {
   protected abstract getDirectusPort(): Promise<number>;
 
   protected async cleanUp(): Promise<void> {}
+
+  private async storeMetadata(directusPort: number, backupDir: string) {
+    const version = await this.directusVersionService.getVersion(directusPort);
+    await fs.promises.writeFile(
+      join(backupDir, 'meta.json'),
+      JSON.stringify({ version, timestamp: new Date().toISOString() }, null, 2),
+    );
+  }
 
   private async createTemporaryDirectory() {
     const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;

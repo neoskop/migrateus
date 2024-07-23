@@ -11,6 +11,7 @@ import { ConfigService } from '../../config/config.service.js';
 import { PortForwardService } from '../../k8s/port-forward/port-forward.service.js';
 import { exec } from '../../util/exec.js';
 import { ProgressService } from '../../progress/progress.service.js';
+import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
 
 @Injectable()
 export class K8sBackupService extends BackupPerformer {
@@ -25,6 +26,7 @@ export class K8sBackupService extends BackupPerformer {
     config: ConfigService,
     private readonly portForwardService: PortForwardService,
     progressService: ProgressService,
+    directusVersionService: DirectusVersionService,
   ) {
     super(
       logger,
@@ -33,6 +35,7 @@ export class K8sBackupService extends BackupPerformer {
       kubernetesContainerService,
       config,
       progressService,
+      directusVersionService,
     );
   }
 

@@ -8,6 +8,7 @@ import { DockerContainerService } from '../../container/docker-container/docker-
 import { DockerService } from '../../docker/docker.service.js';
 import { ConfigService } from '../../config/config.service.js';
 import { ProgressService } from '../../progress/progress.service.js';
+import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
 
 @Injectable()
 export class DockerBackupService extends BackupPerformer {
@@ -19,6 +20,7 @@ export class DockerBackupService extends BackupPerformer {
     private readonly dockerService: DockerService,
     config: ConfigService,
     progressService: ProgressService,
+    directusVersionService: DirectusVersionService,
   ) {
     super(
       logger,
@@ -27,6 +29,7 @@ export class DockerBackupService extends BackupPerformer {
       dockerContainerService,
       config,
       progressService,
+      directusVersionService,
     );
   }
 

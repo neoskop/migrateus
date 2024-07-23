@@ -17,6 +17,7 @@ import { OnepasswordAccount } from '../onepassword/onepassword-account.interface
 import { glob } from 'glob';
 import path from 'node:path';
 import { exec } from '../util/exec.js';
+import { fileExists } from '../util/file-exists.js';
 
 @Injectable()
 export class ConfigService {
@@ -78,17 +79,8 @@ export class ConfigService {
     }
   }
 
-  private async fileExists(path: string) {
-    try {
-      await fs.promises.access(path, fs.constants.F_OK);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   private async injectEnvFile() {
-    if (await this.fileExists(this.envFilePath)) {
+    if (await fileExists(this.envFilePath)) {
       this.logger.debug(
         `Env file already exists: ${chalk.bold(this.envFilePath)}`,
       );
