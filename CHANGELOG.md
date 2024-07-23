@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0] - 2024-07-23
+
+### 🚀 Features
+
+- Compare server version during restore
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v3.1.16
+- *(deps)* Update dependency @inquirer/expand to v2.1.16
+- *(deps)* Update dependency @inquirer/password to v2.1.16
+- *(deps)* Update dependency @inquirer/select to v2.4.1
+- *(deps)* Update dependency @inquirer/confirm to v3.1.17
+- *(deps)* Update dependency @inquirer/expand to v2.1.17
+- *(deps)* Update dependency @inquirer/password to v2.1.17
+- *(deps)* Update dependency @inquirer/select to v2.4.2
+- *(deps)* Update dependency file-type to v19.3.0
+
+### 📚 Documentation
+
+- *(TODO)* Add task
+- *(TODO)* Add tasks
+
 ## [0.9.0] - 2024-07-19
 
 ### 🚀 Features
