@@ -1,5 +1,6 @@
 # Things To Do
 
+- [ ] Ensure Directus container is running when restoring DB
 - [ ] Simplify dialogs in Schema-Diff:
   - [ ] If a new Relation is declined, don't ask for its fields
   - [ ] Better output for details (not just `console.dir` of the JSON)
