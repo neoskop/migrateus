@@ -63,12 +63,15 @@ export class ProgressService {
   }
 
   public fail(error: Error) {
+    const formattedError = chalk.red(
+      error.message ||
+        highlight(JSON.stringify(error, null, 2), { language: 'json' }),
+    );
+
     if (this.useSpinner) {
-      this.spinner.fail(
-        `${this.currentMessage} failed: ${chalk.red(error.message || highlight(JSON.stringify(error, null, 2), { language: 'json' }))}`,
-      );
+      this.spinner.fail(`${this.currentMessage} failed: ${formattedError}`);
     } else {
-      this.logger.error(error);
+      this.logger.error(formattedError);
     }
   }
 
