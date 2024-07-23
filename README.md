@@ -122,6 +122,17 @@ Where `from` is the path to the backup tgz file to restore and `to` is the `name
 
 If you don't specify either of those options, Migrateus will ask you for them.
 
+### Clean
+
+To clean up resources (Directus users and roles and containers/pods) created by Migrateus, run the following command:
+
+```bash
+$ migrateus clean [options] <env-name>
+```
+
+> [!TIP]
+> You can pass `all` as the environment name to clean up all environments.
+
 ### Help
 
 For more information on any command, run `migrateus <command> --help`
