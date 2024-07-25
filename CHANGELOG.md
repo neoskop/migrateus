@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2024-07-25
+
+### 🚀 Features
+
+- *(clean)* Allow cleaning of all environments sequentially
+- Add support for kubeconfig file specification per environment
+
+### 🐛 Bug Fixes
+
+- Fix error logging when verbose output is on
+
+### 📚 Documentation
+
+- *(README)* Add documentation for clean command
+
 ## [0.10.0] - 2024-07-23
 
 ### 🚀 Features
