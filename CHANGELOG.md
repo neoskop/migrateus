@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2024-07-26
+
+### 🚀 Features
+
+- Enable kubelogin
+
+### 🐛 Bug Fixes
+
+- Fix usage of kubeconfig option
+
 ## [0.11.0] - 2024-07-25
 
 ### 🚀 Features
