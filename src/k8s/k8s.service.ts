@@ -8,6 +8,7 @@ import { exec } from '../util/exec.js';
 import { ExecOptions } from 'shelljs';
 import { spawn } from 'child_process';
 import { highlight } from 'cli-highlight';
+import chalk from 'chalk';
 
 @Injectable()
 export class K8sService {
@@ -19,7 +20,46 @@ export class K8sService {
 
   public async setup() {
     await this.setDefaultContext();
+    await this.retrieveKubeloginToken();
     this.sqlService.databaseConfig = await this.retrieveDatabaseConfig();
+  }
+
+  private async retrieveKubeloginToken() {
+    const environment = this.environmentService.environment as K8sEnvironment;
+
+    if (!environment.kubelogin) {
+      return;
+    }
+
+    const env = environment.kubeconfig
+      ? { ...process.env, KUBECONFIG: environment.kubeconfig }
+      : process.env;
+
+    const child = spawn('kubectl', ['version'], {
+      detached: true,
+      env,
+    });
+
+    const port = await new Promise<string>((resolve) => {
+      child.stderr.on('data', (data) => {
+        const match = data.toString().match(/http:\/\/localhost:(\d+)/);
+
+        if (match) {
+          resolve(match[1]);
+        }
+      });
+    });
+
+    this.logger.info(
+      `Open URL ${chalk.bold(`http://localhost:${port}`)} in your browser to login to the Kubernetes cluster`,
+    );
+
+    await new Promise<void>((resolve) => {
+      child.on('close', () => {
+        this.logger.debug(`Login completed successfully!`);
+        resolve();
+      });
+    });
   }
 
   public async restartDirectus() {
