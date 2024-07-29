@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0] - 2024-07-29
+
+### 🚀 Features
+
+- Wait until Directus is up and running after starting it locally
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v3.1.18
+- *(deps)* Update dependency @inquirer/expand to v2.1.18
+- *(deps)* Update dependency @inquirer/password to v2.1.18
+- *(deps)* Update dependency @inquirer/select to v2.4.3
+
 ## [0.12.0] - 2024-07-26
 
 ### 🚀 Features
