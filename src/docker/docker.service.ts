@@ -116,7 +116,39 @@ export class DockerService {
     await exec(`docker start ${this.containerConfig.Id}`, {
       silent: true,
     });
-    return new Promise((resolve) => setTimeout(resolve, 10000));
+    await this.waitUntilDirectusIsRunning();
+  }
+
+  private async waitUntilDirectusIsRunning() {
+    const maxAttempts = 50;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const healtCheckUrl = 'http://localhost:8055/server/health';
+        this.logger.debug(
+          `Polling server health with ${chalk.green('GET')} ${chalk.bold(healtCheckUrl)}`,
+        );
+        const response = await fetch(healtCheckUrl);
+
+        if (!response?.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+
+        const { status } = await response.json();
+
+        if (status === 'ok') {
+          return;
+        }
+      } catch (error) {
+        this.logger.debug(
+          `Server health check failed: ${error.message || error}`,
+        );
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    throw new Error('Failed to start Directus container');
   }
 
   public async restartDirectus() {
