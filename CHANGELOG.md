@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] - 2024-08-01
+
+### 🚀 Features
+
+- *(k8s)* Substitute dotenv in kubeconfig
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v3.1.19
+- *(deps)* Update dependency @inquirer/expand to v2.1.19
+- *(deps)* Update dependency @inquirer/password to v2.1.19
+- *(deps)* Update dependency @inquirer/select to v2.4.4
+- *(deps)* Update dependency @inquirer/confirm to v3.1.20
+- *(deps)* Update dependency @inquirer/expand to v2.1.20
+- *(deps)* Update dependency @inquirer/password to v2.1.20
+- *(deps)* Update dependency @inquirer/select to v2.4.5
+
 ## [0.13.0] - 2024-07-29
 
 ### 🚀 Features
