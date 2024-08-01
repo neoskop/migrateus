@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.1] - 2024-08-01
+
+### 🐛 Bug Fixes
+
+- *(k8s)* Add namespace flag correctly and only if set in config
+
 ## [0.14.0] - 2024-08-01
 
 ### 🚀 Features
