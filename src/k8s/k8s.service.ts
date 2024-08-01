@@ -120,7 +120,14 @@ export class K8sService {
 
   public async kubectl(command: string, options: ExecOptions = {}) {
     const environment = this.environmentService.environment as K8sEnvironment;
-    let fullCommand = `kubectl -n ${environment.namespace} ${command}`;
+    let fullCommand = `kubectl ${command}`;
+
+    if (environment.namespace) {
+      fullCommand = fullCommand.replace(
+        'kubectl',
+        `kubectl -n ${environment.namespace}`,
+      );
+    }
 
     if (this.kubeconfigPath) {
       fullCommand = `KUBECONFIG=${this.kubeconfigPath} ${fullCommand}`;
@@ -139,7 +146,13 @@ export class K8sService {
       fullCommand = `${fullCommand} KUBECONFIG=${this.kubeconfigPath}`;
     }
 
+    const environment = this.environmentService.environment as K8sEnvironment;
+
     fullCommand = `${fullCommand} kubectl apply -f -`;
+
+    if (environment.namespace) {
+      fullCommand = `${fullCommand} -n ${environment.namespace}`;
+    }
 
     this.logger.debug(
       `Running ${highlight(fullCommand, { language: 'bash' })}`,
@@ -157,21 +170,17 @@ export class K8sService {
       ? { ...process.env, KUBECONFIG: this.kubeconfigPath }
       : process.env;
 
-    return spawn(
-      'kubectl',
-      [
-        '-n',
-        environment.namespace,
-        'port-forward',
-        podName,
-        `${sourcePort}:${targetPort}`,
-      ],
-      {
-        stdio: ['ignore', 'ignore', 'ignore'],
-        detached: true,
-        env,
-      },
-    );
+    let args = ['port-forward', podName, `${sourcePort}:${targetPort}`];
+
+    if (environment.namespace) {
+      args = ['-n', environment.namespace, ...args];
+    }
+
+    return spawn('kubectl', args, {
+      stdio: ['ignore', 'ignore', 'ignore'],
+      detached: true,
+      env,
+    });
   }
 
   private async setDefaultContext() {
