@@ -9,7 +9,6 @@ import { K8sContainerService } from '../../container/k8s-container/k8s-container
 import { K8sService } from '../../k8s/k8s.service.js';
 import { ConfigService } from '../../config/config.service.js';
 import { PortForwardService } from '../../k8s/port-forward/port-forward.service.js';
-import { exec } from '../../util/exec.js';
 import { ProgressService } from '../../progress/progress.service.js';
 import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
 
@@ -62,6 +61,7 @@ export class K8sBackupService extends BackupPerformer {
   }
 
   protected async cleanUp(): Promise<void> {
-    return this.portForwardService.stop();
+    this.portForwardService.stop();
+    await this.k8sService.cleanUp();
   }
 }

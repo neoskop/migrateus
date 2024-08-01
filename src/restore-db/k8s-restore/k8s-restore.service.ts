@@ -65,7 +65,8 @@ export class K8sRestoreService extends RestorePerformer {
   }
 
   protected async cleanUp(): Promise<void> {
-    return this.portForwardService.stop();
+    this.portForwardService.stop();
+    await this.k8sService.cleanUp();
   }
 
   protected async restartDirectus(): Promise<void> {

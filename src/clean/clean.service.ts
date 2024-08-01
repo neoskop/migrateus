@@ -59,6 +59,7 @@ export class CleanService {
     await this.sqlService.cleanUpAllDirectusUsers(this.k8sContainerService);
     this.progressService.advance('🗑️ Remove old Migrateus pods');
     await this.k8sContainerService.cleanUpAll();
+    await this.k8sService.cleanUp();
     this.progressService.finish();
   }
 }

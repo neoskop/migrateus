@@ -29,6 +29,7 @@ export class ConfigService {
     environments: [],
   };
   public noAssets = false;
+  public envConfig: dotenv.DotenvParseOutput;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
@@ -57,10 +58,10 @@ export class ConfigService {
         'utf8',
       );
       await this.injectEnvFile();
-      const envConfig = await this.loadEnvFile();
+      this.envConfig = await this.loadEnvFile();
       const subsitutedConfig = configFileContents.replaceAll(
         /\$(\w+)/g,
-        (_match, name) => envConfig[name] || '',
+        (_match, name) => this.envConfig[name] || '',
       );
       this.config = yaml.load(subsitutedConfig) as Config;
       this.redactCredentials();

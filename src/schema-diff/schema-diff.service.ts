@@ -145,6 +145,10 @@ export class SchemaDiffService {
     const containerService = this.containerServices[name];
     await this.sqlService.cleanUpDirectusUser(containerService);
     await containerService.cleanUp();
+
+    if (env.platform === 'k8s') {
+      await this.k8sService.cleanUp();
+    }
   }
 
   private async setupDirectusClient(name: string): Promise<RestClient<any>> {

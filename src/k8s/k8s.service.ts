@@ -9,19 +9,64 @@ import { ExecOptions } from 'shelljs';
 import { spawn } from 'child_process';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
+import tmp from 'tmp';
+import fs from 'node:fs';
+import { ConfigService } from '../config/config.service.js';
 
 @Injectable()
 export class K8sService {
+  private kubeconfigPath: string;
+
   constructor(
     private readonly environmentService: EnvironmentService,
     private readonly sqlService: SqlService,
+    private readonly configService: ConfigService,
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
   ) {}
 
+  public async cleanUp() {
+    if (this.kubeconfigPath) {
+      this.logger.debug(
+        `Deleting kubeconfig at ${chalk.bold(this.kubeconfigPath)}`,
+      );
+      await fs.promises.unlink(this.kubeconfigPath);
+    }
+  }
+
   public async setup() {
     await this.setDefaultContext();
+    await this.substituteKubeconfig();
     await this.retrieveKubeloginToken();
     this.sqlService.databaseConfig = await this.retrieveDatabaseConfig();
+  }
+
+  private async substituteKubeconfig() {
+    const environment = this.environmentService.environment as K8sEnvironment;
+
+    if (!environment.kubeconfig) {
+      return;
+    }
+
+    const kubeconfigTemp = tmp.fileSync({
+      prefix: 'migrateus_kubeconfig_',
+    });
+
+    const kubeconfigContent = await fs.promises.readFile(
+      environment.kubeconfig,
+      'utf-8',
+    );
+    const kubeconfigSubstitutedContent = kubeconfigContent.replaceAll(
+      /\$(\w+)/g,
+      (match, variable) => this.configService.envConfig[variable] || match,
+    );
+    await fs.promises.writeFile(
+      kubeconfigTemp.name,
+      kubeconfigSubstitutedContent,
+    );
+    this.logger.debug(
+      `Substituted kubeconfig ${chalk.bold(environment.kubeconfig)} and copied to: ${chalk.bold(kubeconfigTemp.name)}`,
+    );
+    this.kubeconfigPath = kubeconfigTemp.name;
   }
 
   private async retrieveKubeloginToken() {
@@ -31,16 +76,19 @@ export class K8sService {
       return;
     }
 
-    const env = environment.kubeconfig
-      ? { ...process.env, KUBECONFIG: environment.kubeconfig }
+    const env = this.kubeconfigPath
+      ? { ...process.env, KUBECONFIG: this.kubeconfigPath }
       : process.env;
 
     const child = spawn('kubectl', ['version'], {
-      detached: true,
       env,
     });
 
     const port = await new Promise<string>((resolve) => {
+      child.on('close', () => {
+        this.logger.debug(`Already logged in via kubelogin!`);
+        resolve(null);
+      });
       child.stderr.on('data', (data) => {
         const match = data.toString().match(/http:\/\/localhost:(\d+)/);
 
@@ -49,6 +97,10 @@ export class K8sService {
         }
       });
     });
+
+    if (!port) {
+      return;
+    }
 
     this.logger.info(
       `Open URL ${chalk.bold(`http://localhost:${port}`)} in your browser to login to the Kubernetes cluster`,
@@ -70,8 +122,8 @@ export class K8sService {
     const environment = this.environmentService.environment as K8sEnvironment;
     let fullCommand = `kubectl -n ${environment.namespace} ${command}`;
 
-    if (environment.kubeconfig) {
-      fullCommand = `KUBECONFIG=${environment.kubeconfig} ${fullCommand}`;
+    if (this.kubeconfigPath) {
+      fullCommand = `KUBECONFIG=${this.kubeconfigPath} ${fullCommand}`;
     }
 
     this.logger.debug(
@@ -81,11 +133,10 @@ export class K8sService {
   }
 
   public async kubectlApply(spec: object) {
-    const environment = this.environmentService.environment as K8sEnvironment;
     let fullCommand = `echo '${JSON.stringify(spec)}' |`;
 
-    if (environment.kubeconfig) {
-      fullCommand = `${fullCommand} KUBECONFIG=${environment.kubeconfig}`;
+    if (this.kubeconfigPath) {
+      fullCommand = `${fullCommand} KUBECONFIG=${this.kubeconfigPath}`;
     }
 
     fullCommand = `${fullCommand} kubectl apply -f -`;
@@ -102,8 +153,8 @@ export class K8sService {
     targetPort: number | string,
   ) {
     const environment = this.environmentService.environment as K8sEnvironment;
-    const env = environment.kubeconfig
-      ? { ...process.env, KUBECONFIG: environment.kubeconfig }
+    const env = this.kubeconfigPath
+      ? { ...process.env, KUBECONFIG: this.kubeconfigPath }
       : process.env;
 
     return spawn(
