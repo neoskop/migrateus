@@ -10,6 +10,7 @@ import { EnvironmentService } from '../../environment/environment.service.js';
 import { ProgressService } from '../../progress/progress.service.js';
 import { DirectusSettingService } from '../../directus/directus-setting/directus-setting.service.js';
 import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
+import { ConfigService } from '../../config/config.service.js';
 
 @Injectable()
 export class DockerRestoreService extends RestorePerformer {
@@ -23,6 +24,7 @@ export class DockerRestoreService extends RestorePerformer {
     environmentService: EnvironmentService,
     progressService: ProgressService,
     directusVersionService: DirectusVersionService,
+    configService: ConfigService,
   ) {
     super(
       logger,
@@ -33,6 +35,7 @@ export class DockerRestoreService extends RestorePerformer {
       environmentService,
       progressService,
       directusVersionService,
+      configService,
     );
   }
 

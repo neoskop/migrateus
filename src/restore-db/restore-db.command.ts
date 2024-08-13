@@ -53,10 +53,18 @@ export class RestoreDbCommand extends MigrateusCommand {
 
   @Option({
     flags: '-n, --no-assets',
-    description: "Don't backup assets",
+    description: "Don't restore assets",
   })
   setNoAssets() {
     this.config.noAssets = true;
+  }
+
+  @Option({
+    flags: '-f, --force',
+    description: "Don't check for version differences",
+  })
+  setForce() {
+    this.config.force = true;
   }
 
   async execute(params: string[]): Promise<void> {

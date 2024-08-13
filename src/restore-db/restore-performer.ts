@@ -12,6 +12,7 @@ import { ProgressService } from '../progress/progress.service.js';
 import { DirectusSettingService } from '../directus/directus-setting/directus-setting.service.js';
 import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
 import { fileExists } from '../util/file-exists.js';
+import { ConfigService } from '../config/config.service.js';
 
 export abstract class RestorePerformer {
   constructor(
@@ -23,6 +24,7 @@ export abstract class RestorePerformer {
     private readonly environmentService: EnvironmentService,
     private readonly progressService: ProgressService,
     private readonly directusVersionService: DirectusVersionService,
+    private readonly configService: ConfigService,
   ) {}
 
   public async restore(backupFile: string) {
@@ -36,10 +38,14 @@ export abstract class RestorePerformer {
       await this.containerService.setup();
       await this.beforeMysqlDumpRestore();
       const directusPort = await this.getDirectusPort();
-      this.progressService.advance('👤 Set-up Directus user');
-      await this.sqlService.setupDirectusUser(this.containerService);
-      this.progressService.advance('🔎 Compare Directus versions');
-      await this.compareDirectusVersions(directusPort, backupDir);
+
+      if (!this.configService.force) {
+        this.progressService.advance('👤 Set-up Directus user');
+        await this.sqlService.setupDirectusUser(this.containerService);
+        this.progressService.advance('🔎 Compare Directus versions');
+        await this.compareDirectusVersions(directusPort, backupDir);
+      }
+
       this.progressService.advance('🔄 Restore database dump');
       await this.sqlService.restoreMysqlDump(this.containerService);
       this.progressService.advance('👤 Set-up Directus user');
