@@ -13,6 +13,8 @@ export class DirectusUserService {
   public token: string = nanoid(64);
   private roleId = uuidv4();
   private userId = uuidv4();
+  private accessId = uuidv4();
+  private policyId = uuidv4();
 
   constructor(private readonly redactService: RedactService) {
     this.redactService.addRedaction(this.password);
@@ -21,7 +23,13 @@ export class DirectusUserService {
 
   public async setupUser(execSql: MysqlExecutor) {
     await execSql(
-      `INSERT INTO directus_roles (id, name, admin_access) VALUES ('${this.roleId}', '${this.username}', 1)`,
+      `INSERT INTO directus_roles (id, name) VALUES ('${this.roleId}', '${this.username}')`,
+    );
+    await execSql(
+      `INSERT INTO directus_policies (id, name, admin_access) VALUES ('${this.policyId}', '${this.username}', 1)`,
+    );
+    await execSql(
+      `INSERT INTO directus_access (id, role, policy) VALUES ('${this.accessId}', '${this.roleId}', '${this.policyId}')`,
     );
     const hash = await argon2.hash(this.password);
     await execSql(
@@ -43,6 +51,12 @@ export class DirectusUserService {
     );
     await execSql(
       `DELETE FROM directus_roles WHERE id = '${this.roleId}' LIMIT 1`,
+    );
+    await execSql(
+      `DELETE FROM directus_policies WHERE id = '${this.policyId}' LIMIT 1`,
+    );
+    await execSql(
+      `DELETE FROM directus_access WHERE id = '${this.accessId}' LIMIT 1`,
     );
   }
 
@@ -83,5 +97,17 @@ export class DirectusUserService {
 
     await execSql(`DELETE FROM directus_users WHERE email LIKE 'migrateus%'`);
     await execSql(`DELETE FROM directus_roles WHERE name LIKE 'migrateus%'`);
+    const policyIds = await execSql(
+      `SELECT id FROM directus_policies WHERE name LIKE 'migrateus%'`,
+    );
+
+    for (const policyId of policyIds.split('\n')) {
+      if (policyId) {
+        await execSql(
+          `DELETE FROM directus_access WHERE policy = '${policyId}'`,
+        );
+        await execSql(`DELETE FROM directus_policies WHERE id = '${policyId}'`);
+      }
+    }
   }
 }
