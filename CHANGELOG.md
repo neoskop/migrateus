@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.15.0] - 2024-08-14
+
+### 🚀 Features
+
+- *(restore)* Add force flag to prevent version checks
+- *(restore-db)* Sort backups and show age
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency file-type to v19.4.0
+- *(deps)* Update dependency @inquirer/confirm to v3.1.21
+- *(deps)* Update dependency @inquirer/expand to v2.1.21
+- *(deps)* Update dependency @inquirer/password to v2.1.21
+- *(deps)* Update dependency @inquirer/select to v2.4.6
+- *(deps)* Update dependency @inquirer/confirm to v3.1.22
+- *(deps)* Update dependency @inquirer/expand to v2.1.22
+- *(deps)* Update dependency @inquirer/password to v2.1.22
+- *(deps)* Update dependency @inquirer/select to v2.4.7
+- *(deps)* Update dependency @directus/sdk to v16.1.2
+- *(deps)* Update dependency winston to v3.14.0
+- *(deps)* Update dependency winston to v3.14.1
+- *(deps)* Update nest monorepo to v10.4.0
+- *(deps)* Update nest monorepo to v10.4.1
+- *(schema-diff)* Fix clean up when setup partially failed
+
+### 📚 Documentation
+
+- Update TODO.md
+
 ## [0.14.1] - 2024-08-01
 
 ### 🐛 Bug Fixes
