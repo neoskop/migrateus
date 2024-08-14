@@ -143,8 +143,11 @@ export class SchemaDiffService {
     }
 
     const containerService = this.containerServices[name];
-    await this.sqlService.cleanUpDirectusUser(containerService);
-    await containerService.cleanUp();
+
+    if (containerService) {
+      await this.sqlService.cleanUpDirectusUser(containerService);
+      await containerService.cleanUp();
+    }
 
     if (env.platform === 'k8s') {
       await this.k8sService.cleanUp();
