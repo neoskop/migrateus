@@ -2,13 +2,18 @@ import { QuestionSet, Question, ChoicesFor, WhenFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { RestoreDbAnswers } from './restore-db-answers.interface.js';
 import { Glob } from 'glob';
+import { intlFormatDistance } from 'date-fns/intlFormatDistance';
+import chalk from 'chalk';
 
 @QuestionSet({ name: 'restore-db-questions' })
 export class RestoreDbQuestions {
-  private glob: Glob<{}>;
+  private glob: Glob<{ stat: true; withFileTypes: true }>;
 
   constructor(private readonly config: ConfigService) {
-    this.glob = new Glob('**/migrateus*.{tgz,tar.gz}', {});
+    this.glob = new Glob('**/migrateus*.{tgz,tar.gz}', {
+      stat: true,
+      withFileTypes: true,
+    });
   }
 
   @Question({
@@ -27,7 +32,15 @@ export class RestoreDbQuestions {
 
   @ChoicesFor({ name: 'from' })
   async fromChoices() {
-    return await this.glob.walk();
+    return (await this.glob.walk())
+      .sort((a, b) => b.mtimeMs - a.mtimeMs)
+      .map((file) => {
+        const time = intlFormatDistance(file.mtimeMs, Date.now());
+        return {
+          name: `${chalk.bold(file.name)} (${time})`,
+          value: file.name,
+        };
+      });
   }
 
   @Question({
