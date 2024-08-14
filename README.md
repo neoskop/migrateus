@@ -142,7 +142,7 @@ For more information on any command, run `migrateus <command> --help`
 ## Completions
 
 ```bash
-$ migrateus completion-script >> ~/.bashrc
+$ echo "source <(migrateus completion-script)" >> ~/.bashrc
 ```
 
 ## Changelog
