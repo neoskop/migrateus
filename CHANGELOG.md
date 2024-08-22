@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0] - 2024-08-22
+
+### 🚀 Features
+
+- Adjust user creation to new Directus schema in 11.x.x
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency file-type to v19.4.1
+- *(deps)* Update dependency winston to v3.14.2
+- *(deps)* Update dependency nest-commander to v3.15.0
+
+### 📚 Documentation
+
+- *(README)* Don't add completion script statically to bashrc
+
 ## [0.15.0] - 2024-08-14
 
 ### 🚀 Features
