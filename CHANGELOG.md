@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2024-09-11
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @directus/sdk to v17
+- *(deps)* Update dependency ora to v8.1.0
+- *(deps)* Update dependency @inquirer/expand to v2.2.0
+- *(deps)* Update dependency @inquirer/password to v2.2.0
+- *(deps)* Update dependency @inquirer/confirm to v3.2.0
+- *(deps)* Update dependency @inquirer/select to v2.5.0
+- *(deps)* Update dependency @directus/sdk to v17.0.1
+- *(deps)* Update dependency @inquirer/expand to v2.3.0
+- *(deps)* Update dependency file-type to v19.5.0
+
 ## [1.0.0] - 2024-08-22
 
 ### 🚀 Features
