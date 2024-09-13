@@ -76,6 +76,16 @@ export class K8sService {
       return;
     }
 
+    const { code } = await exec('kubectl oidc-login version', {
+      silent: true,
+    });
+
+    if (code !== 0) {
+      throw new Error(
+        `Kubelogin is not installed. See: ${chalk.bold('https://github.com/int128/kubelogin/tree/master?tab=readme-ov-file#setup')}`,
+      );
+    }
+
     const env = this.kubeconfigPath
       ? { ...process.env, KUBECONFIG: this.kubeconfigPath }
       : process.env;
