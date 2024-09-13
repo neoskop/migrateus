@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2024-09-13
+
+### 🚀 Features
+
+- Add `docker-compose` as `platform` to find Directus container more easily / consistently
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency argon2 to v0.41.1
+
+### ⚙️ Miscellaneous Tasks
+
+- Update deps
+
 ## [1.0.1] - 2024-09-11
 
 ### 🐛 Bug Fixes
