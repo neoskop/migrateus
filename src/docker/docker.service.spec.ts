@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DockerService } from './docker.service';
+import { DockerService } from './docker.service.js';
 
 describe('DockerService', () => {
   let service: DockerService;

@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerConfig } from './container-config.type.js';
 import { EnvironmentService } from '../environment/environment.service.js';
-import { DockerEnvironment } from '../config/environment.interface.js';
+import {
+  DockerComposeEnvironment,
+  DockerEnvironment,
+} from '../config/environment.interface.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { Logger } from 'winston';
@@ -46,10 +49,28 @@ export class DockerService {
   }
 
   private async getContainerConfig() {
-    const inspectOutput = await exec(
-      `docker inspect ${(this.environmentService.environment as DockerEnvironment).containerName}`,
-      { silent: true },
-    );
+    let containerName: string;
+
+    switch (this.environmentService.environment.platform) {
+      case 'docker':
+        containerName = (
+          this.environmentService.environment as DockerEnvironment
+        ).containerName;
+        break;
+
+      case 'docker-compose':
+        containerName = await this.getComposeContainerName();
+        break;
+
+      default:
+        throw new Error(
+          `Unsupported platform ${chalk.bold(this.environmentService.environment.platform)}`,
+        );
+    }
+
+    const inspectOutput = await exec(`docker inspect ${containerName}`, {
+      silent: true,
+    });
 
     if (inspectOutput.code !== 0) {
       throw new Error(
@@ -58,6 +79,24 @@ export class DockerService {
     }
 
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
+  }
+
+  private async getComposeContainerName(): Promise<string> {
+    const env = this.environmentService.environment as DockerComposeEnvironment;
+    const psOutput = await exec(
+      `docker compose -f ${env.composeFile || 'docker-compose.yml'} ps -a --format '{{.Name}}' ${env.serviceName || 'directus'}`,
+      {
+        silent: true,
+      },
+    );
+
+    if (psOutput.code !== 0) {
+      throw new Error(
+        `Failed to get container name from docker compose with code ${psOutput.code}: ${psOutput.stderr}`,
+      );
+    }
+
+    return psOutput.stdout.trim();
   }
 
   private getDockerEnvValue(name: string) {

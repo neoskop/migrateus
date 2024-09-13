@@ -50,18 +50,41 @@ environments:
 
 An environment takes the following options:
 
-| Name            | Type                | Description                                                   |
-| --------------- | ------------------- | ------------------------------------------------------------- |
-| `name`          | `string`            | The name used on the command-line or in selections            |
-| `platform`      | `"docker" \| "k8s"` | The platform type of the environment                          |
-| `containerName` | `string`            | Only if `type=docker`, The name of the Directus container     |
-| `context`       | `string`            | Only if `type=k8s`, the context name in your [kubeconfig][1]  |
-| `namespace`     | `string`            | Only if `type=k8s`, the namespace where Directus is installed |
-| `kubeconfig`    | `string`            | Only if `type=k8s`, path to the kubeconfig file               |
-| `kubelogin`     | `boolean`           | Only if `type=k8s`, whether login via kubelogin is necesary   |
-| `credentials`   | `object[]`          | Credentials to enforce during restore                         |
-| `doubleCheck`   | `boolean`           | Whether to ask before restores / schema diffs                 |
-| `settings`      | `object`            | Specify Directus [project settings][2]                        |
+| Name          | Type                                    | Description                                        |
+| ------------- | --------------------------------------- | -------------------------------------------------- |
+| `name`        | `string`                                | The name used on the command-line or in selections |
+| `platform`    | `"docker" \| "k8s" \| "docker-compose"` | The platform type of the environment               |
+| `credentials` | `object[]`                              | Credentials to enforce during restore              |
+| `doubleCheck` | `boolean`                               | Whether to ask before restores / schema diffs      |
+| `settings`    | `object`                                | Specify Directus [project settings][2]             |
+
+Depending on the `platform` the following options are furthermore available:
+
+#### Kubernetes config
+
+| Name          | Type      | Default                 | Description                               |
+| ------------- | --------- | ----------------------- | ----------------------------------------- |
+| `context?`    | `string`  | _the current one_       | The context name in your [kubeconfig][1]  |
+| `namespace?`  | `string`  | `directus`              | The namespace where Directus is installed |
+| `kubeconfig?` | `string`  | _selected by `kubectl`_ | Path to the kubeconfig file               |
+| `kubelogin?`  | `boolean` | `false`                 | Whether login via kubelogin is necesary   |
+
+#### Docker config
+
+When `platform` is set to `docker`, the following options are required:
+
+| Name            | Type     | Description                             |
+| --------------- | -------- | --------------------------------------- |
+| `containerName` | `string` | The full name of the Directus container |
+
+#### Docker compose config
+
+When `platform` is set to `docker-compose`, the following options are required:
+
+| Name          | Type     | Default              | Description                                        |
+| ------------- | -------- | -------------------- | -------------------------------------------------- |
+| `serviceName` | `string` | `directus`           | The name of the service in the docker-compose file |
+| `composeFile` | `string` | `docker-compose.yml` | The path to the docker-compose file                |
 
 To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
 

@@ -3,7 +3,7 @@ import { ProjectSettings } from './project-settings.type.js';
 
 export interface Environment {
   name: string;
-  platform: 'docker' | 'k8s';
+  platform: 'docker' | 'docker-compose' | 'k8s';
   credentials?: Credential[];
   doubleCheck?: boolean;
   settings?: ProjectSettings;
@@ -20,4 +20,10 @@ export interface K8sEnvironment extends Environment {
 export interface DockerEnvironment extends Environment {
   platform: 'docker';
   containerName: string;
+}
+
+export interface DockerComposeEnvironment extends Environment {
+  platform: 'docker-compose';
+  serviceName?: string;
+  composeFile?: string;
 }

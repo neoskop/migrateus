@@ -26,8 +26,9 @@ export class CleanService {
     this.environmentService.environment = environment;
 
     try {
-      const cleaningFunction =
-        environment.platform === 'k8s' ? this.cleanK8s : this.cleanDocker;
+      const cleaningFunction = environment.platform.startsWith('docker')
+        ? this.cleanDocker
+        : this.cleanK8s;
       await cleaningFunction.call(this);
     } catch (error) {
       this.progressService.fail(error);

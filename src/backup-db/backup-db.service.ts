@@ -17,7 +17,7 @@ export class BackupDbService {
     const environment = await this.config.getEnvironment(sourceEnvironment);
     this.environmentService.environment = environment;
 
-    if (environment.platform === 'docker') {
+    if (environment.platform.startsWith('docker')) {
       await this.dockerBackupService.backup(backupFile);
     } else {
       await this.k8sBackupService.backup(backupFile);

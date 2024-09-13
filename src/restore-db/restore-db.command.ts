@@ -100,7 +100,7 @@ export class RestoreDbCommand extends MigrateusCommand {
       }
     }
 
-    if (environment.platform === 'docker') {
+    if (environment.platform.startsWith('docker')) {
       await this.dockerRestoreService.restore(from);
     } else {
       await this.k8sRestoreService.restore(from);
