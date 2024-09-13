@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2024-09-13
+
+### 🚀 Features
+
+- *(k8s)* Check kubelogin installation
+
 ## [1.1.0] - 2024-09-13
 
 ### 🚀 Features
