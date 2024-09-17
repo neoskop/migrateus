@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2024-09-17
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v10.4.2
+- *(deps)* Update dependency date-fns to v4
+- *(deps)* Update dependency @inquirer/expand to v3
+- *(deps)* Update nest monorepo to v10.4.3
+- *(deps)* Update dependency @inquirer/password to v3
+- *(deps)* Update dependency @inquirer/confirm to v4
+- *(deps)* Update dependency @inquirer/select to v3
+
 ## [1.2.0] - 2024-09-13
 
 ### 🚀 Features
