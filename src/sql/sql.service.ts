@@ -64,6 +64,10 @@ export class SqlService {
     const command = [
       'mysqldump',
       '--no-tablespaces',
+      '--skip-lock-tables',
+      '--skip-add-locks',
+      '--single-transaction',
+      '--compatible=ansi',
       `-h${host}`,
       `-P${port}`,
       `-u${user}`,
