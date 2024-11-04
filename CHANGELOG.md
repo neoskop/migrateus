@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2024-11-04
+
+### 🚀 Features
+
+- *(backup-db)* Add compatibility options for PXC to `mysqldump` command
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v10.4.4
+- *(deps)* Update dependency winston to v3.15.0
+- *(deps)* Update dependency @directus/sdk to v17.0.2
+- *(deps)* Update dependency file-type to v19.6.0
+- *(deps)* Update nest monorepo
+- *(deps)* Update nest monorepo to v10.4.6
+- *(deps)* Update dependency nanoid to v5.0.8
+- *(deps)* Update dependency ora to v8.1.1
+- *(deps)* Update dependency winston to v3.16.0
+- *(backup-db)* Remove single-transaction falg for mysql 8 compatibility
+
+### 📚 Documentation
+
+- Update TODO
+
 ## [1.2.1] - 2024-09-17
 
 ### 🐛 Bug Fixes
