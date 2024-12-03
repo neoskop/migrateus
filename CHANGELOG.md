@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2024-12-03
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v10.4.7
+- *(deps)* Update dependency winston to v3.17.0 ([#190](https://github.com/neoskop/migrateus/issues/190))
+- *(deps)* Update nest monorepo to v10.4.8 ([#193](https://github.com/neoskop/migrateus/issues/193))
+- *(deps)* Update nest monorepo to v10.4.9 ([#204](https://github.com/neoskop/migrateus/issues/204))
+- *(deps)* Update dependency nanoid to v5.0.9 ([#210](https://github.com/neoskop/migrateus/issues/210))
+- *(deps)* Update nest monorepo to v10.4.10 ([#211](https://github.com/neoskop/migrateus/issues/211))
+- *(deps)* Update nest monorepo to v10.4.11 ([#212](https://github.com/neoskop/migrateus/issues/212))
+- *(deps)* Update nest monorepo to v10.4.12 ([#214](https://github.com/neoskop/migrateus/issues/214))
+- *(deps)* Update dependency dotenv to v16.4.6 ([#218](https://github.com/neoskop/migrateus/issues/218))
+- *(schema-diff)* Add array type to color map
+
 ## [1.3.0] - 2024-11-04
 
 ### 🚀 Features
