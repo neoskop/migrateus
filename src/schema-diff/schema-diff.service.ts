@@ -183,6 +183,7 @@ export class SchemaDiffService {
       E: { count: 0, color: chalk.whiteBright.bgYellow },
       N: { count: 0, color: chalk.whiteBright.bgGreen },
       D: { count: 0, color: chalk.whiteBright.bgRed },
+      A: { count: 0, color: chalk.whiteBright.bgBlue },
     };
 
     change.diff.forEach((field) => {
