@@ -61,7 +61,7 @@
     "shelljs": "0.8.5",
     "tmp": "0.2.3",
     "uuid": "11.0.3",
-    "which": "4.0.0",
+    "which": "5.0.0",
     "winston": "3.17.0"
   },
   "devDependencies": {
