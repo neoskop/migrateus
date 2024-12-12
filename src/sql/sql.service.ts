@@ -63,6 +63,7 @@ export class SqlService {
     const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysqldump',
+      '--set-gtid-purged=OFF',
       '--no-tablespaces',
       '--skip-lock-tables',
       '--skip-add-locks',

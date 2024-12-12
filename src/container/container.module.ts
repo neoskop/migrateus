@@ -18,5 +18,5 @@ import { K8sModule } from '../k8s/k8s.module.js';
   imports: [DockerModule, K8sModule],
 })
 export class ContainerModule {
-  public static DEFAULT_IMAGE = 'bitnami/mysql:5.7';
+  public static DEFAULT_IMAGE = 'bitnami/mysql:9.0.1';
 }
