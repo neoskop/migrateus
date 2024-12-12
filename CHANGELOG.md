@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2024-12-12
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency uuid to v11
+- *(deps)* Update nest monorepo to v10.4.13 ([#221](https://github.com/neoskop/migrateus/issues/221))
+- *(deps)* Update dependency dotenv to v16.4.7 ([#222](https://github.com/neoskop/migrateus/issues/222))
+- *(deps)* Update dependency @inquirer/expand to v4.0.3 ([#143](https://github.com/neoskop/migrateus/issues/143))
+- *(deps)* Update dependency @inquirer/password to v4.0.3 ([#144](https://github.com/neoskop/migrateus/issues/144))
+- *(deps)* Update dependency @inquirer/select to v4.0.3 ([#145](https://github.com/neoskop/migrateus/issues/145))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.0 ([#142](https://github.com/neoskop/migrateus/issues/142))
+- Fix interoperability issues between MySQL 5.7 and 8
+
+### ⚙️ Miscellaneous Tasks
+
+- Update deps
+- *(config)* Migrate config renovate.json
+
 ## [1.3.1] - 2024-12-03
 
 ### 🐛 Bug Fixes
