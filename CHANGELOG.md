@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2025-01-03
+
+### 🚀 Features
+
+- Print meaningful error messages for `kubectl` commands
+- Switch to pnpm
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @directus/sdk to v18.0.2 ([#231](https://github.com/neoskop/migrateus/issues/231))
+- *(deps)* Update dependency @directus/sdk to v18.0.3 ([#233](https://github.com/neoskop/migrateus/issues/233))
+- *(deps)* Update dependency chalk to v5.4.0 ([#234](https://github.com/neoskop/migrateus/issues/234))
+- *(deps)* Update dependency p-limit to v6.2.0 ([#235](https://github.com/neoskop/migrateus/issues/235))
+- *(deps)* Update dependency @inquirer/expand to v4.0.4 ([#236](https://github.com/neoskop/migrateus/issues/236))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.1 ([#237](https://github.com/neoskop/migrateus/issues/237))
+- *(deps)* Update dependency @inquirer/password to v4.0.4 ([#238](https://github.com/neoskop/migrateus/issues/238))
+- *(deps)* Update dependency @inquirer/select to v4.0.4 ([#239](https://github.com/neoskop/migrateus/issues/239))
+- *(deps)* Update dependency chalk to v5.4.1 ([#240](https://github.com/neoskop/migrateus/issues/240))
+
 ## [1.3.2] - 2024-12-12
 
 ### 🐛 Bug Fixes
