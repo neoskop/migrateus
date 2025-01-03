@@ -74,9 +74,9 @@ export abstract class BackupPerformer {
       if (!this.config.noAssets) {
         await this.sqlService.cleanUpDirectusUser(this.containerService);
       }
+      await this.containerService.cleanUp();
       await this.cleanUp();
-      this.containerService.cleanUp();
-      this.deleteTemporaryDirectory(backupDir);
+      await this.deleteTemporaryDirectory(backupDir);
       this.progressService.finish();
     }
   }

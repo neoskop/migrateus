@@ -52,9 +52,12 @@ export class K8sContainerService extends ContainerService {
 
   public async cleanUp() {
     this.logger.debug(`Deleting pod ${chalk.bold(this.migrateusPodName)}`);
-    await this.k8sService.kubectl(`delete pod ${this.migrateusPodName}`, {
-      silent: true,
-    });
+    await this.k8sService.kubectl(
+      `delete pod --ignore-not-found=true ${this.migrateusPodName}`,
+      {
+        silent: true,
+      },
+    );
   }
 
   public async cleanUpAll() {

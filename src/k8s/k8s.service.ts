@@ -146,7 +146,14 @@ export class K8sService {
     this.logger.debug(
       `Running ${highlight(fullCommand, { language: 'bash' })}`,
     );
-    return exec(fullCommand, options);
+
+    const result = await exec(fullCommand, options);
+
+    if (result.code !== 0) {
+      throw new Error(result.stderr);
+    }
+
+    return result;
   }
 
   public async kubectlApply(spec: object) {
