@@ -85,7 +85,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
     "genversion": "3.2.0",
-    "git-cliff": "2.7.0",
+    "git-cliff": "2.8.0",
     "jest": "^29.7.0",
     "jscpd": "4.0.5",
     "nest-commander-schematics": "3.0.2",
