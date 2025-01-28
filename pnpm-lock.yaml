@@ -15,8 +15,8 @@ importers:
         specifier: 5.1.4
         version: 5.1.4(@types/node@22.12.0)
       '@inquirer/expand':
-        specifier: 4.0.6
-        version: 4.0.6(@types/node@22.12.0)
+        specifier: 4.0.7
+        version: 4.0.7(@types/node@22.12.0)
       '@inquirer/password':
         specifier: 4.0.6
         version: 4.0.6(@types/node@22.12.0)
@@ -501,8 +501,8 @@ packages:
     resolution: {integrity: sha512-/vyCWhET0ktav/mUeBqJRYTwmjFPIKPRYb3COAw7qORULgipGSUO2vL32lQKki3UxDKJ8BvuEbokaoyCA6YlWw==}
     engines: {node: '>=18'}
 
-  '@inquirer/expand@4.0.6':
-    resolution: {integrity: sha512-TRTfi1mv1GeIZGyi9PQmvAaH65ZlG4/FACq6wSzs7Vvf1z5dnNWsAAXBjWMHt76l+1hUY8teIqJFrWBk5N6gsg==}
+  '@inquirer/expand@4.0.7':
+    resolution: {integrity: sha512-PsUQ5t7r+DPjW0VVEHzssOTBM2UPHnvBNse7hzuki7f6ekRL94drjjfBLrGEDe7cgj3pguufy/cuFwMeWUWHXw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -3989,10 +3989,10 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@inquirer/expand@4.0.6(@types/node@22.12.0)':
+  '@inquirer/expand@4.0.7(@types/node@22.12.0)':
     dependencies:
-      '@inquirer/core': 10.1.4(@types/node@22.12.0)
-      '@inquirer/type': 3.0.2(@types/node@22.12.0)
+      '@inquirer/core': 10.1.5(@types/node@22.12.0)
+      '@inquirer/type': 3.0.3(@types/node@22.12.0)
       '@types/node': 22.12.0
       yoctocolors-cjs: 2.1.2
 
