@@ -33,7 +33,7 @@
   "dependencies": {
     "@directus/sdk": "18.0.3",
     "@inquirer/confirm": "5.1.5",
-    "@inquirer/expand": "4.0.7",
+    "@inquirer/expand": "4.0.8",
     "@inquirer/password": "4.0.7",
     "@inquirer/select": "4.0.7",
     "@nestjs/common": "^10.4.15",
