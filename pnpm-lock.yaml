@@ -18,8 +18,8 @@ importers:
         specifier: 4.0.8
         version: 4.0.8(@types/node@22.13.0)
       '@inquirer/password':
-        specifier: 4.0.7
-        version: 4.0.7(@types/node@22.13.0)
+        specifier: 4.0.8
+        version: 4.0.8(@types/node@22.13.0)
       '@inquirer/select':
         specifier: 4.0.7
         version: 4.0.7(@types/node@22.13.0)
@@ -522,11 +522,14 @@ packages:
     resolution: {integrity: sha512-Ey6176gZmeqZuY/W/nZiUyvmb1/qInjcpiZjXWi6nON+nxJpD1bxtSoBxNliGISae32n6OwbY+TSXPZ1CfS4bw==}
     engines: {node: '>=18'}
 
-  '@inquirer/password@4.0.7':
-    resolution: {integrity: sha512-DFpqWLx+C5GV5zeFWuxwDYaeYnTWYphO07pQ2VnP403RIqRIpwBG0ATWf7pF+3IDbaXEtWatCJWxyDrJ+rkj2A==}
+  '@inquirer/password@4.0.8':
+    resolution: {integrity: sha512-MgA+Z7o3K1df2lGY649fyOBowHGfrKRz64dx3+b6c1w+h2W7AwBoOkHhhF/vfhbs5S4vsKNCuDzS3s9r5DpK1g==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
 
   '@inquirer/select@4.0.7':
     resolution: {integrity: sha512-ejGBMDSD+Iqk60u5t0Zf2UQhGlJWDM78Ep70XpNufIfc+f4VOTeybYKXu9pDjz87FkRzLiVsGpQG2SzuGlhaJw==}
@@ -3976,7 +3979,7 @@ snapshots:
   '@inquirer/core@10.1.5(@types/node@22.13.0)':
     dependencies:
       '@inquirer/figures': 1.0.10
-      '@inquirer/type': 3.0.3(@types/node@22.13.0)
+      '@inquirer/type': 3.0.4(@types/node@22.13.0)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -4009,12 +4012,13 @@ snapshots:
 
   '@inquirer/figures@1.0.10': {}
 
-  '@inquirer/password@4.0.7(@types/node@22.13.0)':
+  '@inquirer/password@4.0.8(@types/node@22.13.0)':
     dependencies:
-      '@inquirer/core': 10.1.5(@types/node@22.13.0)
-      '@inquirer/type': 3.0.3(@types/node@22.13.0)
-      '@types/node': 22.13.0
+      '@inquirer/core': 10.1.6(@types/node@22.13.0)
+      '@inquirer/type': 3.0.4(@types/node@22.13.0)
       ansi-escapes: 4.3.2
+    optionalDependencies:
+      '@types/node': 22.13.0
 
   '@inquirer/select@4.0.7(@types/node@22.13.0)':
     dependencies:
