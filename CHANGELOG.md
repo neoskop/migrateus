@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.2] - 2025-02-27
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency file-type to v20
+- *(deps)* Update nest monorepo to v11
+- *(deps)* Update dependency @directus/sdk to v19
+
 ## [1.4.1] - 2025-02-27
 
 ### 🐛 Bug Fixes
