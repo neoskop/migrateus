@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2025-02-27
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency uuid to v11.0.4 ([#248](https://github.com/neoskop/migrateus/issues/248))
+- *(deps)* Update dependency uuid to v11.0.5 ([#252](https://github.com/neoskop/migrateus/issues/252))
+- *(deps)* Update dependency glob to v11.0.1 ([#253](https://github.com/neoskop/migrateus/issues/253))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.2 ([#256](https://github.com/neoskop/migrateus/issues/256))
+- *(deps)* Update dependency @inquirer/expand to v4.0.5 ([#257](https://github.com/neoskop/migrateus/issues/257))
+- *(deps)* Update dependency @inquirer/password to v4.0.5 ([#258](https://github.com/neoskop/migrateus/issues/258))
+- *(deps)* Update dependency @inquirer/select to v4.0.5 ([#259](https://github.com/neoskop/migrateus/issues/259))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.3 ([#264](https://github.com/neoskop/migrateus/issues/264))
+- *(deps)* Update dependency @inquirer/expand to v4.0.6 ([#265](https://github.com/neoskop/migrateus/issues/265))
+- *(deps)* Update dependency @inquirer/password to v4.0.6 ([#266](https://github.com/neoskop/migrateus/issues/266))
+- *(deps)* Update dependency @inquirer/select to v4.0.6 ([#267](https://github.com/neoskop/migrateus/issues/267))
+- *(deps)* Update dependency nest-winston to v1.10.1 ([#268](https://github.com/neoskop/migrateus/issues/268))
+- *(deps)* Update dependency nest-winston to v1.10.2 ([#277](https://github.com/neoskop/migrateus/issues/277))
+- *(deps)* Update dependency nest-commander to v3.16.0 ([#286](https://github.com/neoskop/migrateus/issues/286))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.4 ([#288](https://github.com/neoskop/migrateus/issues/288))
+- *(deps)* Update dependency @inquirer/expand to v4.0.7 ([#289](https://github.com/neoskop/migrateus/issues/289))
+- *(deps)* Update dependency @inquirer/password to v4.0.7 ([#290](https://github.com/neoskop/migrateus/issues/290))
+- *(deps)* Update dependency @inquirer/select to v4.0.7 ([#291](https://github.com/neoskop/migrateus/issues/291))
+- *(deps)* Update dependency semver to v7.7.0 ([#292](https://github.com/neoskop/migrateus/issues/292))
+- *(deps)* Update dependency ora to v8.2.0 ([#294](https://github.com/neoskop/migrateus/issues/294))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.5 ([#295](https://github.com/neoskop/migrateus/issues/295))
+- *(deps)* Update dependency @inquirer/expand to v4.0.8 ([#296](https://github.com/neoskop/migrateus/issues/296))
+- *(deps)* Update dependency @inquirer/password to v4.0.8 ([#297](https://github.com/neoskop/migrateus/issues/297))
+- *(deps)* Update dependency @inquirer/select to v4.0.8 ([#298](https://github.com/neoskop/migrateus/issues/298))
+- *(deps)* Update dependency semver to v7.7.1 ([#301](https://github.com/neoskop/migrateus/issues/301))
+- *(deps)* Update dependency nanoid to v5.1.0 ([#311](https://github.com/neoskop/migrateus/issues/311))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.6 ([#312](https://github.com/neoskop/migrateus/issues/312))
+- *(deps)* Update dependency @inquirer/expand to v4.0.9 ([#313](https://github.com/neoskop/migrateus/issues/313))
+- *(deps)* Update dependency @inquirer/password to v4.0.9 ([#314](https://github.com/neoskop/migrateus/issues/314))
+- *(deps)* Update dependency @inquirer/select to v4.0.9 ([#315](https://github.com/neoskop/migrateus/issues/315))
+- *(deps)* Update dependency uuid to v11.1.0 ([#318](https://github.com/neoskop/migrateus/issues/318))
+- *(deps)* Update dependency rxjs to v7.8.2 ([#321](https://github.com/neoskop/migrateus/issues/321))
+- *(deps)* Update dependency nanoid to v5.1.2 ([#323](https://github.com/neoskop/migrateus/issues/323))
+- *(deps)* Update dependency portfinder to v1.0.33 ([#327](https://github.com/neoskop/migrateus/issues/327))
+- Fix directus asset service after dependency updates
+
 ## [1.4.0] - 2025-01-03
 
 ### 🚀 Features
