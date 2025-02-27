@@ -279,11 +279,30 @@ export class ConfigService {
     });
   }
 
-  public async getEnvironments() {
+  public getSchemaDiffIgnore() {
+    const schemaDiffIgnore = this.config.schemaDiff?.ignore || {};
+
+    const collections: Set<string> = new Set();
+    const fields: Record<string, string[]> = {};
+
+    for (const [collectionName, ignore] of Object.entries(schemaDiffIgnore)) {
+      if (typeof ignore === 'boolean') {
+        if (ignore) {
+          collections.add(collectionName);
+        }
+      } else {
+        fields[collectionName] = ignore;
+      }
+    }
+
+    return { collections, fields };
+  }
+
+  public getEnvironments() {
     return this.config.environments;
   }
 
-  public async getEnvironment(name: string) {
+  public getEnvironment(name: string) {
     return this.config.environments.find((env) => env.name === name);
   }
 

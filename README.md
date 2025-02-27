@@ -26,6 +26,11 @@ Migrateus needs you to describe the different environments in a YAML config file
 For that, create a `migrateus.yaml` file in the current directory. For example:
 
 ```yml
+schemaDiff:
+  ignore:
+    foo:
+      - bar # Ignore field `bar` of collection `foo`
+    baz: true # Ignore collection `baz`
 environments:
   - name: local
     platform: docker
@@ -48,7 +53,9 @@ environments:
     doubleCheck: true
 ```
 
-An environment takes the following options:
+Under the key `schemaDiff` you can specify which fields or collections to `ignore` during schema diffs.
+
+An environment under the key `environments` takes the following options:
 
 | Name          | Type                                    | Description                                        |
 | ------------- | --------------------------------------- | -------------------------------------------------- |

@@ -24,6 +24,7 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import confirm from '@inquirer/confirm';
 import semver from 'semver';
+import { Diff } from './diff.type.js';
 
 @Injectable()
 export class SchemaDiffService {
@@ -50,8 +51,7 @@ export class SchemaDiffService {
       const diffResponse = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
-
-      if (diffResponse.status === 204) {
+      if (!diffResponse || diffResponse.status === 204) {
         this.logger.info(
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
         );
@@ -157,7 +157,7 @@ export class SchemaDiffService {
   private async setupDirectusClient(name: string): Promise<RestClient<any>> {
     let port = 8055;
     let containerService: ContainerService;
-    const env = await this.config.getEnvironment(name);
+    const env = this.config.getEnvironment(name);
     this.environmentService.environment = env;
 
     if (env.platform === 'k8s') {
@@ -201,7 +201,7 @@ export class SchemaDiffService {
     return result;
   }
 
-  private async promptDecision(diff) {
+  private async promptDecision(diff: Diff) {
     const choice = await expand({
       message: `Accept changes to ${chalk.bold(
         diff.field ? diff.collection + '.' + diff.field : diff.collection,
@@ -236,9 +236,18 @@ export class SchemaDiffService {
     }
   }
 
-  private async processDiffs(diffs) {
+  private async processDiffs(diffs: Diff[]) {
+    const ignore = this.config.getSchemaDiffIgnore();
     const results = [];
     for (const diff of diffs) {
+      if (ignore.collections.has(diff.collection)) {
+        continue;
+      }
+
+      if (diff.field && ignore.fields[diff.collection]?.includes(diff.field)) {
+        continue;
+      }
+
       const decision = await this.promptDecision(diff);
       if (decision) {
         results.push(diff);
