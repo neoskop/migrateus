@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2025-02-27
+
+### 🚀 Features
+
+- *(schema-diff)* Add config option to ignore fields and collections
+
 ## [1.4.2] - 2025-02-27
 
 ### 🐛 Bug Fixes
