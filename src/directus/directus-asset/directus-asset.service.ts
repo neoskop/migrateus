@@ -20,7 +20,7 @@ import { DirectusService } from '../directus.service.js';
 import { mkdir } from 'node:fs/promises';
 import { glob } from 'glob';
 import { fileTypeFromFile } from 'file-type';
-import mime from 'mime';
+import * as mime from 'mime-types';
 import { ProgressBar } from '../../progress/progress-bar.js';
 import { ProgressBarUpdater } from '../../progress/progress-bar-updater.type.js';
 import { highlight } from 'cli-highlight';
