@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.1] - 2025-02-28
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v11.0.11 ([#329](https://github.com/neoskop/migrateus/issues/329))
+- Fix missing package
+- Fix import of `mime-types` package
+
 ## [1.5.0] - 2025-02-27
 
 ### 🚀 Features
