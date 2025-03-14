@@ -75,8 +75,8 @@ importers:
         specifier: 6.2.0
         version: 6.2.0
       portfinder:
-        specifier: 1.0.34
-        version: 1.0.34
+        specifier: 1.0.35
+        version: 1.0.35
       pretty-bytes:
         specifier: 6.1.1
         version: 6.1.1
@@ -2903,9 +2903,9 @@ packages:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
 
-  portfinder@1.0.34:
-    resolution: {integrity: sha512-aTyliYB9lpGRx0iUzgbLpCz3xiCEBsPOiukSp1X8fOnHalHCKNxxpv2cSc00Cc49mpWUtlyRVFHRSaRJF8ew3g==}
-    engines: {node: '>= 6.0'}
+  portfinder@1.0.35:
+    resolution: {integrity: sha512-73JaFg4NwYNAufDtS5FsFu/PdM49ahJrO1i44aCRsDWju1z5wuGDaqyFUQWR6aJoK2JPDWlaYYAGFNIGTSUHSw==}
+    engines: {node: '>= 10.12'}
 
   prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
@@ -6872,11 +6872,10 @@ snapshots:
 
   pluralize@8.0.0: {}
 
-  portfinder@1.0.34:
+  portfinder@1.0.35:
     dependencies:
       async: 3.2.6
       debug: 4.4.0(supports-color@5.5.0)
-      mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
 
