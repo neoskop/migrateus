@@ -48,7 +48,7 @@
     "glob": "11.0.1",
     "js-yaml": "4.1.0",
     "mime-types": "2.1.35",
-    "nanoid": "5.1.4",
+    "nanoid": "5.1.5",
     "nest-commander": "3.17.0",
     "nest-winston": "1.10.2",
     "ora": "8.2.0",
