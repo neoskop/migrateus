@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@directus/sdk':
-        specifier: 19.0.1
-        version: 19.0.1
+        specifier: 19.1.0
+        version: 19.1.0
       '@inquirer/confirm':
         specifier: 5.1.8
         version: 5.1.8(@types/node@22.13.13)
@@ -431,8 +431,8 @@ packages:
   '@dabh/diagnostics@2.0.3':
     resolution: {integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==}
 
-  '@directus/sdk@19.0.1':
-    resolution: {integrity: sha512-6KwWedA/vxrMN2aRm5L52TEgB+42vkz0Ae8kwOitHuBPT4VWtUNOXenzaHnZyXyNrEgh/VBLJ36f3UEe3b/Wfw==}
+  '@directus/sdk@19.1.0':
+    resolution: {integrity: sha512-Nqem9BsvvGyVtAa69mGPtoMoMVkZxdIREdsWvvTzNF4/1XqaFfEiFL7PhtUNfc46/Nufus2+QUKYQbNiAWe3ZA==}
     engines: {node: '>=22'}
 
   '@eslint-community/eslint-utils@4.5.1':
@@ -3963,7 +3963,7 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
-  '@directus/sdk@19.0.1': {}
+  '@directus/sdk@19.1.0': {}
 
   '@eslint-community/eslint-utils@4.5.1(eslint@9.23.0)':
     dependencies:
