@@ -18,8 +18,8 @@ importers:
         specifier: 4.0.12
         version: 4.0.12(@types/node@22.14.0)
       '@inquirer/password':
-        specifier: 4.0.11
-        version: 4.0.11(@types/node@22.14.0)
+        specifier: 4.0.12
+        version: 4.0.12(@types/node@22.14.0)
       '@inquirer/select':
         specifier: 4.1.0
         version: 4.1.0(@types/node@22.14.0)
@@ -580,8 +580,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/password@4.0.11':
-    resolution: {integrity: sha512-dH6zLdv+HEv1nBs96Case6eppkRggMe8LoOTl30+Gq5Wf27AO/vHFgStTVz4aoevLdNXqwE23++IXGw4eiOXTg==}
+  '@inquirer/password@4.0.12':
+    resolution: {integrity: sha512-FlOB0zvuELPEbnBYiPaOdJIaDzb2PmJ7ghi/SVwIHDDSQ2K4opGBkF+5kXOg6ucrtSUQdLhVVY5tycH0j0l+0g==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4021,9 +4021,9 @@ snapshots:
 
   '@inquirer/checkbox@4.1.4(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
       '@inquirer/figures': 1.0.11
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       ansi-escapes: 4.3.2
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
@@ -4064,8 +4064,8 @@ snapshots:
 
   '@inquirer/editor@4.2.9(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       external-editor: 3.1.0
     optionalDependencies:
       '@types/node': 22.14.0
@@ -4082,22 +4082,22 @@ snapshots:
 
   '@inquirer/input@4.1.8(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
     optionalDependencies:
       '@types/node': 22.14.0
 
   '@inquirer/number@3.0.11(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
     optionalDependencies:
       '@types/node': 22.14.0
 
-  '@inquirer/password@4.0.11(@types/node@22.14.0)':
+  '@inquirer/password@4.0.12(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       ansi-escapes: 4.3.2
     optionalDependencies:
       '@types/node': 22.14.0
@@ -4110,7 +4110,7 @@ snapshots:
       '@inquirer/expand': 4.0.12(@types/node@22.14.0)
       '@inquirer/input': 4.1.8(@types/node@22.14.0)
       '@inquirer/number': 3.0.11(@types/node@22.14.0)
-      '@inquirer/password': 4.0.11(@types/node@22.14.0)
+      '@inquirer/password': 4.0.12(@types/node@22.14.0)
       '@inquirer/rawlist': 4.0.11(@types/node@22.14.0)
       '@inquirer/search': 3.0.11(@types/node@22.14.0)
       '@inquirer/select': 4.1.0(@types/node@22.14.0)
@@ -4124,7 +4124,7 @@ snapshots:
       '@inquirer/expand': 4.0.12(@types/node@22.14.0)
       '@inquirer/input': 4.1.8(@types/node@22.14.0)
       '@inquirer/number': 3.0.11(@types/node@22.14.0)
-      '@inquirer/password': 4.0.11(@types/node@22.14.0)
+      '@inquirer/password': 4.0.12(@types/node@22.14.0)
       '@inquirer/rawlist': 4.0.11(@types/node@22.14.0)
       '@inquirer/search': 3.0.11(@types/node@22.14.0)
       '@inquirer/select': 4.1.0(@types/node@22.14.0)
@@ -4133,17 +4133,17 @@ snapshots:
 
   '@inquirer/rawlist@4.0.11(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 22.14.0
 
   '@inquirer/search@3.0.11(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
       '@inquirer/figures': 1.0.11
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 22.14.0
