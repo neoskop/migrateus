@@ -12,8 +12,8 @@ importers:
         specifier: 19.1.0
         version: 19.1.0
       '@inquirer/confirm':
-        specifier: 5.1.8
-        version: 5.1.8(@types/node@22.14.0)
+        specifier: 5.1.9
+        version: 5.1.9(@types/node@22.14.0)
       '@inquirer/expand':
         specifier: 4.0.12
         version: 4.0.12(@types/node@22.14.0)
@@ -513,8 +513,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/confirm@5.1.8':
-    resolution: {integrity: sha512-dNLWCYZvXDjO3rnQfk2iuJNL4Ivwz/T2+C3+WnNfJKsNGSuOs3wAo2F6e0p946gtSAk31nZMfW+MRmYaplPKsg==}
+  '@inquirer/confirm@5.1.9':
+    resolution: {integrity: sha512-NgQCnHqFTjF7Ys2fsqK2WtnA8X1kHyInyG+nMIuHowVTIgIuS10T4AznI/PvbqSpJqjCUqNBlKGh1v3bwLFL4w==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4029,10 +4029,10 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.14.0
 
-  '@inquirer/confirm@5.1.8(@types/node@22.14.0)':
+  '@inquirer/confirm@5.1.9(@types/node@22.14.0)':
     dependencies:
-      '@inquirer/core': 10.1.9(@types/node@22.14.0)
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/core': 10.1.10(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
     optionalDependencies:
       '@types/node': 22.14.0
 
@@ -4052,7 +4052,7 @@ snapshots:
   '@inquirer/core@10.1.9(@types/node@22.14.0)':
     dependencies:
       '@inquirer/figures': 1.0.11
-      '@inquirer/type': 3.0.5(@types/node@22.14.0)
+      '@inquirer/type': 3.0.6(@types/node@22.14.0)
       ansi-escapes: 4.3.2
       cli-width: 4.1.0
       mute-stream: 2.0.0
@@ -4105,7 +4105,7 @@ snapshots:
   '@inquirer/prompts@7.2.1(@types/node@22.14.0)':
     dependencies:
       '@inquirer/checkbox': 4.1.4(@types/node@22.14.0)
-      '@inquirer/confirm': 5.1.8(@types/node@22.14.0)
+      '@inquirer/confirm': 5.1.9(@types/node@22.14.0)
       '@inquirer/editor': 4.2.9(@types/node@22.14.0)
       '@inquirer/expand': 4.0.12(@types/node@22.14.0)
       '@inquirer/input': 4.1.8(@types/node@22.14.0)
@@ -4119,7 +4119,7 @@ snapshots:
   '@inquirer/prompts@7.3.2(@types/node@22.14.0)':
     dependencies:
       '@inquirer/checkbox': 4.1.4(@types/node@22.14.0)
-      '@inquirer/confirm': 5.1.8(@types/node@22.14.0)
+      '@inquirer/confirm': 5.1.9(@types/node@22.14.0)
       '@inquirer/editor': 4.2.9(@types/node@22.14.0)
       '@inquirer/expand': 4.0.12(@types/node@22.14.0)
       '@inquirer/input': 4.1.8(@types/node@22.14.0)
