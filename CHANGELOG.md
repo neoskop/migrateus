@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.2] - 2025-04-09
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency nest-commander to v3.16.1 ([#330](https://github.com/neoskop/migrateus/issues/330))
+- *(deps)* Update dependency nanoid to v5.1.3 ([#339](https://github.com/neoskop/migrateus/issues/339))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.7 ([#342](https://github.com/neoskop/migrateus/issues/342))
+- *(deps)* Update dependency @inquirer/expand to v4.0.10 ([#343](https://github.com/neoskop/migrateus/issues/343))
+- *(deps)* Update dependency @inquirer/password to v4.0.10 ([#344](https://github.com/neoskop/migrateus/issues/344))
+- *(deps)* Update dependency @inquirer/select to v4.0.10 ([#345](https://github.com/neoskop/migrateus/issues/345))
+- *(deps)* Update dependency portfinder to v1.0.34 ([#349](https://github.com/neoskop/migrateus/issues/349))
+- *(deps)* Update dependency file-type to v20.4.1 ([#350](https://github.com/neoskop/migrateus/issues/350))
+- *(deps)* Update dependency portfinder to v1.0.35 ([#351](https://github.com/neoskop/migrateus/issues/351))
+- *(deps)* Update dependency nest-commander to v3.17.0 ([#352](https://github.com/neoskop/migrateus/issues/352))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.8 ([#353](https://github.com/neoskop/migrateus/issues/353))
+- *(deps)* Update dependency @inquirer/expand to v4.0.11 ([#354](https://github.com/neoskop/migrateus/issues/354))
+- *(deps)* Update dependency @inquirer/password to v4.0.11 ([#355](https://github.com/neoskop/migrateus/issues/355))
+- *(deps)* Update dependency @inquirer/select to v4.1.0 ([#356](https://github.com/neoskop/migrateus/issues/356))
+- *(deps)* Update dependency nanoid to v5.1.4 ([#357](https://github.com/neoskop/migrateus/issues/357))
+- *(deps)* Update dependency nanoid to v5.1.5 ([#359](https://github.com/neoskop/migrateus/issues/359))
+- *(deps)* Update nest monorepo to v11.0.12 ([#360](https://github.com/neoskop/migrateus/issues/360))
+- *(deps)* Update dependency @directus/sdk to v19.1.0 ([#374](https://github.com/neoskop/migrateus/issues/374))
+- *(deps)* Update nest monorepo to v11.0.13 ([#386](https://github.com/neoskop/migrateus/issues/386))
+- *(deps)* Update dependency @inquirer/expand to v4.0.12 ([#387](https://github.com/neoskop/migrateus/issues/387))
+- *(deps)* Update dependency @inquirer/password to v4.0.12 ([#388](https://github.com/neoskop/migrateus/issues/388))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.9 ([#389](https://github.com/neoskop/migrateus/issues/389))
+- *(deps)* Update dependency @inquirer/select to v4.1.1 ([#390](https://github.com/neoskop/migrateus/issues/390))
+- Fix Directus asset service typings
+- *(deps)* Update dependency shelljs to v0.9.2
+- *(deps)* Update dependency mime-types to v3
+- *(deps)* Update nest monorepo to v11.0.14 ([#397](https://github.com/neoskop/migrateus/issues/397))
+
 ## [1.5.1] - 2025-02-28
 
 ### 🐛 Bug Fixes
