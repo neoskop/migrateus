@@ -93,7 +93,9 @@ export class DirectusAssetService {
     const formData = new FormData();
     const readStream = fs.createReadStream(assetPath);
     const chunks: Buffer[] = [];
-    readStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    readStream.on('data', (chunk: Buffer | string) =>
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk),
+    );
     await new Promise<void>((resolve) => readStream.on('end', resolve));
     const blob = new Blob(chunks, { type: mime.lookup(assetPath) });
     formData.append('file', blob, parsedPath.base);
