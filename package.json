@@ -82,7 +82,7 @@
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
     "eslint": "^9.16.0",
-    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-prettier": "^10.0.0",
     "eslint-plugin-prettier": "^5.2.1",
     "genversion": "3.2.0",
     "git-cliff": "2.8.0",
