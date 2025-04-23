@@ -178,8 +178,8 @@ importers:
         specifier: 3.1.0
         version: 3.1.0(chokidar@4.0.3)
       nodemon:
-        specifier: 3.1.9
-        version: 3.1.9
+        specifier: 3.1.10
+        version: 3.1.10
       prettier:
         specifier: ^3.4.2
         version: 3.5.3
@@ -1903,6 +1903,7 @@ packages:
 
   formidable@3.5.3:
     resolution: {integrity: sha512-pQEHGLZjLRyfLCe6r6n8IQGqHEceKfYR5tIf/iUDn5SabaitfVR/pIskxnyvSSl122J63rFY17i68hrfK0BVOA==}
+    deprecated: 'ATTENTION: please upgrade to latest of v3 (v3.5.4), should be working on Node v14, v16, v18 and recent lts'
 
   forwarded@0.2.0:
     resolution: {integrity: sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==}
@@ -2719,8 +2720,8 @@ packages:
     resolution: {integrity: sha512-Pzr3rol8fvhG/oJjIq2NTVB0vmdNNlz22FENhhPojYRZ4/ee08CfK4YuKmuL54V9MLhI1kpzxfOJ/63LzmZzDg==}
     engines: {node: '>=14'}
 
-  nodemon@3.1.9:
-    resolution: {integrity: sha512-hdr1oIb2p6ZSxu3PB2JWWYS7ZQ0qvaZsc3hK8DR8f02kRzc8rjYmxAIvdz+aYC+8F2IjNaB7HMcSDg8nQpJxyg==}
+  nodemon@3.1.10:
+    resolution: {integrity: sha512-WDjw3pJ0/0jMFmyNDp3gvY2YizjLmmOUQo6DEBY+JgdvW/yQ9mEeSw6H5ythl5Ny2ytb7f9C2nIbjSxMNzbJXw==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -6716,7 +6717,7 @@ snapshots:
       '@types/sarif': 2.1.7
       fs-extra: 10.1.0
 
-  nodemon@3.1.9:
+  nodemon@3.1.10:
     dependencies:
       chokidar: 3.6.0
       debug: 4.4.0(supports-color@5.5.0)
