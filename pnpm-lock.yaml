@@ -21,8 +21,8 @@ importers:
         specifier: 4.0.12
         version: 4.0.12(@types/node@22.14.1)
       '@inquirer/select':
-        specifier: 4.1.1
-        version: 4.1.1(@types/node@22.14.1)
+        specifier: 4.2.0
+        version: 4.2.0(@types/node@22.14.1)
       '@nestjs/common':
         specifier: ^11.0.0
         version: 11.1.0(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -616,8 +616,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/select@4.1.1':
-    resolution: {integrity: sha512-IUXzzTKVdiVNMA+2yUvPxWsSgOG4kfX93jOM4Zb5FgujeInotv5SPIJVeXQ+fO4xu7tW8VowFhdG5JRmmCyQ1Q==}
+  '@inquirer/select@4.2.0':
+    resolution: {integrity: sha512-KkXQ4aSySWimpV4V/TUJWdB3tdfENZUU765GjOIZ0uPwdbGIG6jrxD4dDf1w68uP+DVtfNhr1A92B+0mbTZ8FA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4144,7 +4144,7 @@ snapshots:
       '@inquirer/password': 4.0.12(@types/node@22.14.1)
       '@inquirer/rawlist': 4.0.12(@types/node@22.14.1)
       '@inquirer/search': 3.0.12(@types/node@22.14.1)
-      '@inquirer/select': 4.1.1(@types/node@22.14.1)
+      '@inquirer/select': 4.2.0(@types/node@22.14.1)
     optionalDependencies:
       '@types/node': 22.14.1
 
@@ -4159,7 +4159,7 @@ snapshots:
       '@inquirer/password': 4.0.12(@types/node@22.14.1)
       '@inquirer/rawlist': 4.0.12(@types/node@22.14.1)
       '@inquirer/search': 3.0.12(@types/node@22.14.1)
-      '@inquirer/select': 4.1.1(@types/node@22.14.1)
+      '@inquirer/select': 4.2.0(@types/node@22.14.1)
     optionalDependencies:
       '@types/node': 22.14.1
 
@@ -4180,7 +4180,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.14.1
 
-  '@inquirer/select@4.1.1(@types/node@22.14.1)':
+  '@inquirer/select@4.2.0(@types/node@22.14.1)':
     dependencies:
       '@inquirer/core': 10.1.10(@types/node@22.14.1)
       '@inquirer/figures': 1.0.11
