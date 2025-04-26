@@ -12,9 +12,15 @@ import { EnvironmentModule } from '../environment/environment.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { UpdateModule } from '../update/update.module.js';
+import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
 
 @Module({
-  providers: [SchemaDiffCommand, SchemaDiffQuestions, SchemaDiffService],
+  providers: [
+    SchemaDiffCommand,
+    SchemaDiffQuestions,
+    SchemaDiffService,
+    SchemaDiffPromptService,
+  ],
   imports: [
     ConfigModule,
     K8sModule,

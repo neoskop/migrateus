@@ -10,7 +10,6 @@ import {
   serverInfo,
 } from '@directus/sdk';
 import chalk from 'chalk';
-import expand from '@inquirer/expand';
 import { DockerService } from '../docker/docker.service.js';
 import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
 import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
@@ -24,7 +23,8 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import confirm from '@inquirer/confirm';
 import semver from 'semver';
-import { Diff } from './diff.type.js';
+import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
+import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class SchemaDiffService {
@@ -40,6 +40,7 @@ export class SchemaDiffService {
     private readonly sqlService: SqlService,
     private readonly directusUserService: DirectusUserService,
     private readonly environmentService: EnvironmentService,
+    private readonly schemaDiffPromptService: SchemaDiffPromptService,
   ) {}
 
   public async diff(from: string, to: string) {
@@ -48,41 +49,29 @@ export class SchemaDiffService {
       const toClient = await this.setupDirectusClient(to);
       await this.checkVersions(from, fromClient, to, toClient);
       const snapshot = await fromClient.request(schemaSnapshot());
-      const diffResponse = await toClient.request<
+      const diffOutput = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
-      if (!diffResponse || diffResponse.status === 204) {
+      if (!diffOutput || diffOutput.status === 204) {
         this.logger.info(
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
         );
       } else {
-        if (diffResponse.diff.collections.length > 0) {
-          diffResponse.diff.collections = await this.processDiffs(
-            diffResponse.diff.collections,
-          );
-        }
-
-        if (diffResponse.diff.fields.length > 0) {
-          diffResponse.diff.fields = await this.processDiffs(
-            diffResponse.diff.fields,
-          );
-        }
-
-        if (diffResponse.diff.relations.length > 0) {
-          diffResponse.diff.relations = await this.processDiffs(
-            diffResponse.diff.relations,
-          );
-        }
+        const filteredDiff = await this.schemaDiffPromptService.prompt({
+          from,
+          to,
+          diffOutput,
+        });
 
         const changes =
-          diffResponse.diff.collections.length +
-          diffResponse.diff.fields.length +
-          diffResponse.diff.relations.length;
+          filteredDiff.diff.collections.length +
+          filteredDiff.diff.fields.length +
+          filteredDiff.diff.relations.length;
 
         if (changes > 0) {
           await this.doubleCheck(changes);
           this.logger.info(`Will apply ${chalk.bold(changes)} changes!`);
-          await this.applyDiff(toClient, diffResponse);
+          await this.applyDiff(toClient, filteredDiff);
         } else {
           this.logger.info(`No changes to apply!`);
         }
@@ -133,7 +122,7 @@ export class SchemaDiffService {
   }
 
   private async cleanUpEnv(name: string) {
-    const env = await this.config.getEnvironment(name);
+    const env = this.config.getEnvironment(name);
     this.environmentService.environment = env;
 
     if (env.platform === 'k8s') {
@@ -176,84 +165,6 @@ export class SchemaDiffService {
     this.containerServices[name] = containerService;
     await this.sqlService.setupDirectusUser(containerService);
     return this.directus.getClient(port, this.directusUserService.token);
-  }
-
-  private coloredChangeSummary(change) {
-    const colorMap = {
-      E: { count: 0, color: chalk.whiteBright.bgYellow },
-      N: { count: 0, color: chalk.whiteBright.bgGreen },
-      D: { count: 0, color: chalk.whiteBright.bgRed },
-      A: { count: 0, color: chalk.whiteBright.bgBlue },
-    };
-
-    change.diff.forEach((field) => {
-      colorMap[field.kind].count++;
-    });
-
-    let result = '';
-
-    Object.values(colorMap).forEach(({ count, color }) => {
-      if (count > 0) {
-        result += color(` ${count} `);
-      }
-    });
-
-    return result;
-  }
-
-  private async promptDecision(diff: Diff) {
-    const choice = await expand({
-      message: `Accept changes to ${chalk.bold(
-        diff.field ? diff.collection + '.' + diff.field : diff.collection,
-      )} ${this.coloredChangeSummary(diff)}?`,
-      default: 'y',
-      choices: [
-        {
-          key: 'y',
-          name: 'Accept change',
-          value: 'accept',
-        },
-        {
-          key: 'n',
-          name: 'Decline change',
-          value: 'decline',
-        },
-        {
-          key: 'd',
-          name: 'Show details',
-          value: 'details',
-        },
-      ],
-    });
-
-    if (choice === 'accept') {
-      return true;
-    } else if (choice === 'decline') {
-      return false;
-    } else if (choice === 'details') {
-      console.dir(diff, { depth: null, colors: true });
-      return this.promptDecision(diff);
-    }
-  }
-
-  private async processDiffs(diffs: Diff[]) {
-    const ignore = this.config.getSchemaDiffIgnore();
-    const results = [];
-    for (const diff of diffs) {
-      if (ignore.collections.has(diff.collection)) {
-        continue;
-      }
-
-      if (diff.field && ignore.fields[diff.collection]?.includes(diff.field)) {
-        continue;
-      }
-
-      const decision = await this.promptDecision(diff);
-      if (decision) {
-        results.push(diff);
-      }
-    }
-    return results;
   }
 
   private async applyDiff(client: RestClient<any>, diff) {

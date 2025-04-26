@@ -31,6 +31,7 @@ export class ConfigService {
   public noAssets = false;
   public envConfig: dotenv.DotenvParseOutput;
   public force: boolean = false;
+  public pageSize: number = 25;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,

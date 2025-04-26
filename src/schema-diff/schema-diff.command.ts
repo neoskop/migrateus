@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { Command, InquirerService } from 'nest-commander';
+import { Command, InquirerService, Option } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { Logger } from 'winston';
@@ -44,6 +44,14 @@ export class SchemaDiffCommand extends MigrateusCommand {
       containerServices,
       updateService,
     );
+  }
+
+  @Option({
+    flags: '-ps, --page-size [pageSize]',
+    description: 'Page size for pagination in change selection prompt',
+  })
+  setPageSize(pageSize: number) {
+    this.config.pageSize = pageSize;
   }
 
   async execute(params: string[]): Promise<void> {
