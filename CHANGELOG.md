@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-04-26
+
+### 🚀 Features
+
+- *(schema-diff)* Add multi-select for changes instead of a series of questions
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v11.0.15 ([#399](https://github.com/neoskop/migrateus/issues/399))
+- *(deps)* Update dependency dotenv to v16.5.0 ([#400](https://github.com/neoskop/migrateus/issues/400))
+- *(deps)* Update nest monorepo to v11.0.16 ([#401](https://github.com/neoskop/migrateus/issues/401))
+- *(deps)* Update nest monorepo to v11.0.17 ([#405](https://github.com/neoskop/migrateus/issues/405))
+- *(deps)* Update dependency portfinder to v1.0.36 ([#406](https://github.com/neoskop/migrateus/issues/406))
+- *(deps)* Update nest monorepo to v11.0.19 ([#409](https://github.com/neoskop/migrateus/issues/409))
+- *(deps)* Update nest monorepo to v11.0.20 ([#410](https://github.com/neoskop/migrateus/issues/410))
+- *(deps)* Update nest monorepo to v11.0.7 ([#415](https://github.com/neoskop/migrateus/issues/415))
+- *(deps)* Update dependency glob to v11.0.2 ([#416](https://github.com/neoskop/migrateus/issues/416))
+- *(deps)* Update dependency @inquirer/select to v4.2.0 ([#417](https://github.com/neoskop/migrateus/issues/417))
+
 ## [1.5.2] - 2025-04-09
 
 ### 🐛 Bug Fixes
