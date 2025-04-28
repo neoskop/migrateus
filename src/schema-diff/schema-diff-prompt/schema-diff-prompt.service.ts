@@ -42,6 +42,7 @@ export class SchemaDiffPromptService {
           `? Select the changes to apply from ${chalk.bold(opts.from)} to ${chalk.bold(opts.to)}`,
           `${chalk.bold('↑')} and ${chalk.bold('↓')} to navigate`,
           `${chalk.bold('space')} to select a change`,
+          `${chalk.bold('d')} to show/hide details`,
           `${chalk.bold('enter')} to apply selected changes`,
         ].join('\n  ');
         useKeypress((key, _readline) => {
@@ -100,6 +101,10 @@ export class SchemaDiffPromptService {
           item.selected = !item.selected;
         }
       });
+      setItems(newItems);
+    } else if (key.name === 'd') {
+      const newItems = new Array(...items);
+      items[active].showDetails = !items[active].showDetails;
       setItems(newItems);
     }
   }

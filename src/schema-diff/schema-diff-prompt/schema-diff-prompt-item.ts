@@ -3,12 +3,14 @@ import { ChangeType } from './types/change-type.enum.js';
 import { Change } from './types/diff.type.js';
 import { Kind } from './types/kind.type.js';
 import chalk from 'chalk';
+import { highlight } from 'cli-highlight';
 
 export class SchemaDiffPromptItem {
   public readonly change: Change;
   public readonly indent: boolean;
   public readonly type: ChangeType;
   public selected: boolean;
+  public showDetails: boolean;
 
   public constructor(
     public opts: {
@@ -18,7 +20,11 @@ export class SchemaDiffPromptItem {
       selected?: boolean;
     },
   ) {
-    Object.assign(this, { indent: false, selected: false }, opts);
+    Object.assign(
+      this,
+      { indent: false, selected: false, showDetails: false },
+      opts,
+    );
   }
 
   public static fromCollection(collection: Change): SchemaDiffPromptItem {
@@ -44,10 +50,21 @@ export class SchemaDiffPromptItem {
     });
   }
 
+  public getDetails(): string[] {
+    return this.change.diff.map((diff) => {
+      return highlight(JSON.stringify(diff), { language: 'json' });
+    });
+  }
+
   public render(active: boolean): string {
     const cursor = active ? figures.pointer : ' ';
     const checkbox = this.selected ? figures.circleFilled : figures.circle;
-    return `${this.indent ? '  ' : ''}${cursor} ${checkbox} ${this.colorizeDiff(this.change)}`;
+    const details = this.showDetails
+      ? this.getDetails()
+          .map((detail) => `\n${this.indent ? '  ' : ''}    ${detail}`)
+          .join('')
+      : '';
+    return `${this.indent ? '  ' : ''}${cursor} ${checkbox} ${this.colorizeDiff(this.change)}${details}`;
   }
 
   private colorizeDiff(change: Change) {
