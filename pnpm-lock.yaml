@@ -18,8 +18,8 @@ importers:
         specifier: 10.1.11
         version: 10.1.11(@types/node@22.15.17)
       '@inquirer/expand':
-        specifier: 4.0.12
-        version: 4.0.12(@types/node@22.15.17)
+        specifier: 4.0.13
+        version: 4.0.13(@types/node@22.15.17)
       '@inquirer/figures':
         specifier: 1.0.11
         version: 1.0.11
@@ -549,8 +549,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/expand@4.0.12':
-    resolution: {integrity: sha512-jV8QoZE1fC0vPe6TnsOfig+qwu7Iza1pkXoUJ3SroRagrt2hxiL+RbM432YAihNR7m7XnU0HWl/WQ35RIGmXHw==}
+  '@inquirer/expand@4.0.13':
+    resolution: {integrity: sha512-HgYNWuZLHX6q5y4hqKhwyytqAghmx35xikOGY3TcgNiElqXGPas24+UzNPOwGUZa5Dn32y25xJqVeUcGlTv+QQ==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4144,7 +4144,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.15.17
 
-  '@inquirer/expand@4.0.12(@types/node@22.15.17)':
+  '@inquirer/expand@4.0.13(@types/node@22.15.17)':
     dependencies:
       '@inquirer/core': 10.1.11(@types/node@22.15.17)
       '@inquirer/type': 3.0.6(@types/node@22.15.17)
@@ -4181,7 +4181,7 @@ snapshots:
       '@inquirer/checkbox': 4.1.5(@types/node@22.15.17)
       '@inquirer/confirm': 5.1.10(@types/node@22.15.17)
       '@inquirer/editor': 4.2.10(@types/node@22.15.17)
-      '@inquirer/expand': 4.0.12(@types/node@22.15.17)
+      '@inquirer/expand': 4.0.13(@types/node@22.15.17)
       '@inquirer/input': 4.1.9(@types/node@22.15.17)
       '@inquirer/number': 3.0.12(@types/node@22.15.17)
       '@inquirer/password': 4.0.12(@types/node@22.15.17)
@@ -4196,7 +4196,7 @@ snapshots:
       '@inquirer/checkbox': 4.1.5(@types/node@22.15.17)
       '@inquirer/confirm': 5.1.10(@types/node@22.15.17)
       '@inquirer/editor': 4.2.10(@types/node@22.15.17)
-      '@inquirer/expand': 4.0.12(@types/node@22.15.17)
+      '@inquirer/expand': 4.0.13(@types/node@22.15.17)
       '@inquirer/input': 4.1.9(@types/node@22.15.17)
       '@inquirer/number': 3.0.12(@types/node@22.15.17)
       '@inquirer/password': 4.0.12(@types/node@22.15.17)
