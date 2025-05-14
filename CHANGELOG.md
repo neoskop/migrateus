@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-05-14
+
+### 🚀 Features
+
+- *(schema-diff)* Add key to show details
+- *(schema-diff)* Allow saving of raw schema diff to disk
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency argon2 to v0.43.0
+- *(deps)* Update dependency file-type to v20.5.0 ([#423](https://github.com/neoskop/migrateus/issues/423))
+- *(deps)* Update dependency portfinder to v1.0.37 ([#427](https://github.com/neoskop/migrateus/issues/427))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.10 ([#444](https://github.com/neoskop/migrateus/issues/444))
+- *(deps)* Update dependency @inquirer/core to v10.1.11 ([#445](https://github.com/neoskop/migrateus/issues/445))
+- *(deps)* Update dependency @inquirer/expand to v4.0.13 ([#446](https://github.com/neoskop/migrateus/issues/446))
+- *(deps)* Update dependency @inquirer/password to v4.0.13 ([#447](https://github.com/neoskop/migrateus/issues/447))
+- *(deps)* Update dependency @inquirer/select to v4.2.1 ([#448](https://github.com/neoskop/migrateus/issues/448))
+- *(deps)* Update dependency semver to v7.7.2 ([#452](https://github.com/neoskop/migrateus/issues/452))
+- Show better error when refrenced environment was not found
+- *(schema-diff)* Fix missing items when the collection was not affected
+
 ## [2.0.0] - 2025-04-26
 
 ### 🚀 Features
