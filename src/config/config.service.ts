@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import * as fs from 'fs';
 import yaml from 'js-yaml';
 import { Config } from './config.interface.js';
@@ -304,7 +304,15 @@ export class ConfigService {
   }
 
   public getEnvironment(name: string) {
-    return this.config.environments.find((env) => env.name === name);
+    const env = this.config.environments.find((env) => env.name === name);
+
+    if (!env) {
+      throw new BadRequestException(
+        `Environment ${chalk.bold(name)} not found`,
+      );
+    }
+
+    return env;
   }
 
   private async findFirstFileForPattern(pattern: string) {
