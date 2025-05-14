@@ -32,6 +32,7 @@ export class ConfigService {
   public envConfig: dotenv.DotenvParseOutput;
   public force: boolean = false;
   public pageSize: number = 25;
+  public schemaDiffSavePath: string = null;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,

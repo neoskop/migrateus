@@ -23,8 +23,9 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import confirm from '@inquirer/confirm';
 import semver from 'semver';
+import fs from 'node:fs';
+import yaml from 'js-yaml';
 import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
-import { highlight } from 'cli-highlight';
 
 @Injectable()
 export class SchemaDiffService {
@@ -57,6 +58,16 @@ export class SchemaDiffService {
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
         );
       } else {
+        if (this.config.schemaDiffSavePath) {
+          this.logger.debug(
+            `Saving diff to ${chalk.bold(this.config.schemaDiffSavePath)}`,
+          );
+          await fs.promises.writeFile(
+            this.config.schemaDiffSavePath,
+            yaml.dump(diffOutput),
+          );
+        }
+
         const filteredDiff = await this.schemaDiffPromptService.prompt({
           from,
           to,

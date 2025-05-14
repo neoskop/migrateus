@@ -54,6 +54,14 @@ export class SchemaDiffCommand extends MigrateusCommand {
     this.config.pageSize = pageSize;
   }
 
+  @Option({
+    flags: '-s, --save [savePath]',
+    description: 'Set path to save schema diff to (as YAML)',
+  })
+  setSave(savePath: string) {
+    this.config.schemaDiffSavePath = savePath;
+  }
+
   async execute(params: string[]): Promise<void> {
     let [from, to] = params;
 
