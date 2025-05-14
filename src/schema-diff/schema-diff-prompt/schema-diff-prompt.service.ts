@@ -10,19 +10,24 @@ import {
   usePagination,
 } from '@inquirer/core';
 import { type Prompt } from '@inquirer/type';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '../../config/config.service.js';
 import chalk from 'chalk';
 import { SchemaDiffPromptConfig } from './types/schema-diff-prompt-config.type.js';
 import { ChangeType } from './types/change-type.enum.js';
 import { SchemaDiffPromptItem } from './schema-diff-prompt-item.js';
 import { SchemaDiffOutput } from '@directus/sdk';
+import { Change } from './types/diff.type.js';
+import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class SchemaDiffPromptService {
   public prompt: Prompt<SchemaDiffOutput, SchemaDiffPromptConfig>;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+  ) {
     this.setupPrompt();
   }
 
@@ -97,7 +102,7 @@ export class SchemaDiffPromptService {
     } else if (isSpaceKey(key)) {
       const newItems = new Array(...items);
       items.forEach((item, index) => {
-        if (index === active) {
+        if (index === active && item.selectable) {
           item.selected = !item.selected;
         }
       });
@@ -111,39 +116,58 @@ export class SchemaDiffPromptService {
 
   private createItems(opts: SchemaDiffPromptConfig) {
     const ignore = this.config.getSchemaDiffIgnore();
-    return useState<Array<SchemaDiffPromptItem>>(
-      opts.diffOutput.diff.collections
-        .filter((collection) => !ignore.collections.has(collection.collection))
-        .map((collection) => {
-          const items = [SchemaDiffPromptItem.fromCollection(collection)]
-            .concat(
-              opts.diffOutput.diff.fields
-                .filter((field) => field.collection === collection.collection)
-                .filter(
-                  (field) =>
-                    !ignore.fields[collection.collection]?.includes(
-                      field.field,
-                    ),
-                )
-                .map((field) => SchemaDiffPromptItem.fromField(field)),
-            )
-            .concat(
-              opts.diffOutput.diff.relations
-                .filter(
-                  (relation) => relation.collection === collection.collection,
-                )
-                .filter(
-                  (relation) =>
-                    !ignore.fields[collection.collection]?.includes(
-                      relation.field,
-                    ),
-                )
-                .map((relation) => SchemaDiffPromptItem.fromRelation(relation)),
-            );
 
-          return items;
-        })
-        .flat(),
+    const collections: string[] = Array.from(
+      new Set([
+        ...opts.diffOutput.diff.collections.map(({ collection }) => collection),
+        ...opts.diffOutput.diff.relations.map(({ collection }) => collection),
+        ...opts.diffOutput.diff.fields.map(({ collection }) => collection),
+      ]),
     );
+
+    const items = collections
+      .filter((collection) => !ignore.collections.has(collection))
+      .map((collectionName) => {
+        const collectionItems = this.getItems(
+          collectionName,
+          opts.diffOutput.diff.collections,
+          SchemaDiffPromptItem.fromCollection,
+        );
+
+        const fieldItems = this.getItems(
+          collectionName,
+          opts.diffOutput.diff.fields,
+          SchemaDiffPromptItem.fromField,
+          (field) => !ignore.fields[collectionName]?.includes(field.field),
+        );
+
+        const relationItems = this.getItems(
+          collectionName,
+          opts.diffOutput.diff.relations,
+          SchemaDiffPromptItem.fromRelation,
+          (relation) =>
+            !ignore.fields[collectionName]?.includes(relation.field),
+        );
+
+        if (collectionItems.length === 0) {
+          collectionItems.push(SchemaDiffPromptItem.getDummy(collectionName));
+        }
+
+        return [...collectionItems, ...fieldItems, ...relationItems];
+      });
+
+    return useState<Array<SchemaDiffPromptItem>>(items.flat());
+  }
+
+  private getItems(
+    collectionName: string,
+    changes: Change[],
+    itemFn: (change: Change) => SchemaDiffPromptItem,
+    filterFn?: (change: Change) => boolean,
+  ): SchemaDiffPromptItem[] {
+    return changes
+      .filter((change) => change.collection === collectionName)
+      .filter(filterFn || (() => true))
+      .map(itemFn);
   }
 }

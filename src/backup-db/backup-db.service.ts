@@ -14,7 +14,7 @@ export class BackupDbService {
   ) {}
 
   public async backup(sourceEnvironment: string, backupFile: string) {
-    const environment = await this.config.getEnvironment(sourceEnvironment);
+    const environment = this.config.getEnvironment(sourceEnvironment);
     this.environmentService.environment = environment;
 
     if (environment.platform.startsWith('docker')) {

@@ -6,23 +6,25 @@ import chalk from 'chalk';
 import { highlight } from 'cli-highlight';
 
 export class SchemaDiffPromptItem {
-  public readonly change: Change;
+  public readonly change: Change | undefined;
   public readonly indent: boolean;
-  public readonly type: ChangeType;
+  public readonly type: ChangeType | undefined;
+  public readonly selectable: boolean;
   public selected: boolean;
   public showDetails: boolean;
 
   public constructor(
     public opts: {
-      change: Change;
-      type: ChangeType;
+      change?: Change;
+      type?: ChangeType;
       indent?: boolean;
       selected?: boolean;
+      selectable?: boolean;
     },
   ) {
     Object.assign(
       this,
-      { indent: false, selected: false, showDetails: false },
+      { indent: false, selected: false, selectable: true, showDetails: false },
       opts,
     );
   }
@@ -50,8 +52,15 @@ export class SchemaDiffPromptItem {
     });
   }
 
+  public static getDummy(collection: string) {
+    return new SchemaDiffPromptItem({
+      change: { collection, diff: [] },
+      selectable: false,
+    });
+  }
+
   public getDetails(): string[] {
-    return this.change.diff.map((diff) => {
+    return this.change?.diff.map((diff) => {
       return highlight(JSON.stringify(diff), { language: 'json' });
     });
   }
@@ -68,6 +77,10 @@ export class SchemaDiffPromptItem {
   }
 
   private colorizeDiff(change: Change) {
+    if (typeof this.type === 'undefined') {
+      return change.collection;
+    }
+
     const kind = change.diff[0].kind;
     return this.kindToColor(kind)(
       change.field ? change.field : change.collection,
