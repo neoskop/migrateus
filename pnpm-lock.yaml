@@ -24,8 +24,8 @@ importers:
         specifier: 1.0.12
         version: 1.0.12
       '@inquirer/password':
-        specifier: 4.0.13
-        version: 4.0.13(@types/node@22.15.21)
+        specifier: 4.0.14
+        version: 4.0.14(@types/node@22.15.21)
       '@inquirer/select':
         specifier: 4.2.1
         version: 4.2.1(@types/node@22.15.21)
@@ -580,8 +580,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/password@4.0.13':
-    resolution: {integrity: sha512-NN0S/SmdhakqOTJhDwOpeBEEr8VdcYsjmZHDb0rblSh2FcbXQOr+2IApP7JG4WE3sxIdKytDn4ed3XYwtHxmJQ==}
+  '@inquirer/password@4.0.14':
+    resolution: {integrity: sha512-/N/5PeI+QWE23dTn2D4erD9Y3yYeh0bUDkO9tt2d11mAVuCswiOKzoHrV9KYGQhoD6ae+Nff1G8TPqbfUUh8Ag==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4088,10 +4088,10 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.15.21
 
-  '@inquirer/password@4.0.13(@types/node@22.15.21)':
+  '@inquirer/password@4.0.14(@types/node@22.15.21)':
     dependencies:
       '@inquirer/core': 10.1.12(@types/node@22.15.21)
-      '@inquirer/type': 3.0.6(@types/node@22.15.21)
+      '@inquirer/type': 3.0.7(@types/node@22.15.21)
       ansi-escapes: 4.3.2
     optionalDependencies:
       '@types/node': 22.15.21
@@ -4104,7 +4104,7 @@ snapshots:
       '@inquirer/expand': 4.0.14(@types/node@22.15.21)
       '@inquirer/input': 4.1.10(@types/node@22.15.21)
       '@inquirer/number': 3.0.13(@types/node@22.15.21)
-      '@inquirer/password': 4.0.13(@types/node@22.15.21)
+      '@inquirer/password': 4.0.14(@types/node@22.15.21)
       '@inquirer/rawlist': 4.1.1(@types/node@22.15.21)
       '@inquirer/search': 3.0.13(@types/node@22.15.21)
       '@inquirer/select': 4.2.1(@types/node@22.15.21)
@@ -4119,7 +4119,7 @@ snapshots:
       '@inquirer/expand': 4.0.14(@types/node@22.15.21)
       '@inquirer/input': 4.1.10(@types/node@22.15.21)
       '@inquirer/number': 3.0.13(@types/node@22.15.21)
-      '@inquirer/password': 4.0.13(@types/node@22.15.21)
+      '@inquirer/password': 4.0.14(@types/node@22.15.21)
       '@inquirer/rawlist': 4.1.1(@types/node@22.15.21)
       '@inquirer/search': 3.0.13(@types/node@22.15.21)
       '@inquirer/select': 4.2.1(@types/node@22.15.21)
