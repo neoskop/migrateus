@@ -59,7 +59,10 @@ export class SqlService {
     );
   }
 
-  public async performMysqlDump(containerService: ContainerService) {
+  public async performMysqlDump(
+    containerService: ContainerService,
+    tableNames?: string[],
+  ) {
     const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysqldump',
@@ -73,8 +76,11 @@ export class SqlService {
       `-u${user}`,
       `-p${password}`,
       name,
+      tableNames && tableNames.join(' '),
       '>/tmp/backup.sql',
-    ].join(' ');
+    ]
+      .filter(Boolean)
+      .join(' ');
 
     const output = await containerService.execute(command);
 
@@ -154,6 +160,17 @@ export class SqlService {
         '; SET foreign_key_checks = 1',
       containerService,
     );
+  }
+
+  public async listTables(containerService: ContainerService) {
+    return (
+      await this.exceuteSql(
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${this._databaseConfig.name}' AND TABLE_TYPE='BASE TABLE';`,
+        containerService,
+      )
+    )
+      .split('\n')
+      .slice(1);
   }
 
   private async exceuteSql(sql: string, containerService: ContainerService) {

@@ -44,16 +44,10 @@ export class K8sBackupService extends BackupPerformer {
   }
 
   protected async afterMysqlDump(): Promise<void> {
-    const ouput = await this.k8sService.kubectl(
-      `cp ${this.kubernetesContainerService.migrateusPodName}:/tmp/backup.sql ${this.backupDir}/backup.sql`,
-      { silent: true },
+    await this.kubernetesContainerService.exfilFile(
+      '/tmp/backup.sql',
+      `${this.backupDir}/backup.sql`,
     );
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to copy ${this.kubernetesContainerService.migrateusPodName}:${chalk.bold('/tmp/backup.sql')} to ${chalk.bold(this.backupDir)}/backup.sql: ${ouput.stderr}`,
-      );
-    }
   }
 
   protected async getDirectusPort(): Promise<number> {
