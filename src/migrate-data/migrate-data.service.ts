@@ -11,6 +11,8 @@ import { K8sService } from '../k8s/k8s.service.js';
 import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { MigrateDataPromptService } from './migrate-data-prompt/migrate-data-prompt.service.js';
+import confirm from '@inquirer/confirm';
+import chalk from 'chalk';
 
 @Injectable()
 export class MigrateDataService {
@@ -44,6 +46,8 @@ export class MigrateDataService {
         return;
       }
 
+      await this.doubleCheck(filteredCollections.length);
+
       await this.migrateCollections(from, to, filteredCollections);
     } catch (error) {
       this.logger.error(error.message || error);
@@ -52,6 +56,21 @@ export class MigrateDataService {
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
       this.portForwardService.stop();
+    }
+  }
+
+  private async doubleCheck(collectionCount: number) {
+    const environment = this.environmentService.environment;
+
+    if (environment.doubleCheck) {
+      const answer = await confirm({
+        message: `Are you sure you want to migrate ${chalk.red(collectionCount)} collections to the environment ${chalk.red(environment.name)}?`,
+        default: false,
+      });
+
+      if (!answer) {
+        process.exit(0);
+      }
     }
   }
 
