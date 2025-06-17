@@ -170,6 +170,7 @@ export class SqlService {
       )
     )
       .split('\n')
+      .filter(Boolean)
       .slice(1);
   }
 
