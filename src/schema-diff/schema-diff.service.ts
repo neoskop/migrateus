@@ -26,6 +26,7 @@ import semver from 'semver';
 import fs from 'node:fs';
 import yaml from 'js-yaml';
 import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Injectable()
 export class SchemaDiffService {
@@ -42,19 +43,23 @@ export class SchemaDiffService {
     private readonly directusUserService: DirectusUserService,
     private readonly environmentService: EnvironmentService,
     private readonly schemaDiffPromptService: SchemaDiffPromptService,
+    private readonly progressService: ProgressService,
   ) {}
 
   public async diff(from: string, to: string) {
     try {
       const fromClient = await this.setupDirectusClient(from);
       const toClient = await this.setupDirectusClient(to);
+      this.progressService.advance('🔎 Compare Directus versions');
       await this.checkVersions(from, fromClient, to, toClient);
+      this.progressService.advance('📸 Get schema snapshot');
       const snapshot = await fromClient.request(schemaSnapshot());
+      this.progressService.advance('🧬 Get schema diff');
       const diffOutput = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
       if (!diffOutput || diffOutput.status === 204) {
-        this.logger.info(
+        this.progressService.succeed(
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
         );
       } else {
@@ -68,6 +73,7 @@ export class SchemaDiffService {
           );
         }
 
+        this.progressService.finish();
         const filteredDiff = await this.schemaDiffPromptService.prompt({
           from,
           to,
@@ -81,19 +87,22 @@ export class SchemaDiffService {
 
         if (changes > 0) {
           await this.doubleCheck(changes);
-          this.logger.info(`Will apply ${chalk.bold(changes)} changes!`);
+          this.progressService.advance(
+            `Applying ${chalk.bold(changes)} changes!`,
+          );
           await this.applyDiff(toClient, filteredDiff);
         } else {
-          this.logger.info(`No changes to apply!`);
+          this.progressService.advance(`No changes to apply!`);
         }
       }
     } catch (error) {
-      this.logger.error(error.message || error);
+      this.progressService.fail(error.message || error);
     } finally {
-      this.logger.info('Cleaning up');
+      this.progressService.advance('🧹 Cleaning up');
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
       this.portForwardService.stop();
+      this.progressService.finish();
     }
   }
 
@@ -161,6 +170,9 @@ export class SchemaDiffService {
     this.environmentService.environment = env;
 
     if (env.platform === 'k8s') {
+      this.progressService.advance(
+        `🔌 Set-up port forward to Directus in Kubernetes (${chalk.bold(name)})`,
+      );
       containerService = new K8sContainerService(this.logger, this.k8sService);
       await this.k8sService.setup();
       port = await this.portForwardService.forward();
@@ -172,8 +184,14 @@ export class SchemaDiffService {
       await this.dockerService.setup();
     }
 
+    this.progressService.advance(
+      `🚀 Set-up Migrateus container for environment ${chalk.bold(name)}`,
+    );
     await containerService.setup();
     this.containerServices[name] = containerService;
+    this.progressService.advance(
+      `👤 Set-up Directus user in environment ${chalk.bold(name)}`,
+    );
     await this.sqlService.setupDirectusUser(containerService);
     return this.directus.getClient(port, this.directusUserService.token);
   }
