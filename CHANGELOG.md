@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.2.0] - 2025-06-17
+
+### 🚀 Features
+
+- Add new command `migrate-data`
+- *(migrate-data)* Add double check
+- *(migrate-data)* Add progress messages
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency pretty-bytes to v7
+- *(deps)* Update dependency shelljs to v0.10.0
+- *(deps)* Update dependency @inquirer/confirm to v5.1.11 ([#463](https://github.com/neoskop/migrateus/issues/463))
+- *(deps)* Update dependency @inquirer/core to v10.1.12 ([#464](https://github.com/neoskop/migrateus/issues/464))
+- *(deps)* Update dependency @inquirer/expand to v4.0.14 ([#465](https://github.com/neoskop/migrateus/issues/465))
+- *(deps)* Update dependency @inquirer/figures to v1.0.12 ([#466](https://github.com/neoskop/migrateus/issues/466))
+- *(deps)* Update dependency @inquirer/password to v4.0.14 ([#467](https://github.com/neoskop/migrateus/issues/467))
+- *(deps)* Update dependency @inquirer/select to v4.2.2 ([#468](https://github.com/neoskop/migrateus/issues/468))
+- *(deps)* Update dependency @inquirer/type to v3.0.7 ([#469](https://github.com/neoskop/migrateus/issues/469))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.12 ([#470](https://github.com/neoskop/migrateus/issues/470))
+- *(deps)* Update dependency @inquirer/core to v10.1.13 ([#471](https://github.com/neoskop/migrateus/issues/471))
+- *(deps)* Update dependency @inquirer/expand to v4.0.15 ([#472](https://github.com/neoskop/migrateus/issues/472))
+- *(deps)* Update dependency @inquirer/password to v4.0.15 ([#473](https://github.com/neoskop/migrateus/issues/473))
+- *(deps)* Update dependency @inquirer/select to v4.2.3 ([#474](https://github.com/neoskop/migrateus/issues/474))
+- *(deps)* Update nest monorepo to v11.1.2 ([#475](https://github.com/neoskop/migrateus/issues/475))
+- *(deps)* Update dependency file-type to v21
+- *(deps)* Update nest monorepo to v11.1.3 ([#487](https://github.com/neoskop/migrateus/issues/487))
+- *(deps)* Update dependency glob to v11.0.3 ([#495](https://github.com/neoskop/migrateus/issues/495))
+
+### 🚜 Refactor
+
+- *(restore)* Remove unused `await` statement
+
+### 📚 Documentation
+
+- *(TODO)* Update todos
+- *(README)* Add `migrate-data` command
+
 ## [2.1.0] - 2025-05-14
 
 ### 🚀 Features
