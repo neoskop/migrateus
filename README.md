@@ -142,6 +142,9 @@ If you don't specify either of those options, Migrateus will ask you for them.
 
 Afterwards you will be asked which database tables to migrate.
 
+> [!WARNING]
+> Since the data migration is done by dumping the tables and re-importing them, you must ensure that the schema of those collections is setup correctly e.g. via the `schema-diff` command.
+
 ### Backup DB
 
 To create a full local backup of the database, run the following command:
