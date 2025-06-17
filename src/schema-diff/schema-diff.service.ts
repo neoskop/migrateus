@@ -92,7 +92,7 @@ export class SchemaDiffService {
           );
           await this.applyDiff(toClient, filteredDiff);
         } else {
-          this.progressService.advance(`No changes to apply!`);
+          this.logger.debug(`No changes to apply - stopping!`);
         }
       }
     } catch (error) {

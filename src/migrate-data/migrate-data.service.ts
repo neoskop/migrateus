@@ -38,6 +38,7 @@ export class MigrateDataService {
       const containerService = await this.prepareContainerService(from);
       this.progressService.advance(`📋 List available collections`);
       const collections = await this.sqlService.listTables(containerService);
+      this.progressService.finish();
       const filteredCollections = await this.migrateDataPromptService.prompt({
         from,
         to,
@@ -47,7 +48,7 @@ export class MigrateDataService {
       const collectionCount = filteredCollections.length;
 
       if (collectionCount === 0) {
-        this.logger.info('No collections selected');
+        this.logger.debug('No collections selected - stopping');
         return;
       }
 
@@ -61,12 +62,13 @@ export class MigrateDataService {
         await this.migrateCollections(from, to, filteredCollections);
       }
     } catch (error) {
-      this.logger.error(error.message || error);
+      this.progressService.fail(error.message || error);
     } finally {
-      this.logger.info('Cleaning up');
+      this.progressService.advance('🧹 Cleaning up');
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
       this.portForwardService.stop();
+      this.progressService.finish();
     }
   }
 
