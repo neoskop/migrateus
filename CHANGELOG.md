@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.0] - 2025-06-17
+
+### 🚀 Features
+
+- *(schema-diff)* Use `ProgressService`
+- *(schema-diff)* Allow for faster selection of diffs
+
+### 🐛 Bug Fixes
+
+- *(migrate-data)* Remove empty line from prompt
+- Fix progress logs in `schema-diff` and `migrate-data` commands
+
+### 📚 Documentation
+
+- *(README)* Add caveat for `migrate-data` command
+
 ## [2.2.0] - 2025-06-17
 
 ### 🚀 Features
