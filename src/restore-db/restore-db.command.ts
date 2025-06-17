@@ -82,7 +82,7 @@ export class RestoreDbCommand extends MigrateusCommand {
       to = answers.to;
     }
 
-    const environment = await this.config.getEnvironment(to);
+    const environment = this.config.getEnvironment(to);
     this.environmentService.environment = environment;
 
     this.logger.debug(
