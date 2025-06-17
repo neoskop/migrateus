@@ -47,6 +47,7 @@ export class SchemaDiffPromptService {
           `? Select the changes to apply from ${chalk.bold(opts.from)} to ${chalk.bold(opts.to)}`,
           `${chalk.bold('↑')} and ${chalk.bold('↓')} to navigate`,
           `${chalk.bold('space')} to select a change`,
+          `${chalk.bold('a')} to select a change and all its children`,
           `${chalk.bold('d')} to show/hide details`,
           `${chalk.bold('enter')} to apply selected changes`,
         ].join('\n  ');
@@ -93,25 +94,72 @@ export class SchemaDiffPromptService {
       };
       done(result);
     } else if (isUpKey(key) || isDownKey(key)) {
-      const increment = isUpKey(key) ? -1 : 1;
-      let next = active + increment;
-
-      if (next >= 0 && next < items.length) {
-        setActive(next);
-      }
+      this.changeActiveIndex(active, setActive, items, isUpKey(key) ? -1 : 1);
     } else if (isSpaceKey(key)) {
-      const newItems = new Array(...items);
-      items.forEach((item, index) => {
-        if (index === active && item.selectable) {
-          item.selected = !item.selected;
-        }
-      });
-      setItems(newItems);
+      this.toggleSelectedItem(items, active, setActive, setItems);
+    } else if (key.name === 'a') {
+      this.toggleChildrenSelected(items, active, setActive, setItems);
     } else if (key.name === 'd') {
-      const newItems = new Array(...items);
-      items[active].showDetails = !items[active].showDetails;
-      setItems(newItems);
+      this.toggleShowDetails(items, active, setItems);
     }
+  }
+
+  private changeActiveIndex(
+    active: number,
+    setActive: (newValue: number) => void,
+    items: SchemaDiffPromptItem[],
+    increment: number,
+  ) {
+    let next = active + increment;
+
+    if (next >= 0 && next < items.length) {
+      setActive(next);
+    }
+  }
+
+  private toggleSelectedItem(
+    items: SchemaDiffPromptItem[],
+    active: number,
+    setActive: (newValue: number) => void,
+    setItems: (newValue: SchemaDiffPromptItem[]) => void,
+  ) {
+    const newItems = new Array(...items);
+    const item = items[active];
+    item.selected = item.selectable && !item.selected;
+    setItems(newItems);
+    this.changeActiveIndex(active, setActive, items, 1);
+  }
+
+  private toggleChildrenSelected(
+    items: SchemaDiffPromptItem[],
+    active: number,
+    setActive: (newValue: number) => void,
+    setItems: (newValue: SchemaDiffPromptItem[]) => void,
+  ) {
+    const newItems = new Array(...items);
+    const item = items[active];
+    item.selected = item.selectable && !item.selected;
+    let next = active + 1;
+    while (next < items.length && items[next].indent > items[active].indent) {
+      const nextItem = items[next];
+      if (nextItem.selectable) {
+        nextItem.selected = !nextItem.selected;
+      }
+      next++;
+    }
+    setItems(newItems);
+    this.changeActiveIndex(active, setActive, items, next - active);
+  }
+
+  private toggleShowDetails(
+    items: SchemaDiffPromptItem[],
+    active: number,
+    setItems: (newValue: SchemaDiffPromptItem[]) => void,
+  ) {
+    const newItems = new Array(...items);
+    const item = items[active];
+    item.showDetails = !item.showDetails;
+    setItems(newItems);
   }
 
   private createItems(opts: SchemaDiffPromptConfig) {
