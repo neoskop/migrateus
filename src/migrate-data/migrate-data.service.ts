@@ -13,6 +13,7 @@ import { SqlService } from '../sql/sql.service.js';
 import { MigrateDataPromptService } from './migrate-data-prompt/migrate-data-prompt.service.js';
 import confirm from '@inquirer/confirm';
 import chalk from 'chalk';
+import { ProgressService } from '../progress/progress.service.js';
 
 @Injectable()
 export class MigrateDataService {
@@ -27,13 +28,15 @@ export class MigrateDataService {
     private readonly sqlService: SqlService,
     private readonly environmentService: EnvironmentService,
     private readonly migrateDataPromptService: MigrateDataPromptService,
+    private readonly progressService: ProgressService,
   ) {}
 
   public async migrate(from: string, to: string) {
     try {
-      const toEnv = this.config.getEnvironment(from);
-      this.environmentService.environment = toEnv;
-      const containerService = await this.prepareContainerService(to);
+      const fromEnv = this.config.getEnvironment(from);
+      this.environmentService.environment = fromEnv;
+      const containerService = await this.prepareContainerService(from);
+      this.progressService.advance(`📋 List available collections`);
       const collections = await this.sqlService.listTables(containerService);
       const filteredCollections = await this.migrateDataPromptService.prompt({
         from,
@@ -41,14 +44,22 @@ export class MigrateDataService {
         collections,
       });
 
-      if (filteredCollections.length === 0) {
+      const collectionCount = filteredCollections.length;
+
+      if (collectionCount === 0) {
         this.logger.info('No collections selected');
         return;
       }
 
-      await this.doubleCheck(filteredCollections.length);
+      const env = this.config.getEnvironment(to);
+      this.environmentService.environment = env;
 
-      await this.migrateCollections(from, to, filteredCollections);
+      if (await this.doubleCheck(collectionCount)) {
+        this.progressService.advance(
+          `🚚 Start migration of ${chalk.bold(collectionCount)} collections`,
+        );
+        await this.migrateCollections(from, to, filteredCollections);
+      }
     } catch (error) {
       this.logger.error(error.message || error);
     } finally {
@@ -62,22 +73,26 @@ export class MigrateDataService {
   private async doubleCheck(collectionCount: number) {
     const environment = this.environmentService.environment;
 
-    if (environment.doubleCheck) {
-      const answer = await confirm({
-        message: `Are you sure you want to migrate ${chalk.red(collectionCount)} collections to the environment ${chalk.red(environment.name)}?`,
-        default: false,
-      });
-
-      if (!answer) {
-        process.exit(0);
-      }
+    if (!environment.doubleCheck) {
+      return true;
     }
+
+    return await confirm({
+      message: `Are you sure you want to migrate ${chalk.red(collectionCount)} collections to the environment ${chalk.red(environment.name)}?`,
+      default: false,
+    });
   }
 
   private async prepareContainerService(name: string) {
-    const env = this.config.getEnvironment(name);
-    this.environmentService.environment = env;
-    await this.setupContainerService(name);
+    if (!this.containerServices[name]) {
+      this.progressService.advance(
+        `🚀 Set-up Migrateus container for environment ${chalk.bold(name)}`,
+      );
+      const env = this.config.getEnvironment(name);
+      this.environmentService.environment = env;
+      await this.setupContainerService(name);
+    }
+
     return this.containerServices[name];
   }
 
@@ -87,10 +102,19 @@ export class MigrateDataService {
     collections: string[],
   ) {
     const fromContainerService = await this.prepareContainerService(from);
+    this.progressService.advance(
+      `💾 Dump collections from environment ${chalk.bold(from)}`,
+    );
     await this.sqlService.performMysqlDump(fromContainerService, collections);
+    this.progressService.advance(
+      `📦 Copy dump to Migrateus container in environment ${chalk.bold(to)}`,
+    );
     await fromContainerService.exfilFile('/tmp/backup.sql', `/tmp/backup.sql`);
     const toContainerService = await this.prepareContainerService(to);
     await toContainerService.infilFile(`/tmp/backup.sql`, '/tmp/backup.sql');
+    this.progressService.advance(
+      `♻️ Restore dump to environment ${chalk.bold(to)}`,
+    );
     await this.sqlService.restoreMysqlDump(toContainerService);
   }
 
@@ -119,6 +143,10 @@ export class MigrateDataService {
     this.environmentService.environment = env;
 
     const containerService = this.containerServices[name];
+
+    if (env.platform === 'k8s') {
+      await this.k8sService.setup();
+    }
 
     if (containerService) {
       await containerService.cleanUp();

@@ -25,6 +25,7 @@ export class K8sContainerService extends ContainerService {
       kind: 'Pod',
       metadata: { name: this.migrateusPodName },
       spec: {
+        activeDeadlineSeconds: 600,
         terminationGracePeriodSeconds: 0,
         containers: [
           {
