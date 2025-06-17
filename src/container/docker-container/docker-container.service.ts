@@ -110,4 +110,38 @@ export class DockerContainerService extends ContainerService {
     );
     await exec(`docker rm -f ${container}`, { silent: true });
   }
+
+  public async exfilFile(source: string, destination: string): Promise<void> {
+    const command = [
+      'docker',
+      'cp',
+      `${this.migrateusContainerId}:${source}`,
+      destination,
+    ].join(' ');
+    this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
+    const ouput = await exec(command, { silent: true });
+
+    if (ouput.code !== 0) {
+      throw new Error(
+        `Failed to copy ${this.migrateusContainerId}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${ouput.stderr}`,
+      );
+    }
+  }
+
+  public async infilFile(source: string, destination: string): Promise<void> {
+    const command = [
+      'docker',
+      'cp',
+      source,
+      `${this.migrateusContainerId}:${destination}`,
+    ].join(' ');
+    this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
+    const ouput = await exec(command, { silent: true });
+
+    if (ouput.code !== 0) {
+      throw new Error(
+        `Failed to copy ${chalk.bold(source)} to ${this.migrateusContainerId}:${chalk.bold(destination)}: ${ouput.stderr}`,
+      );
+    }
+  }
 }

@@ -13,4 +13,8 @@ export abstract class ContainerService {
   public abstract cleanUpAll(): Promise<void>;
 
   public abstract execute(command: string): Promise<ExecOutputReturnValue>;
+
+  public abstract exfilFile(source: string, destination: string): Promise<void>;
+
+  public abstract infilFile(source: string, destination: string): Promise<void>;
 }

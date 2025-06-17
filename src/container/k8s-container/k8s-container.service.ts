@@ -86,4 +86,30 @@ export class K8sContainerService extends ContainerService {
       },
     );
   }
+
+  public async exfilFile(source: string, destination: string): Promise<void> {
+    const ouput = await this.k8sService.kubectl(
+      `cp ${this.migrateusPodName}:${source} ${destination}`,
+      { silent: true },
+    );
+
+    if (ouput.code !== 0) {
+      throw new Error(
+        `Failed to copy ${this.migrateusPodName}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${ouput.stderr}`,
+      );
+    }
+  }
+
+  public async infilFile(source: string, destination: string): Promise<void> {
+    const ouput = await this.k8sService.kubectl(
+      `cp ${source} ${this.migrateusPodName}:${destination}`,
+      { silent: true },
+    );
+
+    if (ouput.code !== 0) {
+      throw new Error(
+        `Failed to copy ${chalk.bold(source)} to ${this.migrateusPodName}:${chalk.bold(destination)}: ${ouput.stderr}`,
+      );
+    }
+  }
 }

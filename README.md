@@ -128,9 +128,23 @@ If you don't specify either of those options, Migrateus will ask you for them.
 > [!WARNING]
 > To successfully perform a schema diff both Directus instances should have the same version. Therefore, Migrateus will exit with an error if they don't.
 
+### Migrate Data
+
+To partially migrate data on the database level between two Directus instances, run the following command:
+
+```bash
+$ migrateus migrate-data [options] <from> <to>
+```
+
+Where `from` is the `name` of the environment to migrate from and `to` is the `name` of the environment to migrate to.
+
+If you don't specify either of those options, Migrateus will ask you for them.
+
+Afterwards you will be asked which database tables to migrate.
+
 ### Backup DB
 
-To create a local backup of the database, run the following command:
+To create a full local backup of the database, run the following command:
 
 ```bash
 $ migrateus backup-db [options] <from> <to>
@@ -144,7 +158,7 @@ If you don't specify either of those options, Migrateus will ask you for them re
 
 ### Restore DB
 
-To restort a database from a local backup, run the following command:
+To restort a database from a full local backup, run the following command:
 
 ```bash
 $ migrateus restore-db [options] <from> <to>

@@ -19,6 +19,7 @@ import { ProgressModule } from './progress/progress.module.js';
 import { highlight } from 'cli-highlight';
 import { OnepasswordModule } from './onepassword/onepassword.module.js';
 import { UpdateModule } from './update/update.module.js';
+import { MigrateDataModule } from './migrate-data/migrate-data.module.js';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { UpdateModule } from './update/update.module.js';
     ProgressModule,
     OnepasswordModule,
     UpdateModule,
+    MigrateDataModule,
   ],
   controllers: [],
   providers: [],
