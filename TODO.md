@@ -1,5 +1,3 @@
 # Things To Do
 
-- [ ] Simplify dialogs in Schema-Diff:
-  - [ ] If a new Relation is declined, don't ask for its fields
-  - [ ] Better output for details (not just `console.dir` of the JSON)
+- [ ] Auto-Select all fields upon selection of a collection
