@@ -24,8 +24,8 @@ importers:
         specifier: 1.0.12
         version: 1.0.12
       '@inquirer/password':
-        specifier: 4.0.15
-        version: 4.0.15(@types/node@22.15.34)
+        specifier: 4.0.16
+        version: 4.0.16(@types/node@22.15.34)
       '@inquirer/select':
         specifier: 4.2.3
         version: 4.2.3(@types/node@22.15.34)
@@ -593,8 +593,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/password@4.0.15':
-    resolution: {integrity: sha512-75CT2p43DGEnfGTaqFpbDC2p2EEMrq0S+IRrf9iJvYreMy5mAWj087+mdKyLHapUEPLjN10mNvABpGbk8Wdraw==}
+  '@inquirer/password@4.0.16':
+    resolution: {integrity: sha512-g8BVNBj5Zeb5/Y3cSN+hDUL7CsIFDIuVxb9EPty3lkxBaYpjL5BNRKSYOF9yOLe+JOcKFd+TSVeADQ4iSY7rbg==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4231,7 +4231,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.15.34
 
-  '@inquirer/password@4.0.15(@types/node@22.15.34)':
+  '@inquirer/password@4.0.16(@types/node@22.15.34)':
     dependencies:
       '@inquirer/core': 10.1.14(@types/node@22.15.34)
       '@inquirer/type': 3.0.7(@types/node@22.15.34)
@@ -4247,7 +4247,7 @@ snapshots:
       '@inquirer/expand': 4.0.16(@types/node@22.15.34)
       '@inquirer/input': 4.1.12(@types/node@22.15.34)
       '@inquirer/number': 3.0.15(@types/node@22.15.34)
-      '@inquirer/password': 4.0.15(@types/node@22.15.34)
+      '@inquirer/password': 4.0.16(@types/node@22.15.34)
       '@inquirer/rawlist': 4.1.3(@types/node@22.15.34)
       '@inquirer/search': 3.0.15(@types/node@22.15.34)
       '@inquirer/select': 4.2.3(@types/node@22.15.34)
@@ -4262,7 +4262,7 @@ snapshots:
       '@inquirer/expand': 4.0.16(@types/node@22.15.34)
       '@inquirer/input': 4.1.12(@types/node@22.15.34)
       '@inquirer/number': 3.0.15(@types/node@22.15.34)
-      '@inquirer/password': 4.0.15(@types/node@22.15.34)
+      '@inquirer/password': 4.0.16(@types/node@22.15.34)
       '@inquirer/rawlist': 4.1.3(@types/node@22.15.34)
       '@inquirer/search': 3.0.15(@types/node@22.15.34)
       '@inquirer/select': 4.2.3(@types/node@22.15.34)
