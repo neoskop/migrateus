@@ -232,12 +232,51 @@ export class K8sService {
 
     const directusContainer = deployManifest.spec.template.spec.containers.find(
       (container: { name: string }) => container.name === 'directus',
-    ) as { name: string; env: { name: string; value: string }[] };
+    ) as {
+      name: string;
+      env: {
+        name: string;
+        value?: string;
+        valueFrom?: { secretKeyRef: { key: string; name: string } };
+      }[];
+      envFrom: { configMapRef: { name: string } }[];
+    };
 
-    const envMap = directusContainer.env.reduce((acc, { name, value }) => {
-      acc[name] = value;
-      return acc;
-    }, {});
+    const envMap: Record<string, string> = {};
+
+    for (const { name, value, valueFrom } of directusContainer.env) {
+      if (valueFrom) {
+        const secret = await this.loadSecret(valueFrom.secretKeyRef.name);
+        envMap[name] = secret[valueFrom.secretKeyRef.key];
+      } else {
+        envMap[name] = value;
+      }
+    }
+
+    if (directusContainer.envFrom.length > 0) {
+      const configMapNames = directusContainer.envFrom.map(
+        ({ configMapRef }) => configMapRef.name,
+      );
+
+      const configMaps = await Promise.all(
+        configMapNames.map(async (name) => {
+          return await this.loadConfigMap(name);
+        }),
+      );
+
+      configMaps.forEach((configMap) => {
+        Object.assign(envMap, configMap);
+      });
+    }
+
+    this.logger.debug(
+      `Retrieved container environment: ${highlight(
+        JSON.stringify(envMap, null, 2),
+        {
+          language: 'json',
+        },
+      )}`,
+    );
 
     const result = {
       host: envMap['DB_HOST'],
@@ -248,5 +287,30 @@ export class K8sService {
     };
 
     return result;
+  }
+
+  private async loadSecret(name: string) {
+    const secretOutput = await this.kubectl(`get secret ${name} -ojson`, {
+      silent: true,
+    });
+
+    const secret = JSON.parse(secretOutput.stdout);
+    const data = secret.data;
+
+    const result = {};
+
+    Object.keys(data).forEach((key) => {
+      result[key] = Buffer.from(data[key], 'base64').toString('utf8');
+    });
+
+    return result;
+  }
+
+  private async loadConfigMap(name: string) {
+    const configMapOutput = await this.kubectl(`get configmap ${name} -ojson`, {
+      silent: true,
+    });
+
+    return JSON.parse(configMapOutput.stdout).data;
   }
 }
