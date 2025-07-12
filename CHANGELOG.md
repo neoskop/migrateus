@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.1] - 2025-07-12
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency dotenv to v16.6.0 ([#511](https://github.com/neoskop/migrateus/issues/511))
+- *(deps)* Update dependency dotenv to v16.6.1 ([#513](https://github.com/neoskop/migrateus/issues/513))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.13 ([#521](https://github.com/neoskop/migrateus/issues/521))
+- *(deps)* Update dependency @inquirer/core to v10.1.14 ([#522](https://github.com/neoskop/migrateus/issues/522))
+- *(deps)* Update dependency @inquirer/expand to v4.0.16 ([#523](https://github.com/neoskop/migrateus/issues/523))
+- *(deps)* Update dependency @inquirer/password to v4.0.16 ([#524](https://github.com/neoskop/migrateus/issues/524))
+- *(deps)* Update dependency @inquirer/select to v4.2.4 ([#525](https://github.com/neoskop/migrateus/issues/525))
+- Fix extraction of k8s database credentials for newer Directus helm chart versions
+
 ## [2.3.0] - 2025-06-17
 
 ### 🚀 Features
