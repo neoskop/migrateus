@@ -91,7 +91,7 @@
     "git-cliff": "2.9.1",
     "jest": "^30.0.0",
     "jscpd": "4.0.5",
-    "nest-commander-schematics": "3.1.0",
+    "nest-commander-schematics": "3.2.0",
     "nodemon": "3.1.10",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
