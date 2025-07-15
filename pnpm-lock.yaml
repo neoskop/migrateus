@@ -72,8 +72,8 @@ importers:
         specifier: 5.1.5
         version: 5.1.5
       nest-commander:
-        specifier: 3.17.0
-        version: 3.17.0(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(@types/inquirer@8.2.11)(typescript@5.8.3)
+        specifier: 3.18.0
+        version: 3.18.0(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(@types/inquirer@8.2.11)(typescript@5.8.3)
       nest-winston:
         specifier: 1.10.2
         version: 1.10.2(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.17.0)
@@ -2831,8 +2831,8 @@ packages:
   nest-commander-schematics@3.2.0:
     resolution: {integrity: sha512-HZTrBjfW6xsjxdKOSUldXyEdGg6zCl+iUBJas5FK3cV6f7ejOH9g2EeHu7+nUOWe1VXmt0yEC8RFe/ll9qNOcg==}
 
-  nest-commander@3.17.0:
-    resolution: {integrity: sha512-1R9vppZT2j/9njKiG0zYTDLAyQOj14KdGWdNuhluveK8VXoQepXNb0t09dRNWy4KCWrI7wDZ2tQTEwb43JyHOw==}
+  nest-commander@3.18.0:
+    resolution: {integrity: sha512-NWtodOl2aStnApWp9oajCoJW71lqN0CCjf9ygOWxpXnG3o4nQ8ZO5CgrExfVw2+0CVC877hr0rFR7FSu2rypGg==}
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
       '@nestjs/core': ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
@@ -6874,7 +6874,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  nest-commander@3.17.0(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(@types/inquirer@8.2.11)(typescript@5.8.3):
+  nest-commander@3.18.0(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)(@types/inquirer@8.2.11)(typescript@5.8.3):
     dependencies:
       '@fig/complete-commander': 3.2.0(commander@11.1.0)
       '@golevelup/nestjs-discovery': 4.0.3(@nestjs/common@11.1.3(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.3)
