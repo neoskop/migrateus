@@ -184,8 +184,8 @@ importers:
         specifier: 4.0.5
         version: 4.0.5
       nest-commander-schematics:
-        specifier: 3.1.0
-        version: 3.1.0(chokidar@4.0.3)
+        specifier: 3.2.0
+        version: 3.2.0(chokidar@4.0.3)
       nodemon:
         specifier: 3.1.10
         version: 3.1.10
@@ -2828,8 +2828,8 @@ packages:
   neo-async@2.6.2:
     resolution: {integrity: sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==}
 
-  nest-commander-schematics@3.1.0:
-    resolution: {integrity: sha512-ZbRa3ykrOo/MghS5D8nEHRsrZde/AI4fkfWf0+5MFi43eRCYAnNJiXHCbF9qjlegFwzt31em6q3lUfPjMTborg==}
+  nest-commander-schematics@3.2.0:
+    resolution: {integrity: sha512-HZTrBjfW6xsjxdKOSUldXyEdGg6zCl+iUBJas5FK3cV6f7ejOH9g2EeHu7+nUOWe1VXmt0yEC8RFe/ll9qNOcg==}
 
   nest-commander@3.17.0:
     resolution: {integrity: sha512-1R9vppZT2j/9njKiG0zYTDLAyQOj14KdGWdNuhluveK8VXoQepXNb0t09dRNWy4KCWrI7wDZ2tQTEwb43JyHOw==}
@@ -6864,7 +6864,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  nest-commander-schematics@3.1.0(chokidar@4.0.3):
+  nest-commander-schematics@3.2.0(chokidar@4.0.3):
     dependencies:
       '@angular-devkit/core': 19.0.1(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.0.1(chokidar@4.0.3)
