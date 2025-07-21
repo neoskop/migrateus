@@ -18,8 +18,8 @@ importers:
         specifier: 10.1.15
         version: 10.1.15(@types/node@22.16.5)
       '@inquirer/expand':
-        specifier: 4.0.16
-        version: 4.0.16(@types/node@22.16.5)
+        specifier: 4.0.17
+        version: 4.0.17(@types/node@22.16.5)
       '@inquirer/figures':
         specifier: 1.0.12
         version: 1.0.12
@@ -562,8 +562,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/expand@4.0.16':
-    resolution: {integrity: sha512-oiDqafWzMtofeJyyGkb1CTPaxUkjIcSxePHHQCfif8t3HV9pHcw1Kgdw3/uGpDvaFfeTluwQtWiqzPVjAqS3zA==}
+  '@inquirer/expand@4.0.17':
+    resolution: {integrity: sha512-PSqy9VmJx/VbE3CT453yOfNa+PykpKg/0SYP7odez1/NWBGuDXgPhp4AeGYYKjhLn5lUUavVS/JbeYMPdH50Mw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4212,10 +4212,10 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.16.5
 
-  '@inquirer/expand@4.0.16(@types/node@22.16.5)':
+  '@inquirer/expand@4.0.17(@types/node@22.16.5)':
     dependencies:
       '@inquirer/core': 10.1.15(@types/node@22.16.5)
-      '@inquirer/type': 3.0.7(@types/node@22.16.5)
+      '@inquirer/type': 3.0.8(@types/node@22.16.5)
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 22.16.5
@@ -4251,7 +4251,7 @@ snapshots:
       '@inquirer/checkbox': 4.1.9(@types/node@22.16.5)
       '@inquirer/confirm': 5.1.14(@types/node@22.16.5)
       '@inquirer/editor': 4.2.14(@types/node@22.16.5)
-      '@inquirer/expand': 4.0.16(@types/node@22.16.5)
+      '@inquirer/expand': 4.0.17(@types/node@22.16.5)
       '@inquirer/input': 4.2.0(@types/node@22.16.5)
       '@inquirer/number': 3.0.16(@types/node@22.16.5)
       '@inquirer/password': 4.0.16(@types/node@22.16.5)
@@ -4266,7 +4266,7 @@ snapshots:
       '@inquirer/checkbox': 4.1.9(@types/node@22.16.5)
       '@inquirer/confirm': 5.1.14(@types/node@22.16.5)
       '@inquirer/editor': 4.2.14(@types/node@22.16.5)
-      '@inquirer/expand': 4.0.16(@types/node@22.16.5)
+      '@inquirer/expand': 4.0.17(@types/node@22.16.5)
       '@inquirer/input': 4.2.0(@types/node@22.16.5)
       '@inquirer/number': 3.0.16(@types/node@22.16.5)
       '@inquirer/password': 4.0.16(@types/node@22.16.5)
