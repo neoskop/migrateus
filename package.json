@@ -35,7 +35,7 @@
     "@inquirer/confirm": "5.1.14",
     "@inquirer/core": "10.1.15",
     "@inquirer/expand": "4.0.17",
-    "@inquirer/figures": "1.0.12",
+    "@inquirer/figures": "1.0.13",
     "@inquirer/password": "4.0.16",
     "@inquirer/select": "4.2.4",
     "@inquirer/type": "3.0.7",
