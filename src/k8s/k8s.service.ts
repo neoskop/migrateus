@@ -253,7 +253,7 @@ export class K8sService {
       }
     }
 
-    if (directusContainer.envFrom.length > 0) {
+    if (directusContainer.envFrom?.length > 0) {
       const configMapNames = directusContainer.envFrom.map(
         ({ configMapRef }) => configMapRef.name,
       );
