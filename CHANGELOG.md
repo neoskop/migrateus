@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.3.2] - 2025-07-25
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency nest-commander to v3.18.0 ([#541](https://github.com/neoskop/migrateus/issues/541))
+- *(deps)* Update nest monorepo to v11.1.4 ([#542](https://github.com/neoskop/migrateus/issues/542))
+- *(deps)* Update nest monorepo to v11.1.5 ([#543](https://github.com/neoskop/migrateus/issues/543))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.14 ([#548](https://github.com/neoskop/migrateus/issues/548))
+- *(deps)* Update dependency @inquirer/core to v10.1.15 ([#549](https://github.com/neoskop/migrateus/issues/549))
+- *(deps)* Update dependency @inquirer/expand to v4.0.17 ([#550](https://github.com/neoskop/migrateus/issues/550))
+- *(deps)* Update dependency @inquirer/figures to v1.0.13 ([#551](https://github.com/neoskop/migrateus/issues/551))
+- *(deps)* Update dependency @inquirer/password to v4.0.17 ([#552](https://github.com/neoskop/migrateus/issues/552))
+- *(deps)* Update dependency @inquirer/type to v3.0.8 ([#553](https://github.com/neoskop/migrateus/issues/553))
+- *(deps)* Update dependency @inquirer/select to v4.3.0 ([#554](https://github.com/neoskop/migrateus/issues/554))
+- *(deps)* Update dependency @inquirer/select to v4.3.1 ([#556](https://github.com/neoskop/migrateus/issues/556))
+- *(backup-db)* Fix error when deployment did not have `envFrom` field in k8s environment
+
 ## [2.3.1] - 2025-07-12
 
 ### 🐛 Bug Fixes
