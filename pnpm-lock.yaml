@@ -102,8 +102,8 @@ importers:
         specifier: 0.10.0
         version: 0.10.0
       tmp:
-        specifier: 0.2.3
-        version: 0.2.3
+        specifier: 0.2.4
+        version: 0.2.4
       uuid:
         specifier: 11.1.0
         version: 11.1.0
@@ -3517,8 +3517,8 @@ packages:
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
 
-  tmp@0.2.3:
-    resolution: {integrity: sha512-nZD7m9iCPC5g0pYmcaxogYKggSfLsdxl8of3Q/oIbqCqLLIO9IAF0GWjX1z9NZRHPiXv8Wex4yDCaZsgEw0Y8w==}
+  tmp@0.2.4:
+    resolution: {integrity: sha512-UdiSoX6ypifLmrfQ/XfiawN6hkjSBpCjhKxxZcWlUUmoXLaCKQU0bx4HF/tdDK2uzRuchf1txGvrWBzYREssoQ==}
     engines: {node: '>=14.14'}
 
   tmpl@1.0.5:
@@ -7664,7 +7664,7 @@ snapshots:
 
   through@2.3.8: {}
 
-  tmp@0.2.3: {}
+  tmp@0.2.4: {}
 
   tmpl@1.0.5: {}
 
