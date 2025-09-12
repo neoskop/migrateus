@@ -33,7 +33,7 @@ export class DirectusAssetService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly directusService: DirectusService,
-  ) {}
+  ) { }
 
   public async restoreAssets(
     directusPort: number,
@@ -97,7 +97,7 @@ export class DirectusAssetService {
       chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk),
     );
     await new Promise<void>((resolve) => readStream.on('end', resolve));
-    const blob = new Blob(chunks, { type: mime.lookup(assetPath) });
+    const blob = new Blob(chunks.map(chunk => new Uint8Array(chunk)), { type: mime.lookup(assetPath) || undefined });
     formData.append('file', blob, parsedPath.base);
 
     const mimeType = await fileTypeFromFile(assetPath);
