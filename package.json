@@ -56,7 +56,7 @@
     "nest-winston": "1.10.2",
     "ora": "8.2.0",
     "p-limit": "7.1.1",
-    "portfinder": "1.0.37",
+    "portfinder": "1.0.38",
     "pretty-bytes": "7.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
