@@ -18,8 +18,8 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(@types/node@22.18.3)
       '@inquirer/expand':
-        specifier: 4.0.18
-        version: 4.0.18(@types/node@22.18.3)
+        specifier: 4.0.20
+        version: 4.0.20(@types/node@22.18.3)
       '@inquirer/figures':
         specifier: 1.0.13
         version: 1.0.13
@@ -551,8 +551,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/expand@4.0.18':
-    resolution: {integrity: sha512-xUjteYtavH7HwDMzq4Cn2X4Qsh5NozoDHCJTdoXg9HfZ4w3R6mxV1B9tL7DGJX2eq/zqtsFjhm0/RJIMGlh3ag==}
+  '@inquirer/expand@4.0.20':
+    resolution: {integrity: sha512-Dt9S+6qUg94fEvgn54F2Syf0Z3U8xmnBI9ATq2f5h9xt09fs2IJXSCIXyyVHwvggKWFXEY/7jATRo2K6Dkn6Ow==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4195,7 +4195,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.18.3
 
-  '@inquirer/expand@4.0.18(@types/node@22.18.3)':
+  '@inquirer/expand@4.0.20(@types/node@22.18.3)':
     dependencies:
       '@inquirer/core': 10.2.2(@types/node@22.18.3)
       '@inquirer/type': 3.0.8(@types/node@22.18.3)
@@ -4239,7 +4239,7 @@ snapshots:
       '@inquirer/checkbox': 4.2.2(@types/node@22.18.3)
       '@inquirer/confirm': 5.1.18(@types/node@22.18.3)
       '@inquirer/editor': 4.2.18(@types/node@22.18.3)
-      '@inquirer/expand': 4.0.18(@types/node@22.18.3)
+      '@inquirer/expand': 4.0.20(@types/node@22.18.3)
       '@inquirer/input': 4.2.2(@types/node@22.18.3)
       '@inquirer/number': 3.0.18(@types/node@22.18.3)
       '@inquirer/password': 4.0.18(@types/node@22.18.3)
@@ -4254,7 +4254,7 @@ snapshots:
       '@inquirer/checkbox': 4.2.2(@types/node@22.18.3)
       '@inquirer/confirm': 5.1.18(@types/node@22.18.3)
       '@inquirer/editor': 4.2.18(@types/node@22.18.3)
-      '@inquirer/expand': 4.0.18(@types/node@22.18.3)
+      '@inquirer/expand': 4.0.20(@types/node@22.18.3)
       '@inquirer/input': 4.2.2(@types/node@22.18.3)
       '@inquirer/number': 3.0.18(@types/node@22.18.3)
       '@inquirer/password': 4.0.18(@types/node@22.18.3)
