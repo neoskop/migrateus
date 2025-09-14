@@ -24,8 +24,8 @@ importers:
         specifier: 1.0.13
         version: 1.0.13
       '@inquirer/password':
-        specifier: 4.0.18
-        version: 4.0.18(@types/node@22.18.3)
+        specifier: 4.0.20
+        version: 4.0.20(@types/node@22.18.3)
       '@inquirer/select':
         specifier: 4.3.2
         version: 4.3.2(@types/node@22.18.3)
@@ -591,8 +591,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/password@4.0.18':
-    resolution: {integrity: sha512-zXvzAGxPQTNk/SbT3carAD4Iqi6A2JS2qtcqQjsL22uvD+JfQzUrDEtPjLL7PLn8zlSNyPdY02IiQjzoL9TStA==}
+  '@inquirer/password@4.0.20':
+    resolution: {integrity: sha512-nxSaPV2cPvvoOmRygQR+h0B+Av73B01cqYLcr7NXcGXhbmsYfUb8fDdw2Us1bI2YsX+VvY7I7upgFYsyf8+Nug==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4226,11 +4226,11 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.18.3
 
-  '@inquirer/password@4.0.18(@types/node@22.18.3)':
+  '@inquirer/password@4.0.20(@types/node@22.18.3)':
     dependencies:
+      '@inquirer/ansi': 1.0.0
       '@inquirer/core': 10.2.2(@types/node@22.18.3)
       '@inquirer/type': 3.0.8(@types/node@22.18.3)
-      ansi-escapes: 4.3.2
     optionalDependencies:
       '@types/node': 22.18.3
 
@@ -4242,7 +4242,7 @@ snapshots:
       '@inquirer/expand': 4.0.20(@types/node@22.18.3)
       '@inquirer/input': 4.2.2(@types/node@22.18.3)
       '@inquirer/number': 3.0.18(@types/node@22.18.3)
-      '@inquirer/password': 4.0.18(@types/node@22.18.3)
+      '@inquirer/password': 4.0.20(@types/node@22.18.3)
       '@inquirer/rawlist': 4.1.6(@types/node@22.18.3)
       '@inquirer/search': 3.1.1(@types/node@22.18.3)
       '@inquirer/select': 4.3.2(@types/node@22.18.3)
@@ -4257,7 +4257,7 @@ snapshots:
       '@inquirer/expand': 4.0.20(@types/node@22.18.3)
       '@inquirer/input': 4.2.2(@types/node@22.18.3)
       '@inquirer/number': 3.0.18(@types/node@22.18.3)
-      '@inquirer/password': 4.0.18(@types/node@22.18.3)
+      '@inquirer/password': 4.0.20(@types/node@22.18.3)
       '@inquirer/rawlist': 4.1.6(@types/node@22.18.3)
       '@inquirer/search': 3.1.1(@types/node@22.18.3)
       '@inquirer/select': 4.3.2(@types/node@22.18.3)
