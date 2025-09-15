@@ -20,6 +20,7 @@ import { highlight } from 'cli-highlight';
 import { OnepasswordModule } from './onepassword/onepassword.module.js';
 import { UpdateModule } from './update/update.module.js';
 import { MigrateDataModule } from './migrate-data/migrate-data.module.js';
+import { RenameCollectionModule } from './rename-collection/rename-collection.module.js';
 
 @Module({
   imports: [
@@ -70,8 +71,9 @@ import { MigrateDataModule } from './migrate-data/migrate-data.module.js';
     OnepasswordModule,
     UpdateModule,
     MigrateDataModule,
+    RenameCollectionModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

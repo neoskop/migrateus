@@ -19,10 +19,10 @@ export class CleanService {
     private readonly config: ConfigService,
     private readonly environmentService: EnvironmentService,
     private readonly progressService: ProgressService,
-  ) {}
+  ) { }
 
   public async clean(environmentName: string) {
-    const environment = await this.config.getEnvironment(environmentName);
+    const environment = this.config.getEnvironment(environmentName);
     this.environmentService.environment = environment;
 
     try {

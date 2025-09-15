@@ -22,7 +22,7 @@ export abstract class BackupPerformer {
     private readonly config: ConfigService,
     private readonly progressService: ProgressService,
     private readonly directusVersionService: DirectusVersionService,
-  ) {}
+  ) { }
 
   public async backup(backupFile: string) {
     const backupDir = await this.createTemporaryDirectory();
@@ -83,11 +83,11 @@ export abstract class BackupPerformer {
 
   protected abstract setup(backupDir: string): Promise<void>;
 
-  protected async afterMysqlDump() {}
+  protected async afterMysqlDump() { }
 
   protected abstract getDirectusPort(): Promise<number>;
 
-  protected async cleanUp(): Promise<void> {}
+  protected async cleanUp(): Promise<void> { }
 
   private async storeMetadata(directusPort: number, backupDir: string) {
     const version = await this.directusVersionService.getVersion(directusPort);

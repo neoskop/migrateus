@@ -17,7 +17,7 @@ export class SqlService {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
-  ) {}
+  ) { }
 
   public set databaseConfig(config: DatabaseConfig) {
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
@@ -30,19 +30,19 @@ export class SqlService {
 
   public async setupDirectusUser(containerService: ContainerService) {
     await this.directusUserService.setupUser((sql) =>
-      this.exceuteSql.bind(this)(sql, containerService),
+      this.executeSql.bind(this)(sql, containerService),
     );
   }
 
   public async cleanUpDirectusUser(containerService: ContainerService) {
     await this.directusUserService.removeUser((sql) =>
-      this.exceuteSql.bind(this)(sql, containerService),
+      this.executeSql.bind(this)(sql, containerService),
     );
   }
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {
     await this.directusUserService.cleanUp((sql) =>
-      this.exceuteSql.bind(this)(sql, containerService),
+      this.executeSql.bind(this)(sql, containerService),
     );
   }
 
@@ -55,7 +55,7 @@ export class SqlService {
     }
 
     await this.directusUserService.setCredentials(credentials, (sql) =>
-      this.exceuteSql.bind(this)(sql, containerService),
+      this.executeSql.bind(this)(sql, containerService),
     );
   }
 
@@ -111,7 +111,7 @@ export class SqlService {
     }
 
     const defaultCollation = (
-      await this.exceuteSql(
+      await this.executeSql(
         `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
         containerService,
       )
@@ -121,7 +121,7 @@ export class SqlService {
       .join(' ');
 
     const defaultCharacterSetName = (
-      await this.exceuteSql(
+      await this.executeSql(
         `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
         containerService,
       )
@@ -134,7 +134,7 @@ export class SqlService {
       `Setting default collation to ${chalk.bold(defaultCollation)}`,
     );
     const tableNames = (
-      await this.exceuteSql(
+      await this.executeSql(
         `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${name}' AND TABLE_TYPE='BASE TABLE'`,
         containerService,
       )
@@ -154,17 +154,17 @@ export class SqlService {
       );
     });
 
-    await this.exceuteSql(
+    await this.executeSql(
       'SET foreign_key_checks = 0; ' +
-        alterStatements.join(';') +
-        '; SET foreign_key_checks = 1',
+      alterStatements.join(';') +
+      '; SET foreign_key_checks = 1',
       containerService,
     );
   }
 
   public async listTables(containerService: ContainerService) {
     return (
-      await this.exceuteSql(
+      await this.executeSql(
         `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${this._databaseConfig.name}' AND TABLE_TYPE='BASE TABLE';`,
         containerService,
       )
@@ -174,7 +174,7 @@ export class SqlService {
       .slice(1);
   }
 
-  private async exceuteSql(sql: string, containerService: ContainerService) {
+  public async executeSql(sql: string, containerService: ContainerService) {
     const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysql',
