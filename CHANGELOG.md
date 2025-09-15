@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.0] - 2025-09-15
+
+### 🚀 Features
+
+- Add `rename-collection` command
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency chalk to v5.5.0 ([#569](https://github.com/neoskop/migrateus/issues/569))
+- *(deps)* Update nest monorepo to v11.1.6 ([#575](https://github.com/neoskop/migrateus/issues/575))
+- *(deps)* Update dependency pretty-bytes to v7.0.1 ([#580](https://github.com/neoskop/migrateus/issues/580))
+- *(deps)* Update dependency chalk to v5.6.0 ([#583](https://github.com/neoskop/migrateus/issues/583))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.15 ([#584](https://github.com/neoskop/migrateus/issues/584))
+- *(deps)* Update dependency nest-commander to v3.19.0 ([#587](https://github.com/neoskop/migrateus/issues/587))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.16 ([#590](https://github.com/neoskop/migrateus/issues/590))
+- *(deps)* Update dependency @inquirer/expand to v4.0.18 ([#591](https://github.com/neoskop/migrateus/issues/591))
+- *(deps)* Update dependency @inquirer/password to v4.0.18 ([#592](https://github.com/neoskop/migrateus/issues/592))
+- *(deps)* Update dependency @inquirer/select to v4.3.2 ([#593](https://github.com/neoskop/migrateus/issues/593))
+- *(deps)* Update dependency @inquirer/core to v10.2.0 ([#594](https://github.com/neoskop/migrateus/issues/594))
+- *(restore)* Fix asset upload after dependency updates
+- *(deps)* Update dependency tmp to v0.2.4 [security]
+- *(deps)* Update dependency dotenv to v17
+- *(deps)* Update dependency @directus/sdk to v20
+- *(deps)* Update dependency argon2 to v0.44.0
+- *(deps)* Update dependency p-limit to v7
+- *(deps)* Update dependency chalk to v5.6.2 ([#602](https://github.com/neoskop/migrateus/issues/602))
+- *(deps)* Update dependency dotenv to v17.2.2 ([#603](https://github.com/neoskop/migrateus/issues/603))
+- *(deps)* Update dependency nest-commander to v3.19.1 ([#604](https://github.com/neoskop/migrateus/issues/604))
+- *(deps)* Update dependency portfinder to v1.0.38 ([#605](https://github.com/neoskop/migrateus/issues/605))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.18 ([#608](https://github.com/neoskop/migrateus/issues/608))
+- *(deps)* Update dependency @inquirer/core to v10.2.2 ([#609](https://github.com/neoskop/migrateus/issues/609))
+- *(deps)* Update dependency @inquirer/expand to v4.0.20 ([#610](https://github.com/neoskop/migrateus/issues/610))
+- *(deps)* Update dependency @inquirer/password to v4.0.20 ([#611](https://github.com/neoskop/migrateus/issues/611))
+- *(deps)* Update dependency @inquirer/select to v4.3.4 ([#612](https://github.com/neoskop/migrateus/issues/612))
+
 ## [2.3.2] - 2025-07-25
 
 ### 🐛 Bug Fixes
