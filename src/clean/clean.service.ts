@@ -42,7 +42,7 @@ export class CleanService {
     await this.dockerService.setup();
     this.progressService.advance('🚀 Set-up Migrateus container');
     await this.dockerContainerService.setup();
-    this.progressService.advance('🛁 Clean-up all Directus users');
+    this.progressService.advance('🛁 Clean-up all Migrateus users');
     await this.sqlService.cleanUpAllDirectusUsers(this.dockerContainerService);
     this.progressService.advance('🗑️ Remove old Migrateus containers');
     await this.dockerContainerService.cleanUpAll();
@@ -56,7 +56,7 @@ export class CleanService {
     await this.k8sService.setup();
     this.progressService.advance('🚀 Set-up Migrateus pod');
     await this.k8sContainerService.setup();
-    this.progressService.advance('🛁 Clean-up all Directus users');
+    this.progressService.advance('🛁 Clean-up all Migrateus users');
     await this.sqlService.cleanUpAllDirectusUsers(this.k8sContainerService);
     this.progressService.advance('🗑️ Remove old Migrateus pods');
     await this.k8sContainerService.cleanUpAll();

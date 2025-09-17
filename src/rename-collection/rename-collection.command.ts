@@ -60,6 +60,6 @@ export class RenameCollectionCommand extends MigrateusCommand {
       newName = answers.newName;
     }
 
-    this.renameCollectionService.RenameCollection(environment, oldName, newName);
+    this.renameCollectionService.renameCollection(environment, oldName, newName);
   }
 }

@@ -17,25 +17,39 @@ export class RenameCollectionService {
     constructor(@Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger, private readonly config: ConfigService, private readonly environmentService: EnvironmentService, @Inject('ContainerServices') private readonly containerServices: { [name: string]: any }, private readonly progressService: ProgressService, private readonly sqlService: SqlService, private readonly k8sService: K8sService,
         private readonly dockerService: DockerService,) { }
 
-    public async RenameCollection(environmentName: string, oldName: string, newName: string) {
+    public async renameCollection(environmentName: string, oldName: string, newName: string) {
+        const containerService = await this.prepareContainerService(environmentName);
+
         try {
             const environment = this.config.getEnvironment(environmentName);
             this.environmentService.environment = environment;
-            const containerService = await this.prepareContainerService(environmentName);
             this.progressService.advance(`🚀 Rename collection ${chalk.bold(oldName)} to ${chalk.bold(newName)}`);
-            const statements = [
-                `ALTER TABLE ${oldName} RENAME TO ${newName};`,
+            const tableExists = await this.sqlService.listTables(containerService).then((tables) => tables.includes(oldName));
+
+            if (tableExists) {
+                const alterTableStatement = `ALTER TABLE ${oldName} RENAME TO ${newName};`;
+                await this.sqlService.executeSql(alterTableStatement, containerService);
+            }
+
+            const otherStatements = [
+                'SET foreign_key_checks = 0;',
+                `UPDATE directus_collections c SET c.group = '${newName}' WHERE c.group = '${oldName}';`,
                 `UPDATE directus_collections SET collection = '${newName}' WHERE collection = '${oldName}';`,
                 `UPDATE directus_fields SET collection = '${newName}' WHERE collection = '${oldName}';`,
                 `UPDATE directus_relations SET many_collection = '${newName}' WHERE many_collection = '${oldName}';`,
                 `UPDATE directus_relations SET one_collection = '${newName}' WHERE one_collection = '${oldName}';`,
                 `UPDATE directus_permissions SET collection = '${newName}' WHERE collection = '${oldName}';`,
+                'SET foreign_key_checks = 1;',
             ];
 
-            await this.sqlService.executeSql(statements.join('\n'), containerService);
+            await this.sqlService.executeSql(otherStatements.join('\n'), containerService);
             this.progressService.finish();
         } catch (error) {
             this.progressService.fail(error);
+        } finally {
+            this.progressService.advance('🧹 Cleaning up');
+            await containerService.cleanUp();
+            this.progressService.finish();
         }
     }
 
