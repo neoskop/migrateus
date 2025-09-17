@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.1] - 2025-09-17
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @directus/sdk to v20.1.0 ([#619](https://github.com/neoskop/migrateus/issues/619))
+- *(rename-collection)* Fix behaviour when collection has fkey constraints
+
 ## [2.4.0] - 2025-09-15
 
 ### 🚀 Features
