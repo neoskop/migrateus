@@ -65,7 +65,7 @@
     "tmp": "0.2.4",
     "uuid": "11.1.0",
     "which": "5.0.0",
-    "winston": "3.17.0"
+    "winston": "3.18.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
