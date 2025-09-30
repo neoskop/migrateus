@@ -76,7 +76,7 @@ importers:
         version: 3.20.0(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.6)(@types/inquirer@8.2.12)(@types/node@22.18.7)(typescript@5.9.2)
       nest-winston:
         specifier: 1.10.2
-        version: 1.10.2(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.18.1)
+        version: 1.10.2(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.18.2)
       ora:
         specifier: 8.2.0
         version: 8.2.0
@@ -111,8 +111,8 @@ importers:
         specifier: 5.0.0
         version: 5.0.0
       winston:
-        specifier: 3.18.1
-        version: 3.18.1
+        specifier: 3.18.2
+        version: 3.18.2
     devDependencies:
       '@nestjs/cli':
         specifier: ^11.0.0
@@ -445,8 +445,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@dabh/diagnostics@2.0.6':
-    resolution: {integrity: sha512-fuB2/plPknb9zp6TyJpnvEXYJddd4xEGoOMraVdK2bq99xpECHuTpqKJ+N40DGHLx1i4jiFzmX9Ti7hh6KLIbw==}
+  '@dabh/diagnostics@2.0.7':
+    resolution: {integrity: sha512-EnXa4T9/wuLw8iaEUFwIJMo0xNxyE3mzxLL14ixfVToJNQHG2Jwo8xMmafVJwAiAmIyHXsFDZpZR/TJC31857g==}
 
   '@directus/sdk@20.1.0':
     resolution: {integrity: sha512-EV2bwfiOXc1QFYAIqfGgyZ7JcKgHF43UVEYivUpMjOLiihI9tpmNfcz/qmOXju7LCZrBmSwTOHMRtOXPdZWiLQ==}
@@ -940,8 +940,8 @@ packages:
   '@sinonjs/fake-timers@13.0.5':
     resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
 
-  '@so-ric/colorspace@1.1.5':
-    resolution: {integrity: sha512-m2yI81kZ+2J2psTYtmBs3lfl/LM4WgLMCzkweMfQdbbyndcyOmFa6pblHjvjfblphPaGDzTDK+lmC/dUMSnv0A==}
+  '@so-ric/colorspace@1.1.6':
+    resolution: {integrity: sha512-/KiKkpHNOBgkFJwu9sh48LkHSMYGyuTcSFK/qMBdnOAlrRJzRSXAOFB5qwzaVQuDl8wAvHVMkaASQDReTahxuw==}
 
   '@tokenizer/inflate@0.2.7':
     resolution: {integrity: sha512-MADQgmZT1eKjp06jpI2yozxaU9uVs4GzzgSL+uEq7bVcJ9V1ZXQkeGNql1fsSI0gMy1vhvNTNbUqrx+pZfJVmg==}
@@ -3768,8 +3768,8 @@ packages:
     resolution: {integrity: sha512-8drMJ4rkgaPo1Me4zD/3WLfI/zPdA9o2IipKODunnGDcuqbHwjsbB79ylv04LCGGzU0xQ6vTznOMpQGaLhhm6A==}
     engines: {node: '>= 12.0.0'}
 
-  winston@3.18.1:
-    resolution: {integrity: sha512-EaQ6y7b9h6q7UJQn4/xlOsiu0I8844FfMdbN6V2I2i4528qeEWqRUcHzhvkseckAb1QxMhwX5V2YYiABkOfGfg==}
+  winston@3.18.2:
+    resolution: {integrity: sha512-+yDkrWD2rWkv6XjSgK2QyujZDNsHE9YLa8S284TpVrYdaloMkZ7NvHzfnETYlSPOX9h5j5VJ+Ro9J872O8CC/g==}
     engines: {node: '>= 12.0.0'}
 
   with@7.0.2:
@@ -4124,9 +4124,9 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@dabh/diagnostics@2.0.6':
+  '@dabh/diagnostics@2.0.7':
     dependencies:
-      '@so-ric/colorspace': 1.1.5
+      '@so-ric/colorspace': 1.1.6
       enabled: 2.0.0
       fix-esm: 1.0.1
       kuler: 2.0.0
@@ -4779,7 +4779,7 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@so-ric/colorspace@1.1.5':
+  '@so-ric/colorspace@1.1.6':
     dependencies:
       color: 5.0.2
       text-hex: 1.0.0
@@ -6996,11 +6996,11 @@ snapshots:
       - '@types/node'
       - typescript
 
-  nest-winston@1.10.2(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.18.1):
+  nest-winston@1.10.2(@nestjs/common@11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2))(winston@3.18.2):
     dependencies:
       '@nestjs/common': 11.1.6(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fast-safe-stringify: 2.1.1
-      winston: 3.18.1
+      winston: 3.18.2
 
   node-abort-controller@3.1.1: {}
 
@@ -7917,10 +7917,10 @@ snapshots:
       readable-stream: 3.6.2
       triple-beam: 1.4.1
 
-  winston@3.18.1:
+  winston@3.18.2:
     dependencies:
       '@colors/colors': 1.6.0
-      '@dabh/diagnostics': 2.0.6
+      '@dabh/diagnostics': 2.0.7
       async: 3.2.6
       is-stream: 2.0.1
       logform: 2.7.0
