@@ -18,8 +18,8 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(@types/node@22.18.10)
       '@inquirer/expand':
-        specifier: 4.0.20
-        version: 4.0.20(@types/node@22.18.10)
+        specifier: 4.0.21
+        version: 4.0.21(@types/node@22.18.10)
       '@inquirer/figures':
         specifier: 1.0.13
         version: 1.0.13
@@ -577,8 +577,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/expand@4.0.20':
-    resolution: {integrity: sha512-Dt9S+6qUg94fEvgn54F2Syf0Z3U8xmnBI9ATq2f5h9xt09fs2IJXSCIXyyVHwvggKWFXEY/7jATRo2K6Dkn6Ow==}
+  '@inquirer/expand@4.0.21':
+    resolution: {integrity: sha512-+mScLhIcbPFmuvU3tAGBed78XvYHSvCl6dBiYMlzCLhpr0bzGzd8tfivMMeqND6XZiaZ1tgusbUHJEfc6YzOdA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4300,10 +4300,10 @@ snapshots:
     optionalDependencies:
       '@types/node': 22.18.10
 
-  '@inquirer/expand@4.0.20(@types/node@22.18.10)':
+  '@inquirer/expand@4.0.21(@types/node@22.18.10)':
     dependencies:
-      '@inquirer/core': 10.2.2(@types/node@22.18.10)
-      '@inquirer/type': 3.0.8(@types/node@22.18.10)
+      '@inquirer/core': 10.3.0(@types/node@22.18.10)
+      '@inquirer/type': 3.0.9(@types/node@22.18.10)
       yoctocolors-cjs: 2.1.3
     optionalDependencies:
       '@types/node': 22.18.10
@@ -4346,7 +4346,7 @@ snapshots:
       '@inquirer/checkbox': 4.2.4(@types/node@22.18.10)
       '@inquirer/confirm': 5.1.19(@types/node@22.18.10)
       '@inquirer/editor': 4.2.20(@types/node@22.18.10)
-      '@inquirer/expand': 4.0.20(@types/node@22.18.10)
+      '@inquirer/expand': 4.0.21(@types/node@22.18.10)
       '@inquirer/input': 4.2.4(@types/node@22.18.10)
       '@inquirer/number': 3.0.20(@types/node@22.18.10)
       '@inquirer/password': 4.0.20(@types/node@22.18.10)
@@ -4361,7 +4361,7 @@ snapshots:
       '@inquirer/checkbox': 4.2.4(@types/node@22.18.10)
       '@inquirer/confirm': 5.1.19(@types/node@22.18.10)
       '@inquirer/editor': 4.2.20(@types/node@22.18.10)
-      '@inquirer/expand': 4.0.20(@types/node@22.18.10)
+      '@inquirer/expand': 4.0.21(@types/node@22.18.10)
       '@inquirer/input': 4.2.4(@types/node@22.18.10)
       '@inquirer/number': 3.0.20(@types/node@22.18.10)
       '@inquirer/password': 4.0.20(@types/node@22.18.10)
