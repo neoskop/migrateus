@@ -80,7 +80,7 @@
     "@types/shelljs": "0.8.17",
     "@types/supertest": "^6.0.2",
     "@types/tmp": "0.2.6",
-    "@types/uuid": "10.0.0",
+    "@types/uuid": "11.0.0",
     "@types/which": "3.0.4",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",
