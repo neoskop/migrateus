@@ -54,7 +54,7 @@
     "nanoid": "5.1.6",
     "nest-commander": "3.20.1",
     "nest-winston": "1.10.2",
-    "ora": "8.2.0",
+    "ora": "9.0.0",
     "p-limit": "7.2.0",
     "portfinder": "1.0.38",
     "pretty-bytes": "7.1.0",
