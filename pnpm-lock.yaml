@@ -24,8 +24,8 @@ importers:
         specifier: 1.0.15
         version: 1.0.15
       '@inquirer/password':
-        specifier: 4.0.22
-        version: 4.0.22(@types/node@24.10.1)
+        specifier: 4.0.23
+        version: 4.0.23(@types/node@24.10.1)
       '@inquirer/select':
         specifier: 4.4.1
         version: 4.4.1(@types/node@24.10.1)
@@ -604,8 +604,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/password@4.0.22':
-    resolution: {integrity: sha512-CbdqK1ioIr0Y3akx03k/+Twf+KSlHjn05hBL+rmubMll7PsDTGH0R4vfFkr+XrkB0FOHrjIwVP9crt49dgt+1g==}
+  '@inquirer/password@4.0.23':
+    resolution: {integrity: sha512-zREJHjhT5vJBMZX/IUbyI9zVtVfOLiTO66MrF/3GFZYZ7T4YILW5MSkEYHceSii/KtRk+4i3RE7E1CUXA2jHcA==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4295,7 +4295,7 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.10.1
 
-  '@inquirer/password@4.0.22(@types/node@24.10.1)':
+  '@inquirer/password@4.0.23(@types/node@24.10.1)':
     dependencies:
       '@inquirer/ansi': 1.0.2
       '@inquirer/core': 10.3.2(@types/node@24.10.1)
@@ -4311,7 +4311,7 @@ snapshots:
       '@inquirer/expand': 4.0.23(@types/node@24.10.1)
       '@inquirer/input': 4.3.0(@types/node@24.10.1)
       '@inquirer/number': 3.0.22(@types/node@24.10.1)
-      '@inquirer/password': 4.0.22(@types/node@24.10.1)
+      '@inquirer/password': 4.0.23(@types/node@24.10.1)
       '@inquirer/rawlist': 4.1.10(@types/node@24.10.1)
       '@inquirer/search': 3.2.1(@types/node@24.10.1)
       '@inquirer/select': 4.4.1(@types/node@24.10.1)
@@ -4326,7 +4326,7 @@ snapshots:
       '@inquirer/expand': 4.0.23(@types/node@24.10.1)
       '@inquirer/input': 4.3.0(@types/node@24.10.1)
       '@inquirer/number': 3.0.22(@types/node@24.10.1)
-      '@inquirer/password': 4.0.22(@types/node@24.10.1)
+      '@inquirer/password': 4.0.23(@types/node@24.10.1)
       '@inquirer/rawlist': 4.1.10(@types/node@24.10.1)
       '@inquirer/search': 3.2.1(@types/node@24.10.1)
       '@inquirer/select': 4.4.1(@types/node@24.10.1)
