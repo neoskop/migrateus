@@ -21,8 +21,8 @@ importers:
         specifier: 4.0.23
         version: 4.0.23(@types/node@24.10.1)
       '@inquirer/figures':
-        specifier: 1.0.15
-        version: 1.0.15
+        specifier: 2.0.1
+        version: 2.0.1
       '@inquirer/password':
         specifier: 4.0.23
         version: 4.0.23(@types/node@24.10.1)
@@ -585,6 +585,10 @@ packages:
   '@inquirer/figures@1.0.15':
     resolution: {integrity: sha512-t2IEY+unGHOzAaVM5Xx6DEWKeXlDDcNPeDyUpsRc6CUhBfU3VQOEl+Vssh7VNp1dR8MdUJBWhuObjXCsVpjN5g==}
     engines: {node: '>=18'}
+
+  '@inquirer/figures@2.0.1':
+    resolution: {integrity: sha512-KtMxyjLCuDFqAWHmCY9qMtsZ09HnjMsm8H3OvpSIpfhHdfw3/AiGWHNrfRwbyvHPtOJpumm8wGn5fkhtvkWRsg==}
+    engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
 
   '@inquirer/input@4.3.1':
     resolution: {integrity: sha512-kN0pAM4yPrLjJ1XJBjDxyfDduXOuQHrBB8aLDMueuwUGn+vNpF7Gq7TvyVxx8u4SHlFFj4trmj+a2cbpG4Jn1g==}
@@ -4276,6 +4280,8 @@ snapshots:
       '@types/node': 24.10.1
 
   '@inquirer/figures@1.0.15': {}
+
+  '@inquirer/figures@2.0.1': {}
 
   '@inquirer/input@4.3.1(@types/node@24.10.1)':
     dependencies:
