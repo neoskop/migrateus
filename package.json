@@ -50,7 +50,7 @@
     "file-type": "21.1.1",
     "glob": "13.0.0",
     "js-yaml": "4.1.1",
-    "mime-types": "3.0.1",
+    "mime-types": "3.0.2",
     "nanoid": "5.1.6",
     "nest-commander": "3.20.1",
     "nest-winston": "1.10.2",
