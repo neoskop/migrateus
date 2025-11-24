@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.4.2] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency nest-commander to v3.20.0 ([#621](https://github.com/neoskop/migrateus/issues/621))
+- *(deps)* Update dependency pretty-bytes to v7.1.0 ([#626](https://github.com/neoskop/migrateus/issues/626))
+- *(deps)* Update dependency nanoid to v5.1.6 ([#629](https://github.com/neoskop/migrateus/issues/629))
+- *(deps)* Update dependency dotenv to v17.2.3 ([#635](https://github.com/neoskop/migrateus/issues/635))
+- *(deps)* Update dependency winston to v3.18.0 ([#636](https://github.com/neoskop/migrateus/issues/636))
+- *(deps)* Update dependency winston to v3.18.1 ([#637](https://github.com/neoskop/migrateus/issues/637))
+- *(deps)* Update dependency winston to v3.18.2 ([#638](https://github.com/neoskop/migrateus/issues/638))
+- *(deps)* Update dependency winston to v3.18.3 ([#641](https://github.com/neoskop/migrateus/issues/641))
+- *(deps)* Update dependency nest-commander to v3.20.1 ([#642](https://github.com/neoskop/migrateus/issues/642))
+- *(deps)* Update dependency semver to v7.7.3 ([#647](https://github.com/neoskop/migrateus/issues/647))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.19 ([#654](https://github.com/neoskop/migrateus/issues/654))
+- *(deps)* Update dependency @inquirer/expand to v4.0.21 ([#655](https://github.com/neoskop/migrateus/issues/655))
+- *(deps)* Update dependency @inquirer/figures to v1.0.14 ([#656](https://github.com/neoskop/migrateus/issues/656))
+- *(deps)* Update dependency @inquirer/password to v4.0.21 ([#657](https://github.com/neoskop/migrateus/issues/657))
+- *(deps)* Update dependency @inquirer/type to v3.0.9 ([#658](https://github.com/neoskop/migrateus/issues/658))
+- *(deps)* Update dependency @inquirer/core to v10.3.0 ([#659](https://github.com/neoskop/migrateus/issues/659))
+- *(deps)* Update dependency @inquirer/select to v4.4.0 ([#660](https://github.com/neoskop/migrateus/issues/660))
+- *(deps)* Update dependency p-limit to v7.2.0 ([#663](https://github.com/neoskop/migrateus/issues/663))
+- *(deps)* Update dependency @directus/sdk to v20.1.1 ([#679](https://github.com/neoskop/migrateus/issues/679))
+- *(deps)* Update dependency @inquirer/confirm to v5.1.20 ([#680](https://github.com/neoskop/migrateus/issues/680))
+- *(deps)* Update dependency @inquirer/core to v10.3.1 ([#681](https://github.com/neoskop/migrateus/issues/681))
+- *(deps)* Update dependency @inquirer/expand to v4.0.22 ([#682](https://github.com/neoskop/migrateus/issues/682))
+- *(deps)* Update dependency @inquirer/figures to v1.0.15 ([#683](https://github.com/neoskop/migrateus/issues/683))
+- *(deps)* Update dependency @inquirer/password to v4.0.22 ([#684](https://github.com/neoskop/migrateus/issues/684))
+- *(deps)* Update dependency @inquirer/select to v4.4.1 ([#685](https://github.com/neoskop/migrateus/issues/685))
+- *(deps)* Update dependency @inquirer/type to v3.0.10 ([#686](https://github.com/neoskop/migrateus/issues/686))
+- *(deps)* Update dependency file-type to v21.1.0 ([#688](https://github.com/neoskop/migrateus/issues/688))
+- *(deps)* Update dependency uuid to v13
+- *(deps)* Update dependency ora to v9
+- *(deps)* Update dependency @inquirer/confirm to v5.1.21 ([#693](https://github.com/neoskop/migrateus/issues/693))
+- *(deps)* Update dependency @inquirer/core to v10.3.2 ([#694](https://github.com/neoskop/migrateus/issues/694))
+- *(deps)* Update dependency @inquirer/expand to v4.0.23 ([#695](https://github.com/neoskop/migrateus/issues/695))
+- *(deps)* Update dependency @inquirer/password to v4.0.23 ([#696](https://github.com/neoskop/migrateus/issues/696))
+- *(deps)* Update dependency @inquirer/select to v4.4.2 ([#697](https://github.com/neoskop/migrateus/issues/697))
+- *(deps)* Update dependency js-yaml to v4.1.1 ([#698](https://github.com/neoskop/migrateus/issues/698))
+- *(deps)* Update dependency glob to v11.1.0 ([#708](https://github.com/neoskop/migrateus/issues/708))
+- *(deps)* Update dependency file-type to v21.1.1 ([#711](https://github.com/neoskop/migrateus/issues/711))
+- *(deps)* Update dependency @directus/sdk to v20.2.0 ([#712](https://github.com/neoskop/migrateus/issues/712))
+- *(deps)* Update dependency which to v6
+- *(deps)* Update dependency tmp to v0.2.5
+- *(deps)* Update dependency glob to v13
+
 ## [2.4.1] - 2025-09-17
 
 ### 🐛 Bug Fixes
