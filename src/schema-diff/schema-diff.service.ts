@@ -44,7 +44,7 @@ export class SchemaDiffService {
     private readonly environmentService: EnvironmentService,
     private readonly schemaDiffPromptService: SchemaDiffPromptService,
     private readonly progressService: ProgressService,
-  ) {}
+  ) { }
 
   public async diff(from: string, to: string) {
     try {
@@ -197,6 +197,12 @@ export class SchemaDiffService {
   }
 
   private async applyDiff(client: RestClient<any>, diff) {
+    const version = await this.getDirectusVersion(client);
+
+    if (semver.gte(version, '11.13.0')) {
+      diff.diff.systemFields = [];
+    }
+
     return await client.request(schemaApply(diff));
   }
 }
