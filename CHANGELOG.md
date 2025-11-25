@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.4.2] - 2025-11-24
+## [2.5.0] - 2025-11-25
 
 ### 🐛 Bug Fixes
 
@@ -47,6 +47,14 @@ All notable changes to this project will be documented in this file.
 - *(deps)* Update dependency which to v6
 - *(deps)* Update dependency tmp to v0.2.5
 - *(deps)* Update dependency glob to v13
+- *(deps)* Update dependency mime-types to v3.0.2 ([#714](https://github.com/neoskop/migrateus/issues/714))
+- *(schema-diff)* Fix schema-diff for Directus >= 11.13.0
+
+### ⚙️ Miscellaneous Tasks
+
+- Switch bitnami/mysql image out because of bitnami deprecation
+- Redact env map entries
+- Update deps
 
 ## [2.4.1] - 2025-09-17
 
