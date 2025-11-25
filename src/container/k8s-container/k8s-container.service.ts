@@ -46,7 +46,7 @@ export class K8sContainerService extends ContainerService {
     }
 
     await this.k8sService.kubectl(
-      `wait --for=condition=ready pod ${this.migrateusPodName}`,
+      `wait --for=condition=ready --timeout=60s pod ${this.migrateusPodName}`,
       { silent: true },
     );
   }

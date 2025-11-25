@@ -18,5 +18,5 @@ import { K8sModule } from '../k8s/k8s.module.js';
   imports: [DockerModule, K8sModule],
 })
 export class ContainerModule {
-  public static DEFAULT_IMAGE = 'bitnami/mysql:9.0.1';
+  public static DEFAULT_IMAGE = 'mysql:9.5.0-oraclelinux9';
 }
