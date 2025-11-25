@@ -29,18 +29,20 @@ export class RedactService {
     }
 
     for (const redaction of this.redactions) {
+      const search = redaction.options?.regex ? new RegExp(redaction.text, 'g') : redaction.text;
+
       if (
         redaction.options &&
         (redaction.options.prefix || redaction.options.suffix)
       ) {
         text = text.replaceAll(
-          redaction.text,
+          search,
           (redaction.options.prefix || '') +
-            this.REDACTION +
-            (redaction.options.suffix || ''),
+          this.REDACTION +
+          (redaction.options.suffix || ''),
         );
       } else {
-        text = text.replaceAll(redaction.text, this.REDACTION);
+        text = text.replaceAll(search, this.REDACTION);
       }
     }
 

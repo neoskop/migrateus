@@ -12,6 +12,7 @@ import chalk from 'chalk';
 import tmp from 'tmp';
 import fs from 'node:fs';
 import { ConfigService } from '../config/config.service.js';
+import { RedactService } from '../redact/redact.service.js';
 
 @Injectable()
 export class K8sService {
@@ -21,8 +22,9 @@ export class K8sService {
     private readonly environmentService: EnvironmentService,
     private readonly sqlService: SqlService,
     private readonly configService: ConfigService,
+    private readonly redactService: RedactService,
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
-  ) {}
+  ) { }
 
   public async cleanUp() {
     if (this.kubeconfigPath) {
@@ -267,6 +269,12 @@ export class K8sService {
       configMaps.forEach((configMap) => {
         Object.assign(envMap, configMap);
       });
+    }
+
+    for (const [key, value] of Object.entries(envMap)) {
+      if (key.includes('PASSWORD') || key.includes('SECRET') || key.includes('KEY')) {
+        this.redactService.addRedaction(value);
+      }
     }
 
     this.logger.debug(
