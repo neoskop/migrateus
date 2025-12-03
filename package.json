@@ -34,7 +34,7 @@
     "@directus/sdk": "20.2.0",
     "@inquirer/confirm": "6.0.2",
     "@inquirer/core": "11.0.2",
-    "@inquirer/expand": "5.0.1",
+    "@inquirer/expand": "5.0.2",
     "@inquirer/figures": "2.0.1",
     "@inquirer/password": "5.0.1",
     "@inquirer/select": "5.0.1",
