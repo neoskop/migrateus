@@ -12,8 +12,8 @@ importers:
         specifier: 20.3.0
         version: 20.3.0
       '@inquirer/confirm':
-        specifier: 6.0.2
-        version: 6.0.2(@types/node@24.10.3)
+        specifier: 6.0.3
+        version: 6.0.3(@types/node@24.10.3)
       '@inquirer/core':
         specifier: 11.0.2
         version: 11.0.2(@types/node@24.10.3)
@@ -547,8 +547,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/confirm@6.0.2':
-    resolution: {integrity: sha512-A0/13Wyi+8iFeNDX6D4zZYKPoBLIEbE4K/219qHcnpXMer2weWvaTo63+2c7mQPPA206DEMSYVOPnEw3meOlCw==}
+  '@inquirer/confirm@6.0.3':
+    resolution: {integrity: sha512-lyEvibDFL+NA5R4xl8FUmNhmu81B+LDL9L/MpKkZlQDJZXzG8InxiqYxiAlQYa9cqLLhYqKLQwZqXmSTqCLjyw==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
       '@types/node': '>=18'
@@ -567,6 +567,15 @@ packages:
 
   '@inquirer/core@11.0.2':
     resolution: {integrity: sha512-lgMRx/n02ciiNELBvFLHtmcjbV5tf5D/I0UYfCg2YbTZWmBZ10/niLd3IjWBxz8LtM27xP+4oLEa06Slmb7p7A==}
+    engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
+  '@inquirer/core@11.1.0':
+    resolution: {integrity: sha512-+jD/34T1pK8M5QmZD/ENhOfXdl9Zr+BrQAUc5h2anWgi7gggRq15ZbiBeLoObj0TLbdgW7TAIQRU2boMc9uOKQ==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4306,9 +4315,9 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.10.3
 
-  '@inquirer/confirm@6.0.2(@types/node@24.10.3)':
+  '@inquirer/confirm@6.0.3(@types/node@24.10.3)':
     dependencies:
-      '@inquirer/core': 11.0.2(@types/node@24.10.3)
+      '@inquirer/core': 11.1.0(@types/node@24.10.3)
       '@inquirer/type': 4.0.2(@types/node@24.10.3)
     optionalDependencies:
       '@types/node': 24.10.3
@@ -4327,6 +4336,18 @@ snapshots:
       '@types/node': 24.10.3
 
   '@inquirer/core@11.0.2(@types/node@24.10.3)':
+    dependencies:
+      '@inquirer/ansi': 2.0.2
+      '@inquirer/figures': 2.0.2
+      '@inquirer/type': 4.0.2(@types/node@24.10.3)
+      cli-width: 4.1.0
+      mute-stream: 3.0.0
+      signal-exit: 4.1.0
+      wrap-ansi: 9.0.2
+    optionalDependencies:
+      '@types/node': 24.10.3
+
+  '@inquirer/core@11.1.0(@types/node@24.10.3)':
     dependencies:
       '@inquirer/ansi': 2.0.2
       '@inquirer/figures': 2.0.2
