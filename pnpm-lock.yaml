@@ -15,8 +15,8 @@ importers:
         specifier: 6.0.4
         version: 6.0.4(@types/node@24.10.7)
       '@inquirer/core':
-        specifier: 11.1.0
-        version: 11.1.0(@types/node@24.10.7)
+        specifier: 11.1.1
+        version: 11.1.1(@types/node@24.10.7)
       '@inquirer/expand':
         specifier: 5.0.3
         version: 5.0.3(@types/node@24.10.7)
@@ -563,15 +563,6 @@ packages:
   '@inquirer/core@10.3.2':
     resolution: {integrity: sha512-43RTuEbfP8MbKzedNqBrlhhNKVwoK//vUFNW3Q3vZ88BLcrs4kYpGg+B2mm5p2K/HfygoCxuKwJJiv8PbGmE0A==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/core@11.1.0':
-    resolution: {integrity: sha512-+jD/34T1pK8M5QmZD/ENhOfXdl9Zr+BrQAUc5h2anWgi7gggRq15ZbiBeLoObj0TLbdgW7TAIQRU2boMc9uOKQ==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -4353,18 +4344,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.10.7
 
-  '@inquirer/core@11.1.0(@types/node@24.10.7)':
-    dependencies:
-      '@inquirer/ansi': 2.0.2
-      '@inquirer/figures': 2.0.2
-      '@inquirer/type': 4.0.2(@types/node@24.10.7)
-      cli-width: 4.1.0
-      mute-stream: 3.0.0
-      signal-exit: 4.1.0
-      wrap-ansi: 9.0.2
-    optionalDependencies:
-      '@types/node': 24.10.7
-
   '@inquirer/core@11.1.1(@types/node@24.10.7)':
     dependencies:
       '@inquirer/ansi': 2.0.3
@@ -4395,7 +4374,7 @@ snapshots:
 
   '@inquirer/expand@5.0.3(@types/node@24.10.7)':
     dependencies:
-      '@inquirer/core': 11.1.0(@types/node@24.10.7)
+      '@inquirer/core': 11.1.1(@types/node@24.10.7)
       '@inquirer/type': 4.0.2(@types/node@24.10.7)
     optionalDependencies:
       '@types/node': 24.10.7
@@ -4438,7 +4417,7 @@ snapshots:
   '@inquirer/password@5.0.3(@types/node@24.10.7)':
     dependencies:
       '@inquirer/ansi': 2.0.2
-      '@inquirer/core': 11.1.0(@types/node@24.10.7)
+      '@inquirer/core': 11.1.1(@types/node@24.10.7)
       '@inquirer/type': 4.0.2(@types/node@24.10.7)
     optionalDependencies:
       '@types/node': 24.10.7
@@ -4503,7 +4482,7 @@ snapshots:
   '@inquirer/select@5.0.3(@types/node@24.10.7)':
     dependencies:
       '@inquirer/ansi': 2.0.2
-      '@inquirer/core': 11.1.0(@types/node@24.10.7)
+      '@inquirer/core': 11.1.1(@types/node@24.10.7)
       '@inquirer/figures': 2.0.2
       '@inquirer/type': 4.0.2(@types/node@24.10.7)
     optionalDependencies:
