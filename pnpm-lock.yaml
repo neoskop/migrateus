@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@directus/sdk':
-        specifier: 20.3.0
-        version: 20.3.0
+        specifier: 21.0.0
+        version: 21.0.0
       '@inquirer/confirm':
         specifier: 6.0.4
         version: 6.0.4(@types/node@24.10.9)
@@ -440,8 +440,8 @@ packages:
   '@dabh/diagnostics@2.0.8':
     resolution: {integrity: sha512-R4MSXTVnuMzGD7bzHdW2ZhhdPC/igELENcq5IjEverBvq5hn1SXCWcsi6eSsdWP0/Ur+SItRRjAktmdoX/8R/Q==}
 
-  '@directus/sdk@20.3.0':
-    resolution: {integrity: sha512-auy59B0A7Ri+4JDy0JcdFHnsHvOkl3ixWMWYciXAbm4oYIE9S4be8xEpIwA5qhlPTOprJ6JHPWo9rEvcrLwNtA==}
+  '@directus/sdk@21.0.0':
+    resolution: {integrity: sha512-+Uld9+anm5N1NfVgEmPBReOrT0uTkE3OnQginvqx7yGS94e20qzNsW8IJnstC1OvdUMTDteDrdYMfx6QG+kY7Q==}
     engines: {node: '>=22'}
 
   '@emnapi/core@1.8.1':
@@ -4200,7 +4200,7 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
-  '@directus/sdk@20.3.0': {}
+  '@directus/sdk@21.0.0': {}
 
   '@emnapi/core@1.8.1':
     dependencies:
