@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.1] - 2026-02-05
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v6.0.2 ([#726](https://github.com/neoskop/migrateus/issues/726))
+- *(deps)* Update dependency @inquirer/core to v11.0.2 ([#727](https://github.com/neoskop/migrateus/issues/727))
+- *(deps)* Update dependency @inquirer/expand to v5.0.2 ([#729](https://github.com/neoskop/migrateus/issues/729))
+- *(deps)* Update dependency @inquirer/figures to v2.0.2 ([#730](https://github.com/neoskop/migrateus/issues/730))
+- *(deps)* Update dependency @inquirer/password to v5.0.2 ([#731](https://github.com/neoskop/migrateus/issues/731))
+- *(deps)* Update dependency @inquirer/select to v5.0.2 ([#732](https://github.com/neoskop/migrateus/issues/732))
+- *(deps)* Update dependency @inquirer/type to v4.0.2 ([#733](https://github.com/neoskop/migrateus/issues/733))
+- *(deps)* Update dependency winston to v3.19.0 ([#734](https://github.com/neoskop/migrateus/issues/734))
+- *(deps)* Update dependency @directus/sdk to v20.3.0 ([#738](https://github.com/neoskop/migrateus/issues/738))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.3 ([#742](https://github.com/neoskop/migrateus/issues/742))
+- *(deps)* Update dependency @inquirer/expand to v5.0.3 ([#743](https://github.com/neoskop/migrateus/issues/743))
+- *(deps)* Update dependency @inquirer/password to v5.0.3 ([#745](https://github.com/neoskop/migrateus/issues/745))
+- *(deps)* Update dependency @inquirer/select to v5.0.3 ([#746](https://github.com/neoskop/migrateus/issues/746))
+- *(deps)* Update dependency @inquirer/core to v11.1.0 ([#747](https://github.com/neoskop/migrateus/issues/747))
+- *(deps)* Update dependency file-type to v21.2.0 ([#755](https://github.com/neoskop/migrateus/issues/755))
+- *(deps)* Update dependency file-type to v21.3.0 ([#758](https://github.com/neoskop/migrateus/issues/758))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.4 ([#766](https://github.com/neoskop/migrateus/issues/766))
+- *(deps)* Update dependency @inquirer/core to v11.1.1 ([#767](https://github.com/neoskop/migrateus/issues/767))
+- *(deps)* Update dependency @inquirer/expand to v5.0.4 ([#768](https://github.com/neoskop/migrateus/issues/768))
+- *(deps)* Update dependency @inquirer/figures to v2.0.3 ([#769](https://github.com/neoskop/migrateus/issues/769))
+- *(deps)* Update dependency @inquirer/password to v5.0.4 ([#770](https://github.com/neoskop/migrateus/issues/770))
+- *(deps)* Update dependency @inquirer/select to v5.0.4 ([#771](https://github.com/neoskop/migrateus/issues/771))
+- *(deps)* Update dependency @inquirer/type to v4.0.3 ([#772](https://github.com/neoskop/migrateus/issues/772))
+- *(deps)* Update dependency ora to v9.1.0 ([#784](https://github.com/neoskop/migrateus/issues/784))
+- *(deps)* Update dependency p-limit to v7.3.0 ([#792](https://github.com/neoskop/migrateus/issues/792))
+- *(deps)* Update dependency glob to v13.0.1 ([#793](https://github.com/neoskop/migrateus/issues/793))
+- *(deps)* Update dependency ora to v9.2.0 ([#794](https://github.com/neoskop/migrateus/issues/794))
+- *(deps)* Update dependency @directus/sdk to v21
+- *(deps)* Update dependency ora to v9.3.0 ([#795](https://github.com/neoskop/migrateus/issues/795))
+
 ## [2.5.0] - 2025-11-25
 
 ### 🐛 Bug Fixes
