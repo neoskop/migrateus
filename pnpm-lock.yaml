@@ -54,8 +54,8 @@ importers:
         specifier: 4.1.0
         version: 4.1.0
       dotenv:
-        specifier: 17.2.3
-        version: 17.2.3
+        specifier: 17.2.4
+        version: 17.2.4
       file-type:
         specifier: 21.3.0
         version: 21.3.0
@@ -1871,8 +1871,8 @@ packages:
   doctypes@1.1.0:
     resolution: {integrity: sha512-LLBi6pEqS6Do3EKQ3J0NqHWV5hhb78Pi8vvESYwyOy2c31ZEZVdtitdzsQsKb7878PEERhzUk0ftqGhG6Mz+pQ==}
 
-  dotenv@17.2.3:
-    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
+  dotenv@17.2.4:
+    resolution: {integrity: sha512-mudtfb4zRB4bVvdj0xRo+e6duH1csJRM8IukBqfTRvHotn9+LBXB8ynAidP9zHqoRC/fsllXgk4kCKlR21fIhw==}
     engines: {node: '>=12'}
 
   dunder-proto@1.0.1:
@@ -5791,7 +5791,7 @@ snapshots:
 
   doctypes@1.1.0: {}
 
-  dotenv@17.2.3: {}
+  dotenv@17.2.4: {}
 
   dunder-proto@1.0.1:
     dependencies:
