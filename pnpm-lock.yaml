@@ -184,8 +184,8 @@ importers:
         specifier: 3.2.0
         version: 3.2.0(chokidar@4.0.3)
       nodemon:
-        specifier: 3.1.11
-        version: 3.1.11
+        specifier: 3.1.13
+        version: 3.1.13
       prettier:
         specifier: ^3.6.2
         version: 3.8.1
@@ -2886,10 +2886,6 @@ packages:
     resolution: {integrity: sha512-VP79XUPxV2CigYP3jWwAUFSku2aKqBH7uTAapFWCBqutsbmDo96KY5o8uh6U+/YSIn5OxJnXp73beVkpqMIGhA==}
     engines: {node: '>=18'}
 
-  minimatch@10.2.1:
-    resolution: {integrity: sha512-MClCe8IL5nRRmawL6ib/eT4oLyeKMGCghibcDWK+J0hh0Q8kqSdia6BvbRMVk6mPa6WqUa5uR2oxt6C5jd533A==}
-    engines: {node: 20 || >=22}
-
   minimatch@10.2.2:
     resolution: {integrity: sha512-+G4CpNBxa5MprY+04MbgOw1v7So6n5JY166pFi9KfYwT78fxScCeSNQSNzp6dpPSW2rONOps6Ocam1wFhCgoVw==}
     engines: {node: 18 || 20 || >=22}
@@ -3001,8 +2997,8 @@ packages:
     resolution: {integrity: sha512-tGnJW6OKRii9u/b2WiUViTJS+h7Apxx17qsMUjsUeNDiMMX5ZFf8F8Fcz7PAQ6omvOxHZtvDTmOYKJQwmfpjeg==}
     engines: {node: '>=20'}
 
-  nodemon@3.1.11:
-    resolution: {integrity: sha512-is96t8F/1//UHAjNPHpbsNY46ELPpftGUoSVNXwUfMk/qdjSylYrWSu1XavVTBOn526kFiOR733ATgNBCQyH0g==}
+  nodemon@3.1.13:
+    resolution: {integrity: sha512-nPN6L7A9cTA3BnJ3zZIibH5FiDh3GbmibeS17bl5YEU1IRO2mcfvR0ZJXH3ndoeKItjUcaX81FSKc/Kq/IiG6g==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -6326,7 +6322,7 @@ snapshots:
 
   glob@13.0.0:
     dependencies:
-      minimatch: 10.2.1
+      minimatch: 10.2.2
       minipass: 7.1.2
       path-scurry: 2.0.1
 
@@ -7052,10 +7048,6 @@ snapshots:
 
   mimic-function@5.0.1: {}
 
-  minimatch@10.2.1:
-    dependencies:
-      brace-expansion: 5.0.2
-
   minimatch@10.2.2:
     dependencies:
       brace-expansion: 5.0.2
@@ -7165,12 +7157,12 @@ snapshots:
       '@types/sarif': 2.1.7
       fs-extra: 11.3.3
 
-  nodemon@3.1.11:
+  nodemon@3.1.13:
     dependencies:
       chokidar: 3.6.0
       debug: 4.4.3(supports-color@5.5.0)
       ignore-by-default: 1.0.1
-      minimatch: 3.1.2
+      minimatch: 10.2.2
       pstree.remy: 1.1.8
       semver: 7.7.4
       simple-update-notifier: 2.0.0
