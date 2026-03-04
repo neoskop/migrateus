@@ -31,7 +31,7 @@
     "update-changelog": "git-cliff -o --tag $version"
   },
   "dependencies": {
-    "@directus/sdk": "21.1.0",
+    "@directus/sdk": "21.2.0",
     "@inquirer/confirm": "6.0.8",
     "@inquirer/core": "11.1.5",
     "@inquirer/expand": "5.0.8",
