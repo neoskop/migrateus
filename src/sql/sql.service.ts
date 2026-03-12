@@ -17,7 +17,7 @@ export class SqlService {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
-  ) { }
+  ) {}
 
   public set databaseConfig(config: DatabaseConfig) {
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
@@ -71,6 +71,7 @@ export class SqlService {
       '--skip-lock-tables',
       '--skip-add-locks',
       '--compatible=ansi',
+      '--default-character-set=utf8mb4',
       `-h${host}`,
       `-P${port}`,
       `-u${user}`,
@@ -99,6 +100,7 @@ export class SqlService {
       `-P${port}`,
       `-u${user}`,
       `-p${password}`,
+      '--default-character-set=utf8mb4',
       name,
       '</tmp/backup.sql',
     ].join(' ');
@@ -156,8 +158,8 @@ export class SqlService {
 
     await this.executeSql(
       'SET foreign_key_checks = 0; ' +
-      alterStatements.join(';') +
-      '; SET foreign_key_checks = 1',
+        alterStatements.join(';') +
+        '; SET foreign_key_checks = 1',
       containerService,
     );
   }
