@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.2] - 2026-03-14
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency semver to v7.7.4 ([#797](https://github.com/neoskop/migrateus/issues/797))
+- *(deps)* Update dependency @directus/sdk to v21.1.0 ([#798](https://github.com/neoskop/migrateus/issues/798))
+- *(deps)* Update dependency dotenv to v17.2.4 ([#799](https://github.com/neoskop/migrateus/issues/799))
+- *(deps)* Update dependency glob to v13.0.2 ([#805](https://github.com/neoskop/migrateus/issues/805))
+- *(deps)* Update dependency which to v6.0.1 ([#806](https://github.com/neoskop/migrateus/issues/806))
+- *(deps)* Update dependency glob to v13.0.3 ([#807](https://github.com/neoskop/migrateus/issues/807))
+- *(deps)* Update dependency dotenv to v17.3.0 ([#808](https://github.com/neoskop/migrateus/issues/808))
+- *(deps)* Update dependency dotenv to v17.3.1 ([#809](https://github.com/neoskop/migrateus/issues/809))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.6 ([#810](https://github.com/neoskop/migrateus/issues/810))
+- *(deps)* Update dependency @inquirer/core to v11.1.3 ([#811](https://github.com/neoskop/migrateus/issues/811))
+- *(deps)* Update dependency @inquirer/expand to v5.0.6 ([#812](https://github.com/neoskop/migrateus/issues/812))
+- *(deps)* Update dependency @inquirer/password to v5.0.6 ([#813](https://github.com/neoskop/migrateus/issues/813))
+- *(deps)* Update dependency @inquirer/select to v5.0.6 ([#814](https://github.com/neoskop/migrateus/issues/814))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.7 ([#816](https://github.com/neoskop/migrateus/issues/816))
+- *(deps)* Update dependency @inquirer/core to v11.1.4 ([#817](https://github.com/neoskop/migrateus/issues/817))
+- *(deps)* Update dependency @inquirer/expand to v5.0.7 ([#818](https://github.com/neoskop/migrateus/issues/818))
+- *(deps)* Update dependency @inquirer/password to v5.0.7 ([#819](https://github.com/neoskop/migrateus/issues/819))
+- *(deps)* Update dependency @inquirer/select to v5.0.7 ([#820](https://github.com/neoskop/migrateus/issues/820))
+- *(deps)* Update dependency glob to v13.0.4 ([#821](https://github.com/neoskop/migrateus/issues/821))
+- *(deps)* Update dependency glob to v13.0.5 ([#824](https://github.com/neoskop/migrateus/issues/824))
+- *(deps)* Update dependency glob to v13.0.6 ([#825](https://github.com/neoskop/migrateus/issues/825))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.8 ([#829](https://github.com/neoskop/migrateus/issues/829))
+- *(deps)* Update dependency @inquirer/core to v11.1.5 ([#830](https://github.com/neoskop/migrateus/issues/830))
+- *(deps)* Update dependency @inquirer/expand to v5.0.8 ([#831](https://github.com/neoskop/migrateus/issues/831))
+- *(deps)* Update dependency @inquirer/password to v5.0.8 ([#832](https://github.com/neoskop/migrateus/issues/832))
+- *(deps)* Update dependency @inquirer/select to v5.1.0 ([#833](https://github.com/neoskop/migrateus/issues/833))
+- *(deps)* Update dependency @directus/sdk to v21.2.0 ([#841](https://github.com/neoskop/migrateus/issues/841))
+- *(deps)* Update dependency file-type to v21.3.1 ([#847](https://github.com/neoskop/migrateus/issues/847))
+- Use utf8mb4 as charset for dump and restore
+- *(deps)* Update dependency file-type to v21.3.2 ([#851](https://github.com/neoskop/migrateus/issues/851))
+
 ## [2.5.1] - 2026-02-05
 
 ### 🐛 Bug Fixes
