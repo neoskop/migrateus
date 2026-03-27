@@ -241,14 +241,21 @@ export class K8sService {
         value?: string;
         valueFrom?: { secretKeyRef: { key: string; name: string } };
       }[];
-      envFrom: { configMapRef: { name: string } }[];
+      envFrom: { configMapRef?: { name: string }, secretRef?: { name: string } }[];
     };
 
     const envMap: Record<string, string> = {};
+    const loadedSecrets: Map<string, {}> = new Map();
 
     for (const { name, value, valueFrom } of directusContainer.env) {
       if (valueFrom) {
-        const secret = await this.loadSecret(valueFrom.secretKeyRef.name);
+        const secretName = valueFrom.secretKeyRef.name;
+
+        if (!loadedSecrets.has(secretName)) {
+          loadedSecrets.set(secretName, await this.loadSecret(secretName));
+        }
+
+        const secret = loadedSecrets.get(secretName);
         envMap[name] = secret[valueFrom.secretKeyRef.key];
       } else {
         envMap[name] = value;
@@ -256,9 +263,16 @@ export class K8sService {
     }
 
     if (directusContainer.envFrom?.length > 0) {
-      const configMapNames = directusContainer.envFrom.map(
-        ({ configMapRef }) => configMapRef.name,
-      );
+      const configMapNames = [];
+      const secretNames = []
+
+      for (const entry of directusContainer.envFrom) {
+        if (entry.configMapRef) {
+          configMapNames.push(entry.configMapRef.name);
+        } else if (entry.secretRef) {
+          secretNames.push(entry.secretRef.name);
+        }
+      }
 
       const configMaps = await Promise.all(
         configMapNames.map(async (name) => {
@@ -267,6 +281,16 @@ export class K8sService {
       );
 
       configMaps.forEach((configMap) => {
+        Object.assign(envMap, configMap);
+      });
+
+      const secrets = await Promise.all(
+        secretNames.map(async (name) => {
+          return await this.loadSecret(name);
+        }),
+      );
+
+      secrets.forEach((configMap) => {
         Object.assign(envMap, configMap);
       });
     }
