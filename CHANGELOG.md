@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.4] - 2026-03-27
+
+### 🐛 Bug Fixes
+
+- Fix errors after TypeScript 6 migration
+
 ## [2.5.3] - 2026-03-27
 
 ### 🚀 Features
