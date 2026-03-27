@@ -40,7 +40,7 @@ export class PortForwardService {
     this.forwards.forEach((process) => {
       try {
         process.kill('SIGKILL');
-      } catch (e) {
+      } catch (e: any) {
         this.logger.warn(`Failed to stop port-forward: ${e.message || e}`);
       }
     });

@@ -95,7 +95,7 @@ export class SchemaDiffService {
           this.logger.debug(`No changes to apply - stopping!`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       this.progressService.fail(error.message || error);
     } finally {
       this.progressService.advance('🧹 Cleaning up');

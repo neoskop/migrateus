@@ -30,7 +30,7 @@ export class CleanService {
         ? this.cleanDocker
         : this.cleanK8s;
       await cleaningFunction.call(this);
-    } catch (error) {
+    } catch (error: any) {
       this.progressService.fail(error);
     }
   }

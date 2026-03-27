@@ -178,7 +178,7 @@ export class DockerService {
         if (status === 'ok') {
           return;
         }
-      } catch (error) {
+      } catch (error: any) {
         this.logger.debug(
           `Server health check failed: ${error.message || error}`,
         );

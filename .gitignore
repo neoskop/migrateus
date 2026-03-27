@@ -4,3 +4,4 @@ migrateus-*.tgz
 scripts/*
 !scripts/release.sh
 .env
+*.tsbuildinfo

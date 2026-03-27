@@ -67,7 +67,7 @@ export abstract class BackupPerformer {
       this.progressService.advance('📦 Create backup archive');
       const size = await this.createBackupArchive(backupDir, backupFile);
       this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
-    } catch (error) {
+    } catch (error: any) {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');

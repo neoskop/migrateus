@@ -204,7 +204,7 @@ export class ConfigService {
       });
 
       return dotenv.parse(envFileContents);
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'ENOENT') {
         this.logger.debug(
           `Env file not found: ${chalk.bold(this.envFilePath)}`,

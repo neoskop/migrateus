@@ -61,7 +61,7 @@ export class DirectusAssetService {
         this.limit(async () => {
           try {
             await this.uploadAsset(directus, asset);
-          } catch (error) {
+          } catch (error: any) {
             failedUploads.push({ path: asset, error });
           }
           progressBar.increment();
@@ -194,7 +194,7 @@ export class DirectusAssetService {
         assets = [...assets, ...nextAssets];
       }
       return assets;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to get assets: ${error.message || JSON.stringify(error)}`,
       );

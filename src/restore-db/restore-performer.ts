@@ -78,7 +78,7 @@ export abstract class RestorePerformer {
 
       this.progressService.advance('🔄 Restarting Directus');
       await this.restartDirectus();
-    } catch (error) {
+    } catch (error: any) {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');

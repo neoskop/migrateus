@@ -44,7 +44,7 @@ export class RenameCollectionService {
 
             await this.sqlService.executeSql(otherStatements.join('\n'), containerService);
             this.progressService.finish();
-        } catch (error) {
+        } catch (error: any) {
             this.progressService.fail(error);
         } finally {
             this.progressService.advance('🧹 Cleaning up');

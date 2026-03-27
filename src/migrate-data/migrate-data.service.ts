@@ -61,7 +61,7 @@ export class MigrateDataService {
         );
         await this.migrateCollections(from, to, filteredCollections);
       }
-    } catch (error) {
+    } catch (error: any) {
       this.progressService.fail(error.message || error);
     } finally {
       this.progressService.advance('🧹 Cleaning up');
