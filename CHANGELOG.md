@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.3] - 2026-03-27
+
+### 🚀 Features
+
+- *(k8s)* Support secretRef in envFrom and cache secret lookups
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v6.0.9 ([#852](https://github.com/neoskop/migrateus/issues/852))
+- *(deps)* Update dependency @inquirer/core to v11.1.6 ([#853](https://github.com/neoskop/migrateus/issues/853))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.10 ([#854](https://github.com/neoskop/migrateus/issues/854))
+- *(deps)* Update dependency @inquirer/core to v11.1.7 ([#855](https://github.com/neoskop/migrateus/issues/855))
+- *(deps)* Update dependency @inquirer/expand to v5.0.10 ([#856](https://github.com/neoskop/migrateus/issues/856))
+- *(deps)* Update dependency @inquirer/figures to v2.0.4 ([#857](https://github.com/neoskop/migrateus/issues/857))
+- *(deps)* Update dependency @inquirer/password to v5.0.10 ([#858](https://github.com/neoskop/migrateus/issues/858))
+- *(deps)* Update dependency @inquirer/select to v5.1.2 ([#859](https://github.com/neoskop/migrateus/issues/859))
+- *(deps)* Update dependency @inquirer/type to v4.0.4 ([#861](https://github.com/neoskop/migrateus/issues/861))
+- *(deps)* Update dependency nanoid to v5.1.7 ([#862](https://github.com/neoskop/migrateus/issues/862))
+- *(deps)* Update dependency file-type to v21.3.3 ([#864](https://github.com/neoskop/migrateus/issues/864))
+- *(deps)* Update dependency file-type to v21.3.4 ([#865](https://github.com/neoskop/migrateus/issues/865))
+- *(deps)* Update dependency @directus/sdk to v21.2.1 ([#869](https://github.com/neoskop/migrateus/issues/869))
+
 ## [2.5.2] - 2026-03-14
 
 ### 🐛 Bug Fixes
