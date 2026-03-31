@@ -1,6 +1,6 @@
 {
   "name": "@neoskop/migrateus",
-  "version": "2.5.4",
+  "version": "2.5.5",
   "description": "Migrations for Directus",
   "author": "Arne Diekmann <diekmann@neoskop.de>",
   "publishConfig": {

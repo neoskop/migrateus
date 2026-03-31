@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.5] - 2026-03-31
+
+### ⚙️ Miscellaneous Tasks
+
+- Add pnpm-workspace.yaml with minimum release age
+- Replace local release script with GitHub Actions workflow
+- Enable npm provenance with OIDC token publishing
+- Pin packageManager field to pnpm@10.33.0
+- Change npm publish access from restricted to public
+- Switch npm publish from pnpm to npm in release workflow
+- Add repository field to package.json
+
 ## [2.5.4] - 2026-03-27
 
 ### 🐛 Bug Fixes
