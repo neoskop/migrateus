@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.5.6] - 2026-03-31
+
+### ⚙️ Miscellaneous Tasks
+
+- Install latest npm globally before version bump in release workflow
+
 ## [2.5.5] - 2026-03-31
 
 ### ⚙️ Miscellaneous Tasks
