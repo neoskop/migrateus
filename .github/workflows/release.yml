@@ -30,9 +30,10 @@ jobs:
         with:
           node-version: "22"
           cache: pnpm
-          registry-url: "https://registry.npmjs.org"
 
       - run: pnpm install --frozen-lockfile
+
+      - run: npm install -g npm@latest
 
       - name: Bump version
         id: version
