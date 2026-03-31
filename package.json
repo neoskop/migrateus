@@ -11,6 +11,7 @@
   "bin": {
     "migrateus": "dist/src/main.js"
   },
+  "repository": "github:neoskop/migrateus",
   "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "nest build && chmod +x dist/src/main.js",
