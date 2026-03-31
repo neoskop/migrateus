@@ -11,6 +11,7 @@
   "bin": {
     "migrateus": "dist/src/main.js"
   },
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "build": "nest build && chmod +x dist/src/main.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
