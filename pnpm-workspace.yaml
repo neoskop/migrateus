@@ -3,3 +3,6 @@ allowBuilds:
   argon2: true
   unrs-resolver: false
 minimumReleaseAge: 4320
+minimumReleaseAgeExclude:
+  # Renovate security update: @nestjs/core@11.1.18
+  - "@nestjs/core@11.1.18"
