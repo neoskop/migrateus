@@ -91,7 +91,7 @@
     "genversion": "3.2.0",
     "git-cliff": "2.12.0",
     "jest": "30.3.0",
-    "jscpd": "4.0.8",
+    "jscpd": "4.0.9",
     "nest-commander-schematics": "3.2.0",
     "nodemon": "3.1.14",
     "prettier": "3.8.2",
