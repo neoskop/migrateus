@@ -115,8 +115,8 @@ importers:
         version: 3.19.0
     devDependencies:
       '@nestjs/cli':
-        specifier: 11.0.19
-        version: 11.0.19(@types/node@24.12.2)
+        specifier: 11.0.21
+        version: 11.0.21(@types/node@24.12.2)
       '@nestjs/schematics':
         specifier: 11.0.10
         version: 11.0.10(chokidar@4.0.3)(typescript@6.0.2)
@@ -856,8 +856,8 @@ packages:
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
 
-  '@nestjs/cli@11.0.19':
-    resolution: {integrity: sha512-9htODqTVVNH4lJqyeIotsAgfeaYngDi020cVCd6JhJRKuOT83c/t4JDSky6+xr0lhHyNTNMgZmulxqcMNZFfrw==}
+  '@nestjs/cli@11.0.21':
+    resolution: {integrity: sha512-F8mV0Sj/zVEouzR3NxBuJy08YHTUOmC5Xdcx3qIIaJWzrm8Vw86CHkhkaPBJ5ewRMHPDCShPmhsfwhpCcjts3A==}
     engines: {node: '>= 20.11'}
     hasBin: true
     peerDependencies:
@@ -4701,7 +4701,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.1
     optional: true
 
-  '@nestjs/cli@11.0.19(@types/node@24.12.2)':
+  '@nestjs/cli@11.0.21(@types/node@24.12.2)':
     dependencies:
       '@angular-devkit/core': 19.2.24(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.2.24(chokidar@4.0.3)
