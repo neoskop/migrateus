@@ -6,3 +6,5 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   # Renovate security update: @nestjs/core@11.1.18
   - "@nestjs/core@11.1.18"
+  # Renovate security update: uuid@14.0.0
+  - uuid@14.0.0
