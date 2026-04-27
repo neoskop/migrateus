@@ -7,6 +7,7 @@ export interface Environment {
   credentials?: Credential[];
   doubleCheck?: boolean;
   settings?: ProjectSettings;
+  assetStorage?: string;
 }
 
 export interface K8sEnvironment extends Environment {

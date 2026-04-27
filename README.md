@@ -35,6 +35,7 @@ environments:
   - name: local
     platform: docker
     containerName: directus
+    assetStorage: local
     settings:
       project_title: foobar
       project_descriptor: local
@@ -64,6 +65,7 @@ An environment under the key `environments` takes the following options:
 | `credentials` | `object[]`                              | Credentials to enforce during restore              |
 | `doubleCheck` | `boolean`                               | Whether to ask before restores / schema diffs      |
 | `settings`    | `object`                                | Specify Directus [project settings][2]             |
+| `assetStorage`| `string`                                | Remap restored `directus_files.storage` to this storage location before uploading assets |
 
 Depending on the `platform` the following options are furthermore available:
 
@@ -168,6 +170,8 @@ $ migrateus restore-db [options] <from> <to>
 ```
 
 Where `from` is the path to the backup tgz file to restore and `to` is the `name` of the environment to restore to.
+
+If you restore a backup created on an instance with a different Directus storage location (for example `s3`) to an environment that only has `local`, set `assetStorage: local` on the target environment. Migrateus will remap `directus_files.storage` before re-uploading the assets.
 
 If you don't specify either of those options, Migrateus will ask you for them.
 

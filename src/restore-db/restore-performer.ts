@@ -55,6 +55,14 @@ export abstract class RestorePerformer {
         this.containerService,
       );
 
+      if (this.environmentService.environment.assetStorage) {
+        this.progressService.advance('🗂️ Remapping asset storage');
+        await this.sqlService.setAssetStorage(
+          this.environmentService.environment.assetStorage,
+          this.containerService,
+        );
+      }
+
       this.progressService.advance('🖼️ Restoring assets');
       const failedUploads = await this.directusAssetService.restoreAssets(
         directusPort,

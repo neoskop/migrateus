@@ -24,6 +24,7 @@ import * as mime from 'mime-types';
 import { ProgressBar } from '../../progress/progress-bar.js';
 import { ProgressBarUpdater } from '../../progress/progress-bar-updater.type.js';
 import { highlight } from 'cli-highlight';
+import { EnvironmentService } from '../../environment/environment.service.js';
 
 @Injectable()
 export class DirectusAssetService {
@@ -33,7 +34,8 @@ export class DirectusAssetService {
     @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly directusService: DirectusService,
-  ) { }
+    private readonly environmentService: EnvironmentService,
+  ) {}
 
   public async restoreAssets(
     directusPort: number,
@@ -103,6 +105,10 @@ export class DirectusAssetService {
     const mimeType = await fileTypeFromFile(assetPath);
     if (mimeType) {
       formData.append('type', mimeType.mime);
+    }
+
+    if (this.environmentService.environment?.assetStorage) {
+      formData.append('storage', this.environmentService.environment.assetStorage);
     }
 
     await directus.request(updateFile(parsedPath.name, formData));

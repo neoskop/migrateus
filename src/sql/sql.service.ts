@@ -59,6 +59,21 @@ export class SqlService {
     );
   }
 
+  public async setAssetStorage(
+    storage: string,
+    containerService: ContainerService,
+  ) {
+    if (!storage) {
+      return;
+    }
+
+    const escapedStorage = storage.replaceAll("'", "''");
+    await this.executeSql(
+      `UPDATE directus_files SET storage = '${escapedStorage}' WHERE storage <> '${escapedStorage}' OR storage IS NULL;`,
+      containerService,
+    );
+  }
+
   public async performMysqlDump(
     containerService: ContainerService,
     tableNames?: string[],

@@ -2,6 +2,7 @@ environments:
   - name: local
     platform: docker
     containerName: directus-directus-1
+    assetStorage: local
     credentials:
       - email: devops@neoskop.de
         token: $TOKEN

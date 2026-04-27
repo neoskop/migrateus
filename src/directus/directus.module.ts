@@ -4,6 +4,7 @@ import { DirectusService } from './directus.service.js';
 import { DirectusAssetService } from './directus-asset/directus-asset.service.js';
 import { DirectusVersionService } from './directus-version/directus-version.service.js';
 import { DirectusSettingService } from './directus-setting/directus-setting.service.js';
+import { EnvironmentModule } from '../environment/environment.module.js';
 
 @Module({
   providers: [
@@ -20,6 +21,8 @@ import { DirectusSettingService } from './directus-setting/directus-setting.serv
     DirectusSettingService,
     DirectusVersionService,
   ],
-  imports: [],
+  imports: [
+    EnvironmentModule
+  ],
 })
-export class DirectusModule {}
+export class DirectusModule { }
