@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.0] - 2026-04-27
+
+### 🚀 Features
+
+- Add assetStorage option to remap storage location during restore
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @nestjs/core to v11.1.18 [security] ([#895](https://github.com/neoskop/migrateus/issues/895))
+- *(deps)* Update dependency @directus/sdk to v21.2.2 ([#899](https://github.com/neoskop/migrateus/issues/899))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.11 ([#900](https://github.com/neoskop/migrateus/issues/900))
+- *(deps)* Update dependency @inquirer/core to v11.1.8 ([#901](https://github.com/neoskop/migrateus/issues/901))
+- *(deps)* Update dependency @inquirer/expand to v5.0.11 ([#902](https://github.com/neoskop/migrateus/issues/902))
+- *(deps)* Update dependency @inquirer/figures to v2.0.5 ([#903](https://github.com/neoskop/migrateus/issues/903))
+- *(deps)* Update dependency @inquirer/password to v5.0.11 ([#904](https://github.com/neoskop/migrateus/issues/904))
+- *(deps)* Update dependency @inquirer/select to v5.1.3 ([#905](https://github.com/neoskop/migrateus/issues/905))
+- *(deps)* Update dependency @inquirer/type to v4.0.5 ([#906](https://github.com/neoskop/migrateus/issues/906))
+- *(deps)* Update nest monorepo ([#907](https://github.com/neoskop/migrateus/issues/907))
+- *(deps)* Update dependency dotenv to v17.4.1 ([#909](https://github.com/neoskop/migrateus/issues/909))
+- *(deps)* Update dependency @inquirer/expand to v5.0.12 ([#910](https://github.com/neoskop/migrateus/issues/910))
+- *(deps)* Update dependency dotenv to v17.4.2 ([#921](https://github.com/neoskop/migrateus/issues/921))
+- *(deps)* Update nest monorepo to v11.1.19 ([#922](https://github.com/neoskop/migrateus/issues/922))
+- *(deps)* Update dependency nanoid to v5.1.9 ([#926](https://github.com/neoskop/migrateus/issues/926))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.12 ([#931](https://github.com/neoskop/migrateus/issues/931))
+- *(deps)* Update dependency @inquirer/core to v11.1.9 ([#932](https://github.com/neoskop/migrateus/issues/932))
+- *(deps)* Update dependency @inquirer/expand to v5.0.13 ([#934](https://github.com/neoskop/migrateus/issues/934))
+- *(deps)* Update dependency @inquirer/password to v5.0.12 ([#935](https://github.com/neoskop/migrateus/issues/935))
+- *(deps)* Update dependency @inquirer/select to v5.1.4 ([#936](https://github.com/neoskop/migrateus/issues/936))
+- *(deps)* Update dependency uuid to v14 [security]
+- *(deps)* Update dependency file-type to v22
+- *(deps)* Update dependency ora to v9.4.0 ([#938](https://github.com/neoskop/migrateus/issues/938))
+
 ## [2.5.6] - 2026-03-31
 
 ### ⚙️ Miscellaneous Tasks
