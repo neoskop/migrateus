@@ -8,6 +8,12 @@ import { ContainerService } from '../container/container.service.js';
 import chalk from 'chalk';
 import { Credential } from '../directus/directus-user/credential.type.js';
 import { RedactService } from '../redact/redact.service.js';
+import {
+  assertSafeCharsetOrCollation,
+  assertSafeIdentifier,
+  escapeMysqlIdentifier,
+  escapeMysqlString,
+} from './sql-escape.js';
 
 @Injectable()
 export class SqlService {
@@ -67,9 +73,9 @@ export class SqlService {
       return;
     }
 
-    const escapedStorage = storage.replaceAll("'", "''");
+    const escapedStorage = escapeMysqlString(storage);
     await this.executeSql(
-      `UPDATE directus_files SET storage = '${escapedStorage}' WHERE storage <> '${escapedStorage}' OR storage IS NULL;`,
+      `UPDATE directus_files SET storage = ${escapedStorage} WHERE storage <> ${escapedStorage} OR storage IS NULL;`,
       containerService,
     );
   }
@@ -127,44 +133,55 @@ export class SqlService {
       throw new Error(errorMessage);
     }
 
-    const defaultCollation = (
-      await this.executeSql(
-        `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
-        containerService,
-      )
-    )
-      .split('\n')
-      .slice(1)
-      .join(' ');
+    const escapedName = escapeMysqlString(name);
 
-    const defaultCharacterSetName = (
-      await this.executeSql(
-        `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='${name}';`,
-        containerService,
+    const defaultCollation = assertSafeCharsetOrCollation(
+      (
+        await this.executeSql(
+          `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
+          containerService,
+        )
       )
-    )
-      .split('\n')
-      .slice(1)
-      .join(' ');
+        .split('\n')
+        .slice(1)
+        .join(' ')
+        .trim(),
+      'default collation',
+    );
+
+    const defaultCharacterSetName = assertSafeCharsetOrCollation(
+      (
+        await this.executeSql(
+          `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
+          containerService,
+        )
+      )
+        .split('\n')
+        .slice(1)
+        .join(' ')
+        .trim(),
+      'default character set',
+    );
 
     this.logger.debug(
       `Setting default collation to ${chalk.bold(defaultCollation)}`,
     );
     const tableNames = (
       await this.executeSql(
-        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${name}' AND TABLE_TYPE='BASE TABLE'`,
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE'`,
         containerService,
       )
     )
       .split('\n')
       .slice(1)
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((tableName) => assertSafeIdentifier(tableName, 'table_name'));
 
     const alterStatements = tableNames.map((tableName) => {
       return (
-        'ALTER TABLE \\\\\\`' +
-        tableName +
-        '\\\\\\` CONVERT TO CHARACTER SET ' +
+        'ALTER TABLE ' +
+        escapeMysqlIdentifier(tableName) +
+        ' CONVERT TO CHARACTER SET ' +
         defaultCharacterSetName +
         ' COLLATE ' +
         defaultCollation
@@ -180,9 +197,10 @@ export class SqlService {
   }
 
   public async listTables(containerService: ContainerService) {
+    const escapedName = escapeMysqlString(this._databaseConfig.name);
     return (
       await this.executeSql(
-        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='${this._databaseConfig.name}' AND TABLE_TYPE='BASE TABLE';`,
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE';`,
         containerService,
       )
     )

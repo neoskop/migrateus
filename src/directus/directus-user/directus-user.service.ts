@@ -5,6 +5,10 @@ import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
 import argon2 from 'argon2';
 import { Credential } from './credential.type.js';
 import { RedactService } from '../../redact/redact.service.js';
+import {
+  assertUuid,
+  escapeMysqlString,
+} from '../../sql/sql-escape.js';
 
 @Injectable()
 export class DirectusUserService {
@@ -22,41 +26,54 @@ export class DirectusUserService {
   }
 
   public async setupUser(execSql: MysqlExecutor) {
+    const roleId = escapeMysqlString(this.roleId);
+    const policyId = escapeMysqlString(this.policyId);
+    const accessId = escapeMysqlString(this.accessId);
+    const userId = escapeMysqlString(this.userId);
+    const username = escapeMysqlString(this.username);
+    const email = escapeMysqlString(`${this.username}@neoskop.de`);
+    const token = escapeMysqlString(this.token);
+
     await execSql(
-      `INSERT INTO directus_roles (id, name) VALUES ('${this.roleId}', '${this.username}')`,
+      `INSERT INTO directus_roles (id, name) VALUES (${roleId}, ${username})`,
     );
     await execSql(
-      `INSERT INTO directus_policies (id, name, admin_access) VALUES ('${this.policyId}', '${this.username}', 1)`,
+      `INSERT INTO directus_policies (id, name, admin_access) VALUES (${policyId}, ${username}, 1)`,
     );
     await execSql(
-      `INSERT INTO directus_access (id, role, policy) VALUES ('${this.accessId}', '${this.roleId}', '${this.policyId}')`,
+      `INSERT INTO directus_access (id, role, policy) VALUES (${accessId}, ${roleId}, ${policyId})`,
     );
-    const hash = await argon2.hash(this.password);
+    const hash = escapeMysqlString(await argon2.hash(this.password));
     await execSql(
       [
         'INSERT INTO',
         'directus_users',
         '(id, first_name, last_name, email, password, role, token)',
-        `VALUES ('${this.userId}', 'Migrateus', 'User', '${this.username}@neoskop.de', '${hash}', '${this.roleId}', '${this.token}')`,
+        `VALUES (${userId}, 'Migrateus', 'User', ${email}, ${hash}, ${roleId}, ${token})`,
       ].join(' '),
     );
   }
 
   public async removeUser(execSql: MysqlExecutor) {
+    const userId = escapeMysqlString(this.userId);
+    const roleId = escapeMysqlString(this.roleId);
+    const policyId = escapeMysqlString(this.policyId);
+    const accessId = escapeMysqlString(this.accessId);
+
     await execSql(
-      `UPDATE directus_files SET modified_by = null WHERE modified_by = '${this.userId}'`,
+      `UPDATE directus_files SET modified_by = null WHERE modified_by = ${userId}`,
     );
     await execSql(
-      `DELETE FROM directus_users WHERE id = '${this.userId}' LIMIT 1`,
+      `DELETE FROM directus_users WHERE id = ${userId} LIMIT 1`,
     );
     await execSql(
-      `DELETE FROM directus_roles WHERE id = '${this.roleId}' LIMIT 1`,
+      `DELETE FROM directus_roles WHERE id = ${roleId} LIMIT 1`,
     );
     await execSql(
-      `DELETE FROM directus_policies WHERE id = '${this.policyId}' LIMIT 1`,
+      `DELETE FROM directus_policies WHERE id = ${policyId} LIMIT 1`,
     );
     await execSql(
-      `DELETE FROM directus_access WHERE id = '${this.accessId}' LIMIT 1`,
+      `DELETE FROM directus_access WHERE id = ${accessId} LIMIT 1`,
     );
   }
 
@@ -65,16 +82,19 @@ export class DirectusUserService {
     execSql: MysqlExecutor,
   ) {
     for (const credential of credentials) {
+      const email = escapeMysqlString(credential.email);
+
       if (credential.token) {
+        const token = escapeMysqlString(credential.token);
         await execSql(
-          `UPDATE directus_users SET token = '${credential.token}' WHERE email = '${credential.email}'`,
+          `UPDATE directus_users SET token = ${token} WHERE email = ${email}`,
         );
       }
 
       if (credential.password) {
-        const hash = await argon2.hash(credential.password);
+        const hash = escapeMysqlString(await argon2.hash(credential.password));
         await execSql(
-          `UPDATE directus_users SET password = '${hash}' WHERE email = '${credential.email}'`,
+          `UPDATE directus_users SET password = ${hash} WHERE email = ${email}`,
         );
       }
     }
@@ -87,11 +107,13 @@ export class DirectusUserService {
       )
     )
       .split('\n')
-      .filter(Boolean);
+      .filter(Boolean)
+      .map((id) => assertUuid(id, 'directus_users.id'));
 
     if (userIds.length > 0) {
+      const escapedIds = userIds.map((id) => escapeMysqlString(id)).join(',');
       await execSql(
-        `UPDATE directus_files SET modified_by = null WHERE modified_by IN (${userIds.map((userId) => `'${userId}'`).join(',')})`,
+        `UPDATE directus_files SET modified_by = null WHERE modified_by IN (${escapedIds})`,
       );
     }
 
@@ -101,12 +123,15 @@ export class DirectusUserService {
       `SELECT id FROM directus_policies WHERE name LIKE 'migrateus%'`,
     );
 
-    for (const policyId of policyIds.split('\n')) {
-      if (policyId) {
-        await execSql(
-          `DELETE FROM directus_access WHERE policy = '${policyId}'`,
+    for (const rawPolicyId of policyIds.split('\n')) {
+      if (rawPolicyId) {
+        const policyId = escapeMysqlString(
+          assertUuid(rawPolicyId, 'directus_policies.id'),
         );
-        await execSql(`DELETE FROM directus_policies WHERE id = '${policyId}'`);
+        await execSql(
+          `DELETE FROM directus_access WHERE policy = ${policyId}`,
+        );
+        await execSql(`DELETE FROM directus_policies WHERE id = ${policyId}`);
       }
     }
   }

@@ -11,6 +11,11 @@ import { DockerContainerService } from '../container/docker-container/docker-con
 import { SqlService } from '../sql/sql.service.js';
 import { K8sService } from '../k8s/k8s.service.js';
 import { DockerService } from '../docker/docker.service.js';
+import {
+  assertSafeIdentifier,
+  escapeMysqlIdentifier,
+  escapeMysqlString,
+} from '../sql/sql-escape.js';
 
 @Injectable()
 export class RenameCollectionService {
@@ -18,6 +23,9 @@ export class RenameCollectionService {
         private readonly dockerService: DockerService,) { }
 
     public async renameCollection(environmentName: string, oldName: string, newName: string) {
+        assertSafeIdentifier(oldName, 'oldName');
+        assertSafeIdentifier(newName, 'newName');
+
         const containerService = await this.prepareContainerService(environmentName);
 
         try {
@@ -27,18 +35,21 @@ export class RenameCollectionService {
             const tableExists = await this.sqlService.listTables(containerService).then((tables) => tables.includes(oldName));
 
             if (tableExists) {
-                const alterTableStatement = `ALTER TABLE ${oldName} RENAME TO ${newName};`;
+                const alterTableStatement = `ALTER TABLE ${escapeMysqlIdentifier(oldName)} RENAME TO ${escapeMysqlIdentifier(newName)};`;
                 await this.sqlService.executeSql(alterTableStatement, containerService);
             }
 
+            const oldLiteral = escapeMysqlString(oldName);
+            const newLiteral = escapeMysqlString(newName);
+
             const otherStatements = [
                 'SET foreign_key_checks = 0;',
-                `UPDATE directus_collections c SET c.group = '${newName}' WHERE c.group = '${oldName}';`,
-                `UPDATE directus_collections SET collection = '${newName}' WHERE collection = '${oldName}';`,
-                `UPDATE directus_fields SET collection = '${newName}' WHERE collection = '${oldName}';`,
-                `UPDATE directus_relations SET many_collection = '${newName}' WHERE many_collection = '${oldName}';`,
-                `UPDATE directus_relations SET one_collection = '${newName}' WHERE one_collection = '${oldName}';`,
-                `UPDATE directus_permissions SET collection = '${newName}' WHERE collection = '${oldName}';`,
+                `UPDATE directus_collections c SET c.group = ${newLiteral} WHERE c.group = ${oldLiteral};`,
+                `UPDATE directus_collections SET collection = ${newLiteral} WHERE collection = ${oldLiteral};`,
+                `UPDATE directus_fields SET collection = ${newLiteral} WHERE collection = ${oldLiteral};`,
+                `UPDATE directus_relations SET many_collection = ${newLiteral} WHERE many_collection = ${oldLiteral};`,
+                `UPDATE directus_relations SET one_collection = ${newLiteral} WHERE one_collection = ${oldLiteral};`,
+                `UPDATE directus_permissions SET collection = ${newLiteral} WHERE collection = ${oldLiteral};`,
                 'SET foreign_key_checks = 1;',
             ];
 
