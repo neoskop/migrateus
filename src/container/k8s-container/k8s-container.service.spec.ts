@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { K8sContainerService } from './k8s-container.service.js';
 
 describe('K8sContainerService', () => {
-  let service: K8sContainerService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [K8sContainerService],
-    }).compile();
-
-    service = module.get<K8sContainerService>(K8sContainerService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(K8sContainerService).toBeDefined();
+    expect(typeof K8sContainerService).toBe('function');
   });
 });

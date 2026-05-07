@@ -1,8 +1,8 @@
 import { ExecOutputReturnValue } from 'shelljs';
-import { ContainerModule } from './container.module.js';
+import { DEFAULT_CONTAINER_IMAGE } from './container.constants.js';
 
 export abstract class ContainerService {
-  public image: string = ContainerModule.DEFAULT_IMAGE;
+  public image: string = DEFAULT_CONTAINER_IMAGE;
 
   public abstract setup(): Promise<void>;
 

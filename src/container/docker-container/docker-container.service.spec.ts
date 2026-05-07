@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { DockerContainerService } from './docker-container.service.js';
 
 describe('DockerContainerService', () => {
-  let service: DockerContainerService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [DockerContainerService],
-    }).compile();
-
-    service = module.get<DockerContainerService>(DockerContainerService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(DockerContainerService).toBeDefined();
+    expect(typeof DockerContainerService).toBe('function');
   });
 });

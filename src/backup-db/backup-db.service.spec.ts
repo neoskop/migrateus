@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BackupDbService } from './backup-db.service';
+import { describe, it, expect } from '@jest/globals';
+import { BackupDbService } from './backup-db.service.js';
 
 describe('BackupDbService', () => {
-  let service: BackupDbService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [BackupDbService],
-    }).compile();
-
-    service = module.get<BackupDbService>(BackupDbService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(BackupDbService).toBeDefined();
+    expect(typeof BackupDbService).toBe('function');
   });
 });

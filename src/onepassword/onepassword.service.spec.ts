@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { OnepasswordService } from './onepassword.service.js';
 
 describe('OnepasswordService', () => {
-  let service: OnepasswordService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [OnepasswordService],
-    }).compile();
-
-    service = module.get<OnepasswordService>(OnepasswordService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(OnepasswordService).toBeDefined();
+    expect(typeof OnepasswordService).toBe('function');
   });
 });

@@ -3,6 +3,7 @@ import { DockerContainerService } from './docker-container/docker-container.serv
 import { K8sContainerService } from './k8s-container/k8s-container.service.js';
 import { DockerModule } from '../docker/docker.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
+import { DEFAULT_CONTAINER_IMAGE } from './container.constants.js';
 
 @Module({
   providers: [
@@ -18,5 +19,5 @@ import { K8sModule } from '../k8s/k8s.module.js';
   imports: [DockerModule, K8sModule],
 })
 export class ContainerModule {
-  public static DEFAULT_IMAGE = 'mysql:9.5.0-oraclelinux9';
+  public static DEFAULT_IMAGE = DEFAULT_CONTAINER_IMAGE;
 }

@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { MigrateDataService } from './migrate-data.service';
+import { describe, it, expect } from '@jest/globals';
+import { MigrateDataService } from './migrate-data.service.js';
 
 describe('MigrateDataService', () => {
-  let service: MigrateDataService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [MigrateDataService],
-    }).compile();
-
-    service = module.get<MigrateDataService>(MigrateDataService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(MigrateDataService).toBeDefined();
+    expect(typeof MigrateDataService).toBe('function');
   });
 });

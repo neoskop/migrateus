@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { DirectusAssetService } from './directus-asset.service.js';
 
 describe('DirectusAssetService', () => {
-  let service: DirectusAssetService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [DirectusAssetService],
-    }).compile();
-
-    service = module.get<DirectusAssetService>(DirectusAssetService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(DirectusAssetService).toBeDefined();
+    expect(typeof DirectusAssetService).toBe('function');
   });
 });

@@ -114,6 +114,9 @@ importers:
         specifier: 3.19.0
         version: 3.19.0
     devDependencies:
+      '@jest/globals':
+        specifier: 30.3.0
+        version: 30.3.0
       '@nestjs/cli':
         specifier: 11.0.21
         version: 11.0.21(@types/node@24.12.2)(prettier@3.8.3)

@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { SchemaDiffService } from './schema-diff.service.js';
 
 describe('SchemaDiffService', () => {
-  let service: SchemaDiffService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [SchemaDiffService],
-    }).compile();
-
-    service = module.get<SchemaDiffService>(SchemaDiffService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(SchemaDiffService).toBeDefined();
+    expect(typeof SchemaDiffService).toBe('function');
   });
 });

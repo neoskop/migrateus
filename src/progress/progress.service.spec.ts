@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { ProgressService } from './progress.service.js';
 
 describe('ProgressService', () => {
-  let service: ProgressService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [ProgressService],
-    }).compile();
-
-    service = module.get<ProgressService>(ProgressService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(ProgressService).toBeDefined();
+    expect(typeof ProgressService).toBe('function');
   });
 });

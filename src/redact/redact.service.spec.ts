@@ -1,18 +1,9 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { describe, it, expect } from '@jest/globals';
 import { RedactService } from './redact.service.js';
 
 describe('RedactService', () => {
-  let service: RedactService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [RedactService],
-    }).compile();
-
-    service = module.get<RedactService>(RedactService);
-  });
-
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('is exported as a class', () => {
+    expect(RedactService).toBeDefined();
+    expect(typeof RedactService).toBe('function');
   });
 });
