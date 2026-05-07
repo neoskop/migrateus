@@ -37,8 +37,10 @@ jobs:
 
       - name: Bump version
         id: version
+        env:
+          BUMP: ${{ inputs.bump }}
         run: |
-          version=$(pnpm version --no-git-tag-version ${{ inputs.bump }})
+          version=$(pnpm version --no-git-tag-version $BUMP)
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Generate version file & build
