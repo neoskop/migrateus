@@ -1,6 +1,6 @@
 import shell, { ExecOptions, ExecOutputReturnValue } from 'shelljs';
 
-export async function exec(
+export function exec(
   command: string,
   options: ExecOptions = {},
 ): Promise<ExecOutputReturnValue> {

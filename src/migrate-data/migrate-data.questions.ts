@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import { QuestionSet, Question, ChoicesFor, WhenFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { MigrateDataAnswers } from './migrate-data-answers.interface.js';
 
+@Injectable()
 @QuestionSet({ name: 'migrate-data-questions' })
 export class MigrateDataQuestions {
   constructor(private readonly config: ConfigService) { }
@@ -21,7 +23,7 @@ export class MigrateDataQuestions {
   }
 
   @ChoicesFor({ name: 'from' })
-  async fromChoices() {
+  fromChoices() {
     return (this.config.getEnvironments()).map((env) => env.name);
   }
 
@@ -35,7 +37,7 @@ export class MigrateDataQuestions {
   }
 
   @ChoicesFor({ name: 'to' })
-  async toChoices(answers: MigrateDataAnswers) {
+  toChoices(answers: MigrateDataAnswers) {
     return (this.config.getEnvironments())
       .filter((env) => env.name !== answers.from)
       .map((env) => env.name);

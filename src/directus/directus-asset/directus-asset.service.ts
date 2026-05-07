@@ -114,7 +114,7 @@ export class DirectusAssetService {
     await directus.request(updateFile(parsedPath.name, formData));
   }
 
-  private async getAllLocalAssets(backupDir: string): Promise<string[]> {
+  private getAllLocalAssets(backupDir: string): Promise<string[]> {
     const assetBackupDir = this.getAssetBackupDir(backupDir);
     return glob(`${assetBackupDir}/**/*`, {});
   }

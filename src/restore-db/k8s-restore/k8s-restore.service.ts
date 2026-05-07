@@ -55,7 +55,7 @@ export class K8sRestoreService extends RestorePerformer {
     );
   }
 
-  protected async getDirectusPort(): Promise<number> {
+  protected getDirectusPort(): Promise<number> {
     return this.portForwardService.forward();
   }
 

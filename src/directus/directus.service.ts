@@ -21,7 +21,7 @@ export class DirectusService {
       .with(rest());
   }
 
-  private async fetch(
+  private fetch(
     url: string,
     options: RequestInit = {},
   ): Promise<Response> {

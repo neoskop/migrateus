@@ -158,7 +158,7 @@ export class K8sService {
     return result;
   }
 
-  public async kubectlApply(spec: object) {
+  public kubectlApply(spec: object) {
     let fullCommand = `echo '${JSON.stringify(spec)}' |`;
 
     if (this.kubeconfigPath) {

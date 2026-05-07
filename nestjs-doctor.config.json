@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "architecture/no-manual-instantiation": {
+      "excludeClasses": ["K8sContainerService", "DockerContainerService"]
+    },
+    "performance/no-unused-providers": false,
+    "performance/no-unused-module-exports": false
+  }
+}

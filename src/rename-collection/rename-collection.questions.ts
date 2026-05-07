@@ -1,6 +1,8 @@
+import { Injectable } from '@nestjs/common';
 import { QuestionSet, Question, ChoicesFor, ValidateFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 
+@Injectable()
 @QuestionSet({ name: 'rename-collection-questions' })
 export class RenameCollectionQuestions {
   constructor(private readonly config: ConfigService) { }

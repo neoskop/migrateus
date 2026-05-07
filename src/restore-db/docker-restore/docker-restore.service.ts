@@ -44,8 +44,8 @@ export class DockerRestoreService extends RestorePerformer {
     this.dockerContainerService.mount = backupDir;
   }
 
-  protected async getDirectusPort(): Promise<number> {
-    return 8055;
+  protected getDirectusPort(): Promise<number> {
+    return Promise.resolve(8055);
   }
 
   protected async restartDirectus(): Promise<void> {

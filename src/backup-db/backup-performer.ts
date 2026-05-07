@@ -83,11 +83,15 @@ export abstract class BackupPerformer {
 
   protected abstract setup(backupDir: string): Promise<void>;
 
-  protected async afterMysqlDump() { }
+  protected afterMysqlDump(): Promise<void> {
+    return Promise.resolve();
+  }
 
   protected abstract getDirectusPort(): Promise<number>;
 
-  protected async cleanUp(): Promise<void> { }
+  protected cleanUp(): Promise<void> {
+    return Promise.resolve();
+  }
 
   private async storeMetadata(directusPort: number, backupDir: string) {
     const version = await this.directusVersionService.getVersion(directusPort);
@@ -97,7 +101,7 @@ export abstract class BackupPerformer {
     );
   }
 
-  private async createTemporaryDirectory() {
+  private createTemporaryDirectory() {
     const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
     this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
     return tempDir;

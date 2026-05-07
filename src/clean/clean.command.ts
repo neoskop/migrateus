@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Command, InquirerService, Option } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -13,6 +13,7 @@ import { ProgressService } from '../progress/progress.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { UpdateService } from '../update/update.service.js';
 
+@Injectable()
 @Command({
   name: 'clean',
   description: 'Clean remains of the database backup from an environment',

@@ -1,7 +1,9 @@
+import { Injectable } from '@nestjs/common';
 import { QuestionSet, Question, ChoicesFor, WhenFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { SchemaDiffAnswers } from './schema-diff-answers.interface.js';
 
+@Injectable()
 @QuestionSet({ name: 'schema-diff-questions' })
 export class SchemaDiffQuestions {
   constructor(private readonly config: ConfigService) {}

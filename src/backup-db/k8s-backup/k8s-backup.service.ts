@@ -50,7 +50,7 @@ export class K8sBackupService extends BackupPerformer {
     );
   }
 
-  protected async getDirectusPort(): Promise<number> {
+  protected getDirectusPort(): Promise<number> {
     return this.portForwardService.forward();
   }
 

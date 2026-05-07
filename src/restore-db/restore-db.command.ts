@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Option, Command, InquirerService } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -16,6 +16,7 @@ import confirm from '@inquirer/confirm';
 import { ContainerService } from '../container/container.service.js';
 import { UpdateService } from '../update/update.service.js';
 
+@Injectable()
 @Command({
   name: 'restore-db',
   description: 'Restore database from a local file to a Directus instance',

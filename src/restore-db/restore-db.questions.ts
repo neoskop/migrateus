@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { QuestionSet, Question, ChoicesFor, WhenFor } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { RestoreDbAnswers } from './restore-db-answers.interface.js';
@@ -5,6 +6,7 @@ import { Glob } from 'glob';
 import { intlFormatDistance } from 'date-fns/intlFormatDistance';
 import chalk from 'chalk';
 
+@Injectable()
 @QuestionSet({ name: 'restore-db-questions' })
 export class RestoreDbQuestions {
   private glob: Glob<{ stat: true; withFileTypes: true }>;

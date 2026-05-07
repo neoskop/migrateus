@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Command, InquirerService, Option } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
@@ -12,6 +12,7 @@ import { UpdateService } from '../update/update.service.js';
 import { RenameCollectionAnswers } from './rename-collection-answers.interface.js';
 import { RenameCollectionService } from './rename-collection.service.js';
 
+@Injectable()
 @Command({
   name: 'rename-collection',
   description: 'Rename a relation',
@@ -60,6 +61,6 @@ export class RenameCollectionCommand extends MigrateusCommand {
       newName = answers.newName;
     }
 
-    this.renameCollectionService.renameCollection(environment, oldName, newName);
+    await this.renameCollectionService.renameCollection(environment, oldName, newName);
   }
 }

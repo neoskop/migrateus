@@ -129,15 +129,19 @@ export abstract class RestorePerformer {
 
   protected abstract setup(backupDir: string): Promise<void>;
 
-  protected async beforeMysqlDumpRestore() {}
+  protected beforeMysqlDumpRestore(): Promise<void> {
+    return Promise.resolve();
+  }
 
   protected abstract getDirectusPort(): Promise<number>;
 
   protected abstract restartDirectus(): Promise<void>;
 
-  protected async cleanUp(): Promise<void> {}
+  protected cleanUp(): Promise<void> {
+    return Promise.resolve();
+  }
 
-  private async createTemporaryDirectory() {
+  private createTemporaryDirectory() {
     const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
     this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
     return tempDir;

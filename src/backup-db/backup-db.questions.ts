@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import {
   QuestionSet,
   Question,
@@ -8,6 +9,7 @@ import {
 import { ConfigService } from '../config/config.service.js';
 import { BackupDbAnswers } from './backup-db-answers.interface.js';
 
+@Injectable()
 @QuestionSet({ name: 'backup-db-questions' })
 export class BackupDbQuestions {
   constructor(private readonly config: ConfigService) {}
