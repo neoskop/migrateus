@@ -70,7 +70,7 @@
     "winston": "3.19.0"
   },
   "devDependencies": {
-    "@jest/globals": "30.4.0",
+    "@jest/globals": "30.4.1",
     "@nestjs/cli": "11.0.21",
     "@nestjs/schematics": "11.1.0",
     "@nestjs/testing": "11.1.19",
@@ -91,7 +91,7 @@
     "eslint-plugin-prettier": "5.5.5",
     "genversion": "3.2.0",
     "git-cliff": "2.13.1",
-    "jest": "30.4.0",
+    "jest": "30.4.1",
     "jscpd": "4.0.9",
     "nest-commander-schematics": "3.2.0",
     "nodemon": "3.1.14",
