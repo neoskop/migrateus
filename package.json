@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@directus/sdk": "21.3.0",
-    "@inquirer/confirm": "6.0.12",
+    "@inquirer/confirm": "6.0.13",
     "@inquirer/core": "11.1.9",
     "@inquirer/expand": "5.0.13",
     "@inquirer/figures": "2.0.5",
