@@ -38,7 +38,7 @@
     "@inquirer/core": "11.1.10",
     "@inquirer/expand": "5.0.14",
     "@inquirer/figures": "2.0.5",
-    "@inquirer/password": "5.0.12",
+    "@inquirer/password": "5.0.13",
     "@inquirer/select": "5.1.4",
     "@inquirer/type": "4.0.5",
     "@nestjs/common": "11.1.19",
