@@ -40,7 +40,8 @@ jobs:
         env:
           BUMP: ${{ inputs.bump }}
         run: |
-          version=$(pnpm version --no-git-tag-version $BUMP)
+          pnpm version --no-git-tag-version "$BUMP"
+          version="v$(node -p "require('./package.json').version")"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       - name: Generate version file & build
