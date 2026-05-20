@@ -13,6 +13,7 @@ import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { UpdateModule } from '../update/update.module.js';
 import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
+import { ErrorFormatterModule } from '../error-formatter/error-formatter.module.js';
 
 @Module({
   providers: [
@@ -32,6 +33,7 @@ import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt
     DependenciesModule,
     ProgressModule,
     UpdateModule,
+    ErrorFormatterModule,
   ],
 })
 export class SchemaDiffModule {}

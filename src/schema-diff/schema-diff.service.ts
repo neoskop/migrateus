@@ -27,6 +27,8 @@ import fs from 'node:fs';
 import yaml from 'js-yaml';
 import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
 import { ProgressService } from '../progress/progress.service.js';
+import { highlight } from 'cli-highlight';
+import { ErrorFormatterService } from '../error-formatter/error-formatter.service.js';
 
 @Injectable()
 export class SchemaDiffService {
@@ -44,6 +46,7 @@ export class SchemaDiffService {
     private readonly environmentService: EnvironmentService,
     private readonly schemaDiffPromptService: SchemaDiffPromptService,
     private readonly progressService: ProgressService,
+    private readonly errorFormatter: ErrorFormatterService,
   ) { }
 
   public async diff(from: string, to: string) {
@@ -58,6 +61,8 @@ export class SchemaDiffService {
       const diffOutput = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
+      this.logger.debug(`Schema diff: ${highlight(JSON.stringify(diffOutput), { language: 'json' })}`);
+
       if (!diffOutput || diffOutput.status === 204) {
         this.progressService.succeed(
           `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
@@ -96,7 +101,7 @@ export class SchemaDiffService {
         }
       }
     } catch (error: any) {
-      this.progressService.fail(error.message || error);
+      this.progressService.fail(this.errorFormatter.format(error));
     } finally {
       this.progressService.advance('🧹 Cleaning up');
       await this.cleanUpEnv(from);
