@@ -23,7 +23,7 @@ export class SqlService {
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
-  ) {}
+  ) { }
 
   public set databaseConfig(config: DatabaseConfig) {
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
@@ -143,7 +143,6 @@ export class SqlService {
         )
       )
         .split('\n')
-        .slice(1)
         .join(' ')
         .trim(),
       'default collation',
@@ -157,7 +156,6 @@ export class SqlService {
         )
       )
         .split('\n')
-        .slice(1)
         .join(' ')
         .trim(),
       'default character set',
@@ -173,7 +171,6 @@ export class SqlService {
       )
     )
       .split('\n')
-      .slice(1)
       .filter(Boolean)
       .map((tableName) => assertSafeIdentifier(tableName, 'table_name'));
 
@@ -190,8 +187,8 @@ export class SqlService {
 
     await this.executeSql(
       'SET foreign_key_checks = 0; ' +
-        alterStatements.join(';') +
-        '; SET foreign_key_checks = 1',
+      alterStatements.join(';') +
+      '; SET foreign_key_checks = 1',
       containerService,
     );
   }
@@ -205,14 +202,14 @@ export class SqlService {
       )
     )
       .split('\n')
-      .filter(Boolean)
-      .slice(1);
+      .filter(Boolean);
   }
 
   public async executeSql(sql: string, containerService: ContainerService) {
     const { host, port, user, password, name } = this._databaseConfig;
     const command = [
       'mysql',
+      '-sN',
       `-h${host}`,
       `-P${port}`,
       `-u${user}`,
