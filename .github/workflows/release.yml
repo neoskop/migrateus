@@ -52,6 +52,9 @@ jobs:
       - name: Update changelog
         run: pnpm exec git-cliff -o --tag ${{ steps.version.outputs.version }}
 
+      - name: Generate release notes
+        run: pnpm exec git-cliff --unreleased --tag ${{ steps.version.outputs.version }} --strip header -o RELEASE_NOTES.md
+
       - name: Publish to npm
         run: npm publish --provenance --access public
 
@@ -59,13 +62,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
+          git add CHANGELOG.md package.json src/version.ts pnpm-lock.yaml
           git commit -m "chore: release ${{ steps.version.outputs.version }}"
           git tag ${{ steps.version.outputs.version }}
           git push
           git push --tags
 
       - name: Create GitHub release
-        run: gh release create ${{ steps.version.outputs.version }} --generate-notes
+        run: gh release create ${{ steps.version.outputs.version }} --notes-file RELEASE_NOTES.md
         env:
           GH_TOKEN: ${{ github.token }}
