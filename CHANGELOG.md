@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.1] - 2026-05-20
+
+### 🚀 Features
+
+- *(schema-diff)* Add ErrorFormatterService for structured error formatting and log schema-diff more thoroughly
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency nanoid to v5.1.10 ([#945](https://github.com/neoskop/migrateus/issues/945))
+- *(deps)* Update dependency @directus/sdk to v21.3.0 ([#946](https://github.com/neoskop/migrateus/issues/946))
+- *(deps)* Update dependency nanoid to v5.1.11 ([#947](https://github.com/neoskop/migrateus/issues/947))
+- Sanitize SQL inputs to prevent injection in CLI-built queries
+- *(security)* Autofix Template Injection in GitHub Workflows Action
+- *(deps)* Update dependency semver to v7.8.0 ([#961](https://github.com/neoskop/migrateus/issues/961))
+- *(deps)* Update dependency @inquirer/confirm to v6.0.13 ([#966](https://github.com/neoskop/migrateus/issues/966))
+- *(deps)* Update dependency @inquirer/core to v11.1.10 ([#967](https://github.com/neoskop/migrateus/issues/967))
+- *(deps)* Update dependency @inquirer/expand to v5.0.14 ([#968](https://github.com/neoskop/migrateus/issues/968))
+- *(deps)* Update dependency @inquirer/password to v5.0.13 ([#969](https://github.com/neoskop/migrateus/issues/969))
+- *(deps)* Update dependency @inquirer/select to v5.1.5 ([#970](https://github.com/neoskop/migrateus/issues/970))
+- *(deps)* Update nest monorepo to v11.1.20 ([#977](https://github.com/neoskop/migrateus/issues/977))
+- *(deps)* Update nest monorepo to v11.1.21 ([#979](https://github.com/neoskop/migrateus/issues/979))
+- *(sql)* Remove manual header-line stripping by using mysql `-sN` flag
+- *(release)* Read version from package.json after bump
+
+### 🧪 Testing
+
+- Unblock test runner and add real coverage for SQL escaping
+
+### ⚙️ Miscellaneous Tasks
+
+- Address nestjs-doctor findings, score 89→100
+
 ## [2.6.0] - 2026-04-27
 
 ### 🚀 Features
