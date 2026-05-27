@@ -108,6 +108,17 @@ describe('SqlService.executeSql', () => {
     expect(cmd).not.toMatch(/[^\\]\$x/);
   });
 
+  it('escapes backticks in the wire command (regression)', async () => {
+    const { service, containerService } = build();
+    await service.executeSql(
+      'ALTER TABLE `t1` CONVERT TO CHARACTER SET utf8mb4',
+      containerService as never,
+    );
+    const cmd = containerService.execute.mock.calls[0][0] as string;
+    expect(cmd).toContain('\\\\\\`t1\\\\\\`');
+    expect(cmd).not.toMatch(/[^\\]`t1[^\\]/);
+  });
+
   it('returns stdout on success', async () => {
     const { service, containerService } = build(() => ({
       code: 0,
