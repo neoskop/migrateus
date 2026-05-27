@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.6.2] - 2026-05-27
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency which to v7
+- *(deps)* Update dependency date-fns to v4.2.0 ([#986](https://github.com/neoskop/migrateus/issues/986))
+- *(deps)* Update dependency date-fns to v4.2.1 ([#988](https://github.com/neoskop/migrateus/issues/988))
+- *(deps)* Update nest monorepo to v11.1.22 ([#993](https://github.com/neoskop/migrateus/issues/993))
+- *(deps)* Update dependency semver to v7.8.1 ([#996](https://github.com/neoskop/migrateus/issues/996))
+- *(deps)* Update nest monorepo to v11.1.23 ([#997](https://github.com/neoskop/migrateus/issues/997))
+- *(deps)* Update dependency date-fns to v4.3.0 ([#999](https://github.com/neoskop/migrateus/issues/999))
+- Escape backticks in executeSql wire command.
+
+### ⚙️ Miscellaneous Tasks
+
+- *(release)* Generate release notes from git-cliff for GitHub release
+
 ## [2.6.1] - 2026-05-20
 
 ### 🚀 Features
