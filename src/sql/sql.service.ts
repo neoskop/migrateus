@@ -216,7 +216,7 @@ export class SqlService {
       `-p${password}`,
       name,
       '-e',
-      `\\"${sql.replaceAll(/\$/g, '\\\\\\$')}\\"`,
+      `\\"${sql.replaceAll(/[$`]/g, '\\\\\\$&')}\\"`,
     ];
     this.logger.debug(
       `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,
