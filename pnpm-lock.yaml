@@ -30,8 +30,8 @@ importers:
         specifier: 5.1.5
         version: 5.1.5(@types/node@24.12.4)
       '@inquirer/type':
-        specifier: 4.0.5
-        version: 4.0.5(@types/node@24.12.4)
+        specifier: 4.0.6
+        version: 4.0.6(@types/node@24.12.4)
       '@nestjs/common':
         specifier: 11.1.24
         version: 11.1.24(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -709,6 +709,15 @@ packages:
 
   '@inquirer/type@4.0.5':
     resolution: {integrity: sha512-aetVUNeKNc/VriqXlw1NRSW0zhMBB0W4bNbWRJgzRl/3d0QNDQFfk0GO5SDdtjMZVg6o8ZKEiadd7SCCzoOn5Q==}
+    engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
+    peerDependencies:
+      '@types/node': '>=18'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+
+  '@inquirer/type@4.0.6':
+    resolution: {integrity: sha512-J+9tdxOskuYuGjsvGaq00AamhDgjR7anhEW2dP4QdQpFCMPngCeC/bCYWQ5NsMWZRdsy53is7kAHb/+7cwDk2g==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
       '@types/node': '>=18'
@@ -4476,6 +4485,10 @@ snapshots:
       '@types/node': 24.12.4
 
   '@inquirer/type@4.0.5(@types/node@24.12.4)':
+    optionalDependencies:
+      '@types/node': 24.12.4
+
+  '@inquirer/type@4.0.6(@types/node@24.12.4)':
     optionalDependencies:
       '@types/node': 24.12.4
 
