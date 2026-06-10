@@ -181,8 +181,8 @@ importers:
         specifier: 30.4.2
         version: 30.4.2(@types/node@24.13.1)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@24.13.1)(typescript@6.0.3))
       jscpd:
-        specifier: 4.2.4
-        version: 4.2.4
+        specifier: 4.2.5
+        version: 4.2.5
       nest-commander-schematics:
         specifier: 3.2.0
         version: 3.2.0(chokidar@4.0.3)
@@ -828,20 +828,20 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@jscpd/badge-reporter@4.2.4':
-    resolution: {integrity: sha512-g5vu05u0lX9rcHA0k3CptLfpOiuMzxh5+mUe2iYRAznTwH3ks6JAVAf9aPi5mBFttMCRiJh2zSt3xnSadHtMGg==}
+  '@jscpd/badge-reporter@4.2.5':
+    resolution: {integrity: sha512-ktXrjPeRaRyUDktxTroSA2/w5sshXpQplWkUuq/e6XqEpKBSbGEnwZLIaegSijOrMwIcCXPQ9k4feXIz5eVJNA==}
 
-  '@jscpd/core@4.2.4':
-    resolution: {integrity: sha512-9V9YzmmhYg9682kFqi+n0KGOhXNSoqxHbuIP3i/l/oSd6upBOnnSeBWDZMGOenQRQnyKEtCIbnS9YFz+3B+siQ==}
+  '@jscpd/core@4.2.5':
+    resolution: {integrity: sha512-Esf2deHxaoNEjePwf2jqP6Urzj+BAOsJVPFLbnnSsV+q7rLNMcn0UEEoKBXIOOt4qMkrkhl9DfwpMyPPOr6GkQ==}
 
-  '@jscpd/finder@4.2.4':
-    resolution: {integrity: sha512-4LLEuAAmAraud/TAAlB5BByVdWfy7SYiPKacj5yEggpkNs0qsw2kiZ5EyU3LonB+/vntJJEDDpJMmvOeS58e0A==}
+  '@jscpd/finder@4.2.5':
+    resolution: {integrity: sha512-Rw0dtwp/EeLANbujOubuQeJIuXXXkAlT+f5geZhwkB9TxEYP0hqNrdOJUK/TDBKQjRGrOizEtdNy+S4UlbdzOQ==}
 
-  '@jscpd/html-reporter@4.2.4':
-    resolution: {integrity: sha512-6UljCTVGf7O+o6D6fs1zNBG+vR1PTn47W2mSgb5hzSrvNw60rLrVoAMZMnr/TeIEdd/OEgAu+icbdvvVBfnvJw==}
+  '@jscpd/html-reporter@4.2.5':
+    resolution: {integrity: sha512-zMMIKbvi43dMgeNeHXlHQy1ovf+KJrzNlUubaBvCAVatqP23ksW8d3fmsevIQG9mMMTH0D1xOz+SxUn1FREOPg==}
 
-  '@jscpd/tokenizer@4.2.4':
-    resolution: {integrity: sha512-nM4kGyDvpcevt8t0zOsMQ82ShSc65c3LIQUHClTYwraiOGOmWgUQyen+JIiFCNF8eDCGR2Qa5iI5XBfGWYQzIg==}
+  '@jscpd/tokenizer@4.2.5':
+    resolution: {integrity: sha512-UM8Wx/jwahmflqQExlcKMQTYOAy58N/fn7Pv6NYrkD3EZm/FTk7gW97wkXy5aDE1Ts9oBUpT9tLY2rz7ogCHAQ==}
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -1748,15 +1748,15 @@ packages:
     resolution: {integrity: sha512-yPVavfyCcRhmorC7rWlkHn15b4wDVgVmBA7kV4QVBsF7kv/9TKJAbAXVTxvTnwP8HHKjRCJDClKbciiYS7p0DQ==}
     engines: {node: '>=16'}
 
+  commander@15.0.0:
+    resolution: {integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==}
+    engines: {node: '>=22.12.0'}
+
   commander@2.20.3:
     resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
-    engines: {node: '>= 6'}
-
-  commander@5.1.0:
-    resolution: {integrity: sha512-P0CysNDQ7rtVw4QIQtm+MRxV66vKFSvlsQvGYXZWR3qFU0jlMKHZZZgw8e+8DSah4UDKMqnknRDQz+xuQXQ/Zg==}
     engines: {node: '>= 6'}
 
   commander@7.2.0:
@@ -2702,11 +2702,11 @@ packages:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
     hasBin: true
 
-  jscpd-sarif-reporter@4.2.4:
-    resolution: {integrity: sha512-JtX79kFSyAhqJh5TdLUcvtYJtJd1F8UW8b4Miaga+EIgUn2/nR0N2zWL9mH5cRXgbzLuQbbsw9kReUVIECApwQ==}
+  jscpd-sarif-reporter@4.2.5:
+    resolution: {integrity: sha512-O8LcM9grAS5yO5x1Q0yegYaYcUX//IEBEyvzGFSYCeo1YzHbMnAI6EK7oTrwD+7Csjvfg9m8B8G7OOxzcSlr9w==}
 
-  jscpd@4.2.4:
-    resolution: {integrity: sha512-PSo2U0G8OxULayGyQMv7T/0ZQ+c3PPltdMOz/57v9Xnmq5xSIhh4cnZ0oYZPKqejy10aFwAbMVxqAlo24+PQ3g==}
+  jscpd@4.2.5:
+    resolution: {integrity: sha512-KDpApYw1ChGelfHb7MwYTEx694OnW52pv3McAasidUV4ILcGDQMiVJzB+vI8ox+ZPVfOSvdXQCk8uRa9B0LXnw==}
     hasBin: true
 
   jsesc@3.1.0:
@@ -2987,8 +2987,8 @@ packages:
     resolution: {integrity: sha512-Uzmd6LXpouKo8EUK68IjH4+E01w/hXyV3R3g/geCJo+rXLNfh1xucB+LOzYEOQPSiUK3h/xZf0cQGcSsmyL2Og==}
     engines: {node: '>=18'}
 
-  node-sarif-builder@3.4.0:
-    resolution: {integrity: sha512-tGnJW6OKRii9u/b2WiUViTJS+h7Apxx17qsMUjsUeNDiMMX5ZFf8F8Fcz7PAQ6omvOxHZtvDTmOYKJQwmfpjeg==}
+  node-sarif-builder@4.1.0:
+    resolution: {integrity: sha512-IWqZF6u0EI/07HTBm+zZ+MgXgWl09dnSJRGaDCPBSlOqilDcx6pj3Mpb3HvPN8V2Gr+ISw7ZrMsL7STWs1F++w==}
     engines: {node: '>=20'}
 
   nodemon@3.1.14:
@@ -4706,20 +4706,20 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@jscpd/badge-reporter@4.2.4':
+  '@jscpd/badge-reporter@4.2.5':
     dependencies:
       badgen: 3.3.2
       colors: 1.4.0
       fs-extra: 11.3.5
 
-  '@jscpd/core@4.2.4':
+  '@jscpd/core@4.2.5':
     dependencies:
       eventemitter3: 5.0.4
 
-  '@jscpd/finder@4.2.4':
+  '@jscpd/finder@4.2.5':
     dependencies:
-      '@jscpd/core': 4.2.4
-      '@jscpd/tokenizer': 4.2.4
+      '@jscpd/core': 4.2.5
+      '@jscpd/tokenizer': 4.2.5
       blamer: 1.0.7
       bytes: 3.1.2
       cli-table3: 0.6.5
@@ -4729,15 +4729,15 @@ snapshots:
       markdown-table: 2.0.0
       pug: 3.0.4
 
-  '@jscpd/html-reporter@4.2.4':
+  '@jscpd/html-reporter@4.2.5':
     dependencies:
       colors: 1.4.0
       fs-extra: 11.3.5
       pug: 3.0.4
 
-  '@jscpd/tokenizer@4.2.4':
+  '@jscpd/tokenizer@4.2.5':
     dependencies:
-      '@jscpd/core': 4.2.4
+      '@jscpd/core': 4.2.5
       spark-md5: 3.0.2
 
   '@lukeed/csprng@1.1.0': {}
@@ -5075,7 +5075,7 @@ snapshots:
 
   '@types/through@0.0.33':
     dependencies:
-      '@types/node': 24.13.0
+      '@types/node': 24.13.1
 
   '@types/tmp@0.2.6': {}
 
@@ -5728,11 +5728,11 @@ snapshots:
 
   commander@11.1.0: {}
 
+  commander@15.0.0: {}
+
   commander@2.20.3: {}
 
   commander@4.1.1: {}
-
-  commander@5.1.0: {}
 
   commander@7.2.0: {}
 
@@ -6943,23 +6943,23 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jscpd-sarif-reporter@4.2.4:
+  jscpd-sarif-reporter@4.2.5:
     dependencies:
       colors: 1.4.0
       fs-extra: 11.3.5
-      node-sarif-builder: 3.4.0
+      node-sarif-builder: 4.1.0
 
-  jscpd@4.2.4:
+  jscpd@4.2.5:
     dependencies:
-      '@jscpd/badge-reporter': 4.2.4
-      '@jscpd/core': 4.2.4
-      '@jscpd/finder': 4.2.4
-      '@jscpd/html-reporter': 4.2.4
-      '@jscpd/tokenizer': 4.2.4
+      '@jscpd/badge-reporter': 4.2.5
+      '@jscpd/core': 4.2.5
+      '@jscpd/finder': 4.2.5
+      '@jscpd/html-reporter': 4.2.5
+      '@jscpd/tokenizer': 4.2.5
       colors: 1.4.0
-      commander: 5.1.0
+      commander: 15.0.0
       fs-extra: 11.3.5
-      jscpd-sarif-reporter: 4.2.4
+      jscpd-sarif-reporter: 4.2.5
 
   jsesc@3.1.0: {}
 
@@ -7204,7 +7204,7 @@ snapshots:
 
   node-releases@2.0.47: {}
 
-  node-sarif-builder@3.4.0:
+  node-sarif-builder@4.1.0:
     dependencies:
       '@types/sarif': 2.1.7
       fs-extra: 11.3.5
