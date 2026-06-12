@@ -118,8 +118,8 @@ importers:
         specifier: 30.4.1
         version: 30.4.1
       '@nestjs/cli':
-        specifier: 11.0.22
-        version: 11.0.22(@types/node@24.13.1)(prettier@3.8.3)
+        specifier: 11.0.23
+        version: 11.0.23(@types/node@24.13.1)(prettier@3.8.3)
       '@nestjs/schematics':
         specifier: 11.1.0
         version: 11.1.0(chokidar@4.0.3)(prettier@3.8.3)(typescript@6.0.3)
@@ -851,8 +851,8 @@ packages:
       '@emnapi/core': ^1.7.1
       '@emnapi/runtime': ^1.7.1
 
-  '@nestjs/cli@11.0.22':
-    resolution: {integrity: sha512-KuMosDSsMM0qlfYiBBRbIvCavYh77kFXDJVXqvd2rJOuhsAS+sYaujXPl/KTIiVlS7WCUvcGeQl6Ek2nY17org==}
+  '@nestjs/cli@11.0.23':
+    resolution: {integrity: sha512-2V0Bf5jz0KXhUZk3eJi9GljIyqH04otwsE/mYLbqJR+X0iiYx+6bkNJ2Qz28uHNFj1cpHgimf9xDzHkqarie0g==}
     engines: {node: '>= 20.11'}
     hasBin: true
     peerDependencies:
@@ -4605,7 +4605,7 @@ snapshots:
       '@tybys/wasm-util': 0.10.2
     optional: true
 
-  '@nestjs/cli@11.0.22(@types/node@24.13.1)(prettier@3.8.3)':
+  '@nestjs/cli@11.0.23(@types/node@24.13.1)(prettier@3.8.3)':
     dependencies:
       '@angular-devkit/core': 19.2.27(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.2.27(chokidar@4.0.3)
@@ -6046,7 +6046,7 @@ snapshots:
       minimatch: 3.1.5
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.8.2
+      semver: 7.8.3
       tapable: 2.3.3
       typescript: 5.9.3
       webpack: 5.106.2
