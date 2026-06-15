@@ -196,6 +196,40 @@ For more information on any command, run `migrateus <command> --help`
 $ echo "source <(migrateus completion-script)" >> ~/.bashrc
 ```
 
+## Development
+
+To work on Migrateus locally and run your changes as the `migrateus` CLI without publishing to npm, link the package globally with pnpm:
+
+```bash
+pnpm install
+pnpm build
+pnpm link --global .
+```
+
+> [!NOTE]
+> Since pnpm 11 the directory argument is required — pass `.` for the current package. The first time you use pnpm's global bin, run `pnpm setup` once and open a new shell so `PNPM_HOME` is on `PATH`.
+
+If you previously installed Migrateus globally via npm, remove that version first so the linked binary wins:
+
+```bash
+npm uninstall -g @neoskop/migrateus
+```
+
+Verify the linked binary points at your working copy:
+
+```bash
+which migrateus
+# → ~/.local/share/pnpm/bin/migrateus
+grep cmd-shim-target $(which migrateus)
+# → # cmd-shim-target=<repo>/dist/src/main.js
+```
+
+The `bin` entry resolves to `dist/src/main.js`, so rebuild after every change. The recommended workflow is to keep a watcher running in a second terminal:
+
+```bash
+pnpm watch
+```
+
 ## Changelog
 
 See [Changelog](CHANGELOG.md).
