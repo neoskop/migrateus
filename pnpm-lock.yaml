@@ -158,19 +158,19 @@ importers:
         version: 3.0.4
       '@typescript-eslint/eslint-plugin':
         specifier: 8.61.0
-        version: 8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3))(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)
+        version: 8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3))(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
       '@typescript-eslint/parser':
         specifier: 8.61.0
-        version: 8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)
+        version: 8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
       eslint:
         specifier: 10.5.0
-        version: 10.5.0
+        version: 10.5.0(supports-color@5.5.0)
       eslint-config-prettier:
         specifier: 10.1.8
-        version: 10.1.8(eslint@10.5.0)
+        version: 10.1.8(eslint@10.5.0(supports-color@5.5.0))
       eslint-plugin-prettier:
         specifier: 5.5.6
-        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4)
+        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.5.0(supports-color@5.5.0)))(eslint@10.5.0(supports-color@5.5.0))(prettier@3.8.4)
       genversion:
         specifier: 3.2.0
         version: 3.2.0
@@ -181,8 +181,8 @@ importers:
         specifier: 30.4.2
         version: 30.4.2(@types/node@24.13.2)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@24.13.2)(typescript@6.0.3))
       jscpd:
-        specifier: 5.0.8
-        version: 5.0.8
+        specifier: 5.0.9
+        version: 5.0.9
       nest-commander-schematics:
         specifier: 3.2.0
         version: 3.2.0(chokidar@4.0.3)
@@ -1780,36 +1780,36 @@ packages:
       typescript:
         optional: true
 
-  cpd-darwin-arm64@5.0.8:
-    resolution: {integrity: sha512-PkbfGYpQMqRliprPBs4U39FRNxXTAepPWKF8dj/OVBm6avE0OkJlkK6gtxxLe6mrS7S1Hen5R/UCQkyzXboPaw==}
+  cpd-darwin-arm64@5.0.9:
+    resolution: {integrity: sha512-hUYQKrUUmlYxl2MDD8GYESpcKc5M5eGMjiHTK+O8ooCj1ogPiNHXg+aIeDl6BuLu7v3jFDcCu5fVqtcpHzAKpw==}
     cpu: [arm64]
     os: [darwin]
 
-  cpd-darwin-x64@5.0.8:
-    resolution: {integrity: sha512-5vfR17HlL5LSikWxVH2R04YbH+hnLs0NAdxVtjtoVhjnr6xAHC2JRbnGUPu/PRMa5Ku6lIu5RkTm/HDA+A4ArA==}
+  cpd-darwin-x64@5.0.9:
+    resolution: {integrity: sha512-viCFEUhUQnGundSMFq9ixi+RxfRiNDQsWP/CZErMlf20fM5h9zTtrHI9liNyRQn+ZtQUTTpabQ4PpzDV530bMg==}
     cpu: [x64]
     os: [darwin]
 
-  cpd-linux-arm64-gnu@5.0.8:
-    resolution: {integrity: sha512-eOBVkjjmA54y1EGmSkjc59ZGGWVmWMdpr0NWqGgHahJKsWuYTEdYOyP2OkB+wj52KvGL3Gak2kTPbTJ51+MPTQ==}
+  cpd-linux-arm64-gnu@5.0.9:
+    resolution: {integrity: sha512-BxiLx9haM+AhDlkyFoe1ro1w4/dvAteyEGytv4XraaRNntw2NMFX1Fsa9I8waegpXydM6E0lPWRWqkG59rin3A==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  cpd-linux-x64-gnu@5.0.8:
-    resolution: {integrity: sha512-QKn47hJ9qBSgKPjYVDf+XSX3hFO3o1CTknS29s4yGyLo5knqEQhsI55WAMpIAruN+EQgiPo87NUQ5wZCm+kOOA==}
+  cpd-linux-x64-gnu@5.0.9:
+    resolution: {integrity: sha512-VC2bUEJ0KRZ3fJijqqFcrBl6a69vmHrrNoJkSPtFwFju8x7ce2Vs9ntEmlxeB7Ho4mIzN8OYOrlCeqyNdAZcUA==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  cpd-linux-x64-musl@5.0.8:
-    resolution: {integrity: sha512-3zHP9v7KcYjEzPftVz/quZWoMQWBFit/sLBAbku1k8kXW1u0ZRGCpXhOwJY1xuCKMa4k7dW8kmGdqioUguc3TA==}
+  cpd-linux-x64-musl@5.0.9:
+    resolution: {integrity: sha512-YJekKRRgAhez2+Rrbt42fp8cJuNi/PtGuBb8jIzEtegXRRBG9CE9HaoTy0mS3JeiQuwxiT0Fnz2j8hR9gDbq0w==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  cpd-windows-x64-msvc@5.0.8:
-    resolution: {integrity: sha512-sxNzZ8lbMNTwWplH//s+e/79AmKTxT9GrM20ailLRdpTy6uXFAAAVxAyNJtK16YF5f6JoFEl+aIzaqlD+krwXA==}
+  cpd-windows-x64-msvc@5.0.9:
+    resolution: {integrity: sha512-Z54yLFmRjIgTMqzeUxbZzgxj8gWxB/jjMi/QOkBOLx9yHHwzhW8MukpY7JhCOmlvPOOn6pjSVrMTxChliDcYAw==}
     cpu: [x64]
     os: [win32]
 
@@ -2643,8 +2643,8 @@ packages:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
     hasBin: true
 
-  jscpd@5.0.8:
-    resolution: {integrity: sha512-dyP6fZZuHe8aks3iH3L02Ey3/CJgSPsLLgDlGCn79BmZ7Kxl5kX+NKWVpxQyBl/rNss2pcpEXgsx4MeuclRCJw==}
+  jscpd@5.0.9:
+    resolution: {integrity: sha512-52zn0erBrRCCLvKulOs/UNUsL2fAmnMRUUbwbJhfUmqI9jtVSQ2Hk20F7m58JnkmgBEoyNBSTTomrF8K+H4fLA==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4114,14 +4114,14 @@ snapshots:
 
   '@epic-web/invariant@1.0.0': {}
 
-  '@eslint-community/eslint-utils@4.9.1(eslint@10.5.0)':
+  '@eslint-community/eslint-utils@4.9.1(eslint@10.5.0(supports-color@5.5.0))':
     dependencies:
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       eslint-visitor-keys: 3.4.3
 
   '@eslint-community/regexpp@4.12.2': {}
 
-  '@eslint/config-array@0.23.5':
+  '@eslint/config-array@0.23.5(supports-color@5.5.0)':
     dependencies:
       '@eslint/object-schema': 3.0.5
       debug: 4.4.3(supports-color@5.5.0)
@@ -4926,15 +4926,15 @@ snapshots:
     dependencies:
       '@types/yargs-parser': 21.0.3
 
-  '@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3))(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)':
+  '@typescript-eslint/eslint-plugin@8.61.0(@typescript-eslint/parser@8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3))(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)':
     dependencies:
       '@eslint-community/regexpp': 4.12.2
-      '@typescript-eslint/parser': 8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)
+      '@typescript-eslint/parser': 8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
       '@typescript-eslint/scope-manager': 8.61.0
-      '@typescript-eslint/type-utils': 8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)
-      '@typescript-eslint/utils': 8.61.0(eslint@10.5.0)(typescript@6.0.3)
+      '@typescript-eslint/type-utils': 8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.61.0(eslint@10.5.0(supports-color@5.5.0))(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.61.0
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       ignore: 7.0.5
       natural-compare: 1.4.0
       ts-api-utils: 2.5.0(typescript@6.0.3)
@@ -4942,14 +4942,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/parser@8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)':
+  '@typescript-eslint/parser@8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/scope-manager': 8.61.0
       '@typescript-eslint/types': 8.61.0
       '@typescript-eslint/typescript-estree': 8.61.0(supports-color@5.5.0)(typescript@6.0.3)
       '@typescript-eslint/visitor-keys': 8.61.0
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -4972,13 +4972,13 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  '@typescript-eslint/type-utils@8.61.0(eslint@10.5.0)(supports-color@5.5.0)(typescript@6.0.3)':
+  '@typescript-eslint/type-utils@8.61.0(eslint@10.5.0(supports-color@5.5.0))(supports-color@5.5.0)(typescript@6.0.3)':
     dependencies:
       '@typescript-eslint/types': 8.61.0
       '@typescript-eslint/typescript-estree': 8.61.0(supports-color@5.5.0)(typescript@6.0.3)
-      '@typescript-eslint/utils': 8.61.0(eslint@10.5.0)(typescript@6.0.3)
+      '@typescript-eslint/utils': 8.61.0(eslint@10.5.0(supports-color@5.5.0))(typescript@6.0.3)
       debug: 4.4.3(supports-color@5.5.0)
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       ts-api-utils: 2.5.0(typescript@6.0.3)
       typescript: 6.0.3
     transitivePeerDependencies:
@@ -5001,13 +5001,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@typescript-eslint/utils@8.61.0(eslint@10.5.0)(typescript@6.0.3)':
+  '@typescript-eslint/utils@8.61.0(eslint@10.5.0(supports-color@5.5.0))(typescript@6.0.3)':
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0(supports-color@5.5.0))
       '@typescript-eslint/scope-manager': 8.61.0
       '@typescript-eslint/types': 8.61.0
       '@typescript-eslint/typescript-estree': 8.61.0(supports-color@5.5.0)(typescript@6.0.3)
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
@@ -5613,22 +5613,22 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  cpd-darwin-arm64@5.0.8:
+  cpd-darwin-arm64@5.0.9:
     optional: true
 
-  cpd-darwin-x64@5.0.8:
+  cpd-darwin-x64@5.0.9:
     optional: true
 
-  cpd-linux-arm64-gnu@5.0.8:
+  cpd-linux-arm64-gnu@5.0.9:
     optional: true
 
-  cpd-linux-x64-gnu@5.0.8:
+  cpd-linux-x64-gnu@5.0.9:
     optional: true
 
-  cpd-linux-x64-musl@5.0.8:
+  cpd-linux-x64-musl@5.0.9:
     optional: true
 
-  cpd-windows-x64-msvc@5.0.8:
+  cpd-windows-x64-msvc@5.0.9:
     optional: true
 
   create-require@1.1.1: {}
@@ -5739,19 +5739,19 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-prettier@10.1.8(eslint@10.5.0):
+  eslint-config-prettier@10.1.8(eslint@10.5.0(supports-color@5.5.0)):
     dependencies:
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
 
-  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.5.0))(eslint@10.5.0)(prettier@3.8.4):
+  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.5.0(supports-color@5.5.0)))(eslint@10.5.0(supports-color@5.5.0))(prettier@3.8.4):
     dependencies:
-      eslint: 10.5.0
+      eslint: 10.5.0(supports-color@5.5.0)
       prettier: 3.8.4
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.13
     optionalDependencies:
       '@types/eslint': 9.6.1
-      eslint-config-prettier: 10.1.8(eslint@10.5.0)
+      eslint-config-prettier: 10.1.8(eslint@10.5.0(supports-color@5.5.0))
 
   eslint-scope@5.1.1:
     dependencies:
@@ -5769,11 +5769,11 @@ snapshots:
 
   eslint-visitor-keys@5.0.1: {}
 
-  eslint@10.5.0:
+  eslint@10.5.0(supports-color@5.5.0):
     dependencies:
-      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0)
+      '@eslint-community/eslint-utils': 4.9.1(eslint@10.5.0(supports-color@5.5.0))
       '@eslint-community/regexpp': 4.12.2
-      '@eslint/config-array': 0.23.5
+      '@eslint/config-array': 0.23.5(supports-color@5.5.0)
       '@eslint/config-helpers': 0.6.0
       '@eslint/core': 1.2.1
       '@eslint/plugin-kit': 0.7.2
@@ -6684,14 +6684,14 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jscpd@5.0.8:
+  jscpd@5.0.9:
     optionalDependencies:
-      cpd-darwin-arm64: 5.0.8
-      cpd-darwin-x64: 5.0.8
-      cpd-linux-arm64-gnu: 5.0.8
-      cpd-linux-x64-gnu: 5.0.8
-      cpd-linux-x64-musl: 5.0.8
-      cpd-windows-x64-msvc: 5.0.8
+      cpd-darwin-arm64: 5.0.9
+      cpd-darwin-x64: 5.0.9
+      cpd-linux-arm64-gnu: 5.0.9
+      cpd-linux-x64-gnu: 5.0.9
+      cpd-linux-x64-musl: 5.0.9
+      cpd-windows-x64-msvc: 5.0.9
 
   jsesc@3.1.0: {}
 
