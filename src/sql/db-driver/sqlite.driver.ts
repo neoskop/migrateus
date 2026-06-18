@@ -11,6 +11,8 @@ import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js'
 export class SqliteDriver implements DbDriver {
   public readonly client = 'sqlite3' as const;
   public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
+  // SQLite is a file, copied directly to/from the Directus container — no sidecar needed.
+  public readonly usesSidecar = false;
 
   constructor(
     private readonly config: DatabaseConfig,

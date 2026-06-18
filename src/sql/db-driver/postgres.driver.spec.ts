@@ -25,6 +25,10 @@ describe('PostgresDriver basics', () => {
     expect(driverWith().driver.client).toBe('pg');
   });
 
+  it('usesSidecar is true (Postgres requires a database server sidecar)', () => {
+    expect(driverWith().driver.usesSidecar).toBe(true);
+  });
+
   it('quotes identifiers with double-quotes (ANSI)', () => {
     const { driver } = driverWith();
     expect(driver.escapeIdentifier('my_table')).toBe('"my_table"');

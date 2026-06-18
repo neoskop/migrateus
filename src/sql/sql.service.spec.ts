@@ -74,6 +74,27 @@ describe('SqlService.client getter', () => {
   });
 });
 
+describe('SqlService.usesSidecar getter', () => {
+  it('returns true for the default mysql config', () => {
+    const { service } = build();
+    expect(service.usesSidecar).toBe(true);
+  });
+
+  it('returns false when databaseConfig is sqlite3', () => {
+    const { service } = build();
+    service.databaseConfig = {
+      client: 'sqlite3',
+      filename: '/x.db',
+      host: '',
+      port: '',
+      user: '',
+      password: '',
+      name: '',
+    } as never;
+    expect(service.usesSidecar).toBe(false);
+  });
+});
+
 describe('SqlService cleanup guards (no driver / setup failed)', () => {
   it('cleanUpDirectusUser is a no-op when databaseConfig was never set', async () => {
     const directusUser = {

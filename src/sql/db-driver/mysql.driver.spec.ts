@@ -30,6 +30,10 @@ describe('MysqlDriver basics', () => {
     expect(driverWith().driver.clientImage).toBe(DEFAULT_CONTAINER_IMAGE);
   });
 
+  it('usesSidecar is true (MySQL requires a database server sidecar)', () => {
+    expect(driverWith().driver.usesSidecar).toBe(true);
+  });
+
   it('quotes identifiers with backticks and bool literal as 1', () => {
     const { driver } = driverWith();
     expect(driver.escapeIdentifier('t1')).toBe('`t1`');

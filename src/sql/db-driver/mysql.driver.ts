@@ -14,6 +14,7 @@ import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js'
 export class MysqlDriver implements DbDriver {
   public readonly client = 'mysql' as const;
   public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
+  public readonly usesSidecar = true;
 
   constructor(
     private readonly config: DatabaseConfig,

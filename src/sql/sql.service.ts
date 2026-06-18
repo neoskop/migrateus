@@ -43,6 +43,10 @@ export class SqlService {
     return this.driver.clientImage;
   }
 
+  public get usesSidecar(): boolean {
+    return this.driver.usesSidecar;
+  }
+
   private get driver(): DbDriver {
     return this._driver;
   }

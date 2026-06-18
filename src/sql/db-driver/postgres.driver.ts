@@ -12,6 +12,7 @@ import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js'
 export class PostgresDriver implements DbDriver {
   public readonly client = 'pg' as const;
   public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
+  public readonly usesSidecar = true;
 
   constructor(
     private readonly config: DatabaseConfig,

@@ -25,6 +25,10 @@ describe('SqliteDriver basics', () => {
     expect(driverWith().driver.client).toBe('sqlite3');
   });
 
+  it('usesSidecar is false (SQLite is a file, copied directly — no sidecar needed)', () => {
+    expect(driverWith().driver.usesSidecar).toBe(false);
+  });
+
   it('quotes identifiers with double-quotes (ANSI)', () => {
     const { driver } = driverWith();
     expect(driver.escapeIdentifier('my_table')).toBe('"my_table"');
