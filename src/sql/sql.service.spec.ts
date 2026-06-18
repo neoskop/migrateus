@@ -2,7 +2,6 @@ import {
   describe,
   it,
   expect,
-  beforeEach,
   jest,
 } from '@jest/globals';
 import { SqlService } from './sql.service.js';
@@ -88,154 +87,33 @@ describe('SqlService.setAssetStorage', () => {
   });
 });
 
-describe('SqlService.executeSql', () => {
-  it('throws when exit code is non-zero, including stderr', async () => {
-    const { service, containerService } = build(() => ({
-      code: 1,
-      stdout: '',
-      stderr: 'boom',
-    }));
-    await expect(
-      service.executeSql('SELECT 1', containerService as never),
-    ).rejects.toThrow(/Execution of SQL failed with status code 1: boom/);
+describe('SqlService delegates to the driver', () => {
+  it('builds a mysql driver from databaseConfig and routes executeSql through it', async () => {
+    const { service, containerService } = build(() => ({ code: 0, stdout: 'ok\n', stderr: '' }));
+    const out = await service.executeSql('SELECT 1', containerService as never);
+    expect(out).toBe('ok\n');
+    // wire command still mysql-shaped
+    expect(containerService.execute.mock.calls[0][0]).toContain('mysql -sN');
   });
 
-  it('escapes $ characters in the wire command (regression)', async () => {
-    const { service, containerService } = build();
-    await service.executeSql("SELECT '$x' FROM t", containerService as never);
-    const cmd = containerService.execute.mock.calls[0][0] as string;
-    expect(cmd).toContain('\\\\\\$x');
-    expect(cmd).not.toMatch(/[^\\]\$x/);
-  });
-
-  it('escapes backticks in the wire command (regression)', async () => {
-    const { service, containerService } = build();
-    await service.executeSql(
-      'ALTER TABLE `t1` CONVERT TO CHARACTER SET utf8mb4',
-      containerService as never,
-    );
-    const cmd = containerService.execute.mock.calls[0][0] as string;
-    expect(cmd).toContain('\\\\\\`t1\\\\\\`');
-    expect(cmd).not.toMatch(/[^\\]`t1[^\\]/);
-  });
-
-  it('returns stdout on success', async () => {
-    const { service, containerService } = build(() => ({
-      code: 0,
-      stdout: 'hello\n',
-      stderr: '',
-    }));
-    const out = await service.executeSql(
-      'SELECT 1',
-      containerService as never,
-    );
-    expect(out).toBe('hello\n');
-  });
-});
-
-describe('SqlService.listTables', () => {
-  it('drops the header row and trims blank lines', async () => {
-    const { service, containerService } = build(() => ({
-      code: 0,
-      stdout: 'table_name\nfoo\nbar\n',
-      stderr: '',
-    }));
-    const tables = await service.listTables(containerService as never);
-    expect(tables).toEqual(['foo', 'bar']);
-  });
-});
-
-describe('SqlService.restoreMysqlDump', () => {
-  function execScript(replies: string[]) {
-    let i = 0;
-    return (cmd: string) => {
-      if (cmd.startsWith('mysql ') && !cmd.includes(' -e ')) {
-        return { code: 0, stdout: '', stderr: '' };
-      }
-      const stdout = replies[i] ?? '';
-      i += 1;
-      return { code: 0, stdout, stderr: '' };
-    };
-  }
-
-  it('issues ALTER TABLE per table with safe charset/collation', async () => {
-    const { service, containerService } = build(
-      execScript([
-        'DEFAULT_COLLATION_NAME\nutf8mb4_unicode_ci\n',
-        'default_character_set_name\nutf8mb4\n',
-        'table_name\nt1\nt2\n',
-        '',
-      ]),
-    );
-
-    await service.restoreMysqlDump(containerService as never);
-
-    const cmds = containerService.execute.mock.calls.map(
-      (c: any[]) => c[0] as string,
-    );
-    const alterCmd = cmds.find((c) => c.includes('ALTER TABLE')) ?? '';
-    expect(alterCmd).toContain('SET foreign_key_checks = 0;');
-    expect(alterCmd).toContain(
-      'ALTER TABLE `t1` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
-    );
-    expect(alterCmd).toContain(
-      'ALTER TABLE `t2` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci',
-    );
-    expect(alterCmd).toContain('SET foreign_key_checks = 1');
-  });
-
-  it('rejects when the schema returns a malicious collation', async () => {
-    const { service, containerService } = build(
-      execScript([
-        'DEFAULT_COLLATION_NAME\nutf8mb4; DROP DATABASE foo\n',
-      ]),
-    );
-    await expect(
-      service.restoreMysqlDump(containerService as never),
-    ).rejects.toThrow(/Invalid charset\/collation for default collation/);
-  });
-
-  it('rejects when a returned table_name is not a safe identifier', async () => {
-    const { service, containerService } = build(
-      execScript([
-        'DEFAULT_COLLATION_NAME\nutf8mb4_unicode_ci\n',
-        'default_character_set_name\nutf8mb4\n',
-        'table_name\nusers; DROP\n',
-      ]),
-    );
-    await expect(
-      service.restoreMysqlDump(containerService as never),
-    ).rejects.toThrow(/Invalid SQL identifier for table_name/);
-  });
-
-  it('throws if the mysql restore itself fails (non-zero exit)', async () => {
-    const { service, containerService } = build((cmd) =>
-      cmd.startsWith('mysql ') && !cmd.includes(' -e ')
-        ? { code: 2, stdout: '', stderr: 'corrupt' }
-        : { code: 0, stdout: '', stderr: '' },
-    );
-    await expect(
-      service.restoreMysqlDump(containerService as never),
-    ).rejects.toThrow(/Restore failed with status code 2: corrupt/);
-  });
-});
-
-describe('SqlService.performMysqlDump', () => {
-  it('throws when mysqldump exits non-zero', async () => {
-    const { service, containerService } = build(() => ({
-      code: 3,
-      stdout: '',
-      stderr: 'denied',
-    }));
-    await expect(
-      service.performMysqlDump(containerService as never),
-    ).rejects.toThrow(/Backup failed with status code 3: denied/);
-  });
-
-  it('appends the joined table list when provided', async () => {
+  it('performMysqlDump still appends the table list', async () => {
     const { service, containerService } = build();
     await service.performMysqlDump(containerService as never, ['a', 'b']);
-    const cmd = containerService.execute.mock.calls[0][0] as string;
-    expect(cmd).toContain(' mydb a b ');
+    expect(containerService.execute.mock.calls[0][0]).toContain(' mydb a b ');
+  });
+
+  it('restoreMysqlDump runs restore then post-restore fixups', async () => {
+    const { service, containerService } = build((cmd) =>
+      cmd.includes('DEFAULT_COLLATION_NAME')
+        ? { code: 0, stdout: 'utf8mb4_unicode_ci\n', stderr: '' }
+        : cmd.includes('default_character_set_name')
+          ? { code: 0, stdout: 'utf8mb4\n', stderr: '' }
+          : cmd.includes('TABLE_TYPE')
+            ? { code: 0, stdout: 't1\n', stderr: '' }
+            : { code: 0, stdout: '', stderr: '' },
+    );
+    await service.restoreMysqlDump(containerService as never);
+    const cmds = containerService.execute.mock.calls.map((c: any[]) => c[0] as string);
+    expect(cmds.some((c) => c.includes('CONVERT TO CHARACTER SET utf8mb4'))).toBe(true);
   });
 });

@@ -5,25 +5,21 @@ import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { ContainerService } from '../container/container.service.js';
-import chalk from 'chalk';
 import { Credential } from '../directus/directus-user/credential.type.js';
 import { RedactService } from '../redact/redact.service.js';
-import {
-  assertSafeCharsetOrCollation,
-  assertSafeIdentifier,
-  escapeMysqlIdentifier,
-  escapeMysqlString,
-} from './sql-escape.js';
+import { DbDriver, Exec } from './db-driver/db-driver.interface.js';
+import { createDbDriver } from './db-driver/db-driver.factory.js';
 
 @Injectable()
 export class SqlService {
   private _databaseConfig: DatabaseConfig;
+  private _driver: DbDriver;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
-  ) { }
+  ) {}
 
   public set databaseConfig(config: DatabaseConfig) {
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
@@ -32,203 +28,70 @@ export class SqlService {
       `Database config: ${highlight(JSON.stringify(config), { language: 'json' })}`,
     );
     this._databaseConfig = config;
+    this._driver = createDbDriver(config, this.logger);
+  }
+
+  private get driver(): DbDriver {
+    return this._driver;
+  }
+
+  private execFor(containerService: ContainerService): Exec {
+    return (command: string) => containerService.execute(command);
   }
 
   public async setupDirectusUser(containerService: ContainerService) {
-    await this.directusUserService.setupUser((sql) =>
-      this.executeSql.bind(this)(sql, containerService),
+    await this.directusUserService.setupUser(this.driver, (sql) =>
+      this.driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
   public async cleanUpDirectusUser(containerService: ContainerService) {
-    await this.directusUserService.removeUser((sql) =>
-      this.executeSql.bind(this)(sql, containerService),
+    await this.directusUserService.removeUser(this.driver, (sql) =>
+      this.driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {
-    await this.directusUserService.cleanUp((sql) =>
-      this.executeSql.bind(this)(sql, containerService),
+    await this.directusUserService.cleanUp(this.driver, (sql) =>
+      this.driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
-  public async setCredentials(
-    credentials: Credential[],
-    containerService: ContainerService,
-  ) {
+  public async setCredentials(credentials: Credential[], containerService: ContainerService) {
     if (!credentials || credentials.length === 0) {
       return;
     }
-
-    await this.directusUserService.setCredentials(credentials, (sql) =>
-      this.executeSql.bind(this)(sql, containerService),
+    await this.directusUserService.setCredentials(credentials, this.driver, (sql) =>
+      this.driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
-  public async setAssetStorage(
-    storage: string,
-    containerService: ContainerService,
-  ) {
+  public async setAssetStorage(storage: string, containerService: ContainerService) {
     if (!storage) {
       return;
     }
-
-    const escapedStorage = escapeMysqlString(storage);
-    await this.executeSql(
-      `UPDATE directus_files SET storage = ${escapedStorage} WHERE storage <> ${escapedStorage} OR storage IS NULL;`,
-      containerService,
+    const escaped = this.driver.escapeString(storage);
+    await this.driver.executeSql(
+      this.execFor(containerService),
+      `UPDATE directus_files SET storage = ${escaped} WHERE storage <> ${escaped} OR storage IS NULL;`,
     );
   }
 
-  public async performMysqlDump(
-    containerService: ContainerService,
-    tableNames?: string[],
-  ) {
-    const { host, port, user, password, name } = this._databaseConfig;
-    const command = [
-      'mysqldump',
-      '--set-gtid-purged=OFF',
-      '--no-tablespaces',
-      '--skip-lock-tables',
-      '--skip-add-locks',
-      '--compatible=ansi',
-      '--default-character-set=utf8mb4',
-      `-h${host}`,
-      `-P${port}`,
-      `-u${user}`,
-      `-p${password}`,
-      name,
-      tableNames && tableNames.join(' '),
-      '>/tmp/backup.sql',
-    ]
-      .filter(Boolean)
-      .join(' ');
-
-    const output = await containerService.execute(command);
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Backup failed with status code ${output.code}: ${output.stderr}`,
-      );
-    }
+  public async performMysqlDump(containerService: ContainerService, tableNames?: string[]) {
+    await this.driver.dump(this.execFor(containerService), '/tmp/backup.sql', tableNames);
   }
 
   public async restoreMysqlDump(containerService: ContainerService) {
-    const { host, port, user, password, name } = this._databaseConfig;
-    const command = [
-      'mysql',
-      `-h${host}`,
-      `-P${port}`,
-      `-u${user}`,
-      `-p${password}`,
-      '--default-character-set=utf8mb4',
-      name,
-      '</tmp/backup.sql',
-    ].join(' ');
-
-    const output = await containerService.execute(command);
-
-    if (output.code !== 0) {
-      const errorMessage = `Restore failed with status code ${output.code}: ${output.stderr}`;
-      throw new Error(errorMessage);
-    }
-
-    const escapedName = escapeMysqlString(name);
-
-    const defaultCollation = assertSafeCharsetOrCollation(
-      (
-        await this.executeSql(
-          `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
-          containerService,
-        )
-      )
-        .split('\n')
-        .join(' ')
-        .trim(),
-      'default collation',
-    );
-
-    const defaultCharacterSetName = assertSafeCharsetOrCollation(
-      (
-        await this.executeSql(
-          `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
-          containerService,
-        )
-      )
-        .split('\n')
-        .join(' ')
-        .trim(),
-      'default character set',
-    );
-
-    this.logger.debug(
-      `Setting default collation to ${chalk.bold(defaultCollation)}`,
-    );
-    const tableNames = (
-      await this.executeSql(
-        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE'`,
-        containerService,
-      )
-    )
-      .split('\n')
-      .filter(Boolean)
-      .map((tableName) => assertSafeIdentifier(tableName, 'table_name'));
-
-    const alterStatements = tableNames.map((tableName) => {
-      return (
-        'ALTER TABLE ' +
-        escapeMysqlIdentifier(tableName) +
-        ' CONVERT TO CHARACTER SET ' +
-        defaultCharacterSetName +
-        ' COLLATE ' +
-        defaultCollation
-      );
-    });
-
-    await this.executeSql(
-      'SET foreign_key_checks = 0; ' +
-      alterStatements.join(';') +
-      '; SET foreign_key_checks = 1',
-      containerService,
-    );
+    const exec = this.execFor(containerService);
+    await this.driver.restore(exec, '/tmp/backup.sql');
+    await this.driver.postRestoreFixups(exec);
   }
 
   public async listTables(containerService: ContainerService) {
-    const escapedName = escapeMysqlString(this._databaseConfig.name);
-    return (
-      await this.executeSql(
-        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE';`,
-        containerService,
-      )
-    )
-      .split('\n')
-      .filter(Boolean);
+    return this.driver.listTables(this.execFor(containerService));
   }
 
   public async executeSql(sql: string, containerService: ContainerService) {
-    const { host, port, user, password, name } = this._databaseConfig;
-    const command = [
-      'mysql',
-      '-sN',
-      `-h${host}`,
-      `-P${port}`,
-      `-u${user}`,
-      `-p${password}`,
-      name,
-      '-e',
-      `\\"${sql.replaceAll(/[$`]/g, '\\\\\\$&')}\\"`,
-    ];
-    this.logger.debug(
-      `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,
-    );
-    const output = await containerService.execute(command.join(' '));
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Execution of SQL failed with status code ${output.code}: ${output.stderr}`,
-      );
-    }
-
-    return output.stdout;
+    return this.driver.executeSql(this.execFor(containerService), sql);
   }
 }

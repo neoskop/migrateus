@@ -6,6 +6,14 @@ import {
 } from '@jest/globals';
 import { DirectusUserService } from './directus-user.service.js';
 
+function fakeDriver() {
+  return {
+    escapeString: (v: string) => `'${v}'`,
+    boolLiteral: (b: boolean) => (b ? '1' : '0'),
+    deleteOne: (t: string, w: string) => `DELETE FROM ${t} WHERE ${w} LIMIT 1`,
+  } as never;
+}
+
 function build() {
   const redact = { addRedaction: jest.fn() };
   const service = new DirectusUserService(redact as never);
@@ -36,7 +44,7 @@ describe('DirectusUserService.setupUser', () => {
     const { service } = build();
     const { fn, calls } = makeExecutor();
 
-    await service.setupUser(fn as never);
+    await service.setupUser(fakeDriver(), fn as never);
 
     expect(calls).toHaveLength(4);
     expect(calls[0]).toMatch(
@@ -52,6 +60,16 @@ describe('DirectusUserService.setupUser', () => {
     expect(calls[3]).toContain("'Migrateus'");
     expect(calls[3]).toContain("'User'");
   }, 20000);
+
+  it('uses the driver bool literal for admin_access', async () => {
+    const svc = new DirectusUserService({ addRedaction: jest.fn() } as never);
+    const sql: string[] = [];
+    await svc.setupUser(fakeDriver(), async (s) => {
+      sql.push(s);
+      return '';
+    });
+    expect(sql.some((s) => s.includes('admin_access) VALUES') && s.includes(', 1)'))).toBe(true);
+  });
 });
 
 describe('DirectusUserService.removeUser', () => {
@@ -59,7 +77,7 @@ describe('DirectusUserService.removeUser', () => {
     const { service } = build();
     const { fn, calls } = makeExecutor();
 
-    await service.removeUser(fn as never);
+    await service.removeUser(fakeDriver(), fn as never);
 
     expect(calls).toHaveLength(5);
     expect(calls[0]).toMatch(
@@ -78,13 +96,23 @@ describe('DirectusUserService.removeUser', () => {
       /^DELETE FROM directus_access WHERE id = '[^']+' LIMIT 1$/,
     );
   });
+
+  it('uses the driver deleteOne helper', async () => {
+    const svc = new DirectusUserService({ addRedaction: jest.fn() } as never);
+    const sql: string[] = [];
+    await svc.removeUser(fakeDriver(), async (s) => {
+      sql.push(s);
+      return '';
+    });
+    expect(sql.some((s) => /DELETE FROM directus_users WHERE id = .* LIMIT 1/.test(s))).toBe(true);
+  });
 });
 
 describe('DirectusUserService.setCredentials', () => {
   it('does nothing for empty list', async () => {
     const { service } = build();
     const { fn } = makeExecutor();
-    await service.setCredentials([], fn as never);
+    await service.setCredentials([], fakeDriver(), fn as never);
     expect(fn).not.toHaveBeenCalled();
   });
 
@@ -94,6 +122,7 @@ describe('DirectusUserService.setCredentials', () => {
 
     await service.setCredentials(
       [{ email: 'a@b.c', token: 'tok' } as never],
+      fakeDriver(),
       fn as never,
     );
 
@@ -109,6 +138,7 @@ describe('DirectusUserService.setCredentials', () => {
 
     await service.setCredentials(
       [{ email: 'a@b.c', password: 'pw' } as never],
+      fakeDriver(),
       fn as never,
     );
 
@@ -124,6 +154,7 @@ describe('DirectusUserService.setCredentials', () => {
 
     await service.setCredentials(
       [{ email: 'a@b.c', token: 'tok', password: 'pw' } as never],
+      fakeDriver(),
       fn as never,
     );
 
@@ -142,7 +173,7 @@ describe('DirectusUserService.cleanUp', () => {
     const replies = [`${u1}\n${u2}\n`, ``, ``, ``, `${policy}\n`, ``, ``];
     const { fn, calls } = makeExecutor(replies);
 
-    await service.cleanUp(fn as never);
+    await service.cleanUp(fakeDriver(), fn as never);
 
     expect(calls[0]).toContain('SELECT id from directus_users');
     expect(calls[1]).toContain(`('${u1}','${u2}')`);
@@ -166,7 +197,7 @@ describe('DirectusUserService.cleanUp', () => {
     const replies = [`not-a-uuid\n`];
     const { fn, calls } = makeExecutor(replies);
 
-    await expect(service.cleanUp(fn as never)).rejects.toThrow(
+    await expect(service.cleanUp(fakeDriver(), fn as never)).rejects.toThrow(
       /Invalid UUID for directus_users\.id/,
     );
     expect(calls.some((c) => c.startsWith('UPDATE directus_files'))).toBe(
@@ -179,7 +210,7 @@ describe('DirectusUserService.cleanUp', () => {
     const replies = [``, ``, ``, `not-a-uuid\n`];
     const { fn } = makeExecutor(replies);
 
-    await expect(service.cleanUp(fn as never)).rejects.toThrow(
+    await expect(service.cleanUp(fakeDriver(), fn as never)).rejects.toThrow(
       /Invalid UUID for directus_policies\.id/,
     );
   });
