@@ -95,3 +95,30 @@ describe('MysqlDriver.dump', () => {
     expect(calls()[0]).toContain(' mydb a b ');
   });
 });
+
+describe('MysqlDriver.dropAllTables', () => {
+  it('does nothing when there are no tables', async () => {
+    const { driver, exec } = driverWith(() => ({ code: 0, stdout: '', stderr: '' }));
+    await driver.dropAllTables(exec as unknown as Exec);
+    // Only one exec call: the listTables query
+    expect((exec as jest.Mock<any>).mock.calls).toHaveLength(1);
+  });
+
+  it('emits SET foreign_key_checks=0, DROP TABLE IF EXISTS, SET foreign_key_checks=1', async () => {
+    let callCount = 0;
+    const { driver, exec, calls } = driverWith(() => {
+      callCount++;
+      // First call is listTables, return two table names
+      if (callCount === 1) return { code: 0, stdout: 'foo\nbar\n', stderr: '' };
+      return { code: 0, stdout: '', stderr: '' };
+    });
+    await driver.dropAllTables(exec as unknown as Exec);
+    // Second call should be the DROP statement
+    expect(calls()[1]).toContain('SET foreign_key_checks = 0');
+    expect(calls()[1]).toContain('DROP TABLE IF EXISTS');
+    // backticks are shell-escaped in the wire command by executeSql
+    expect(calls()[1]).toContain('foo');
+    expect(calls()[1]).toContain('bar');
+    expect(calls()[1]).toContain('SET foreign_key_checks = 1');
+  });
+});

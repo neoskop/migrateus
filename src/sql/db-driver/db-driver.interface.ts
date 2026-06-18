@@ -10,6 +10,7 @@ export interface DbDriver {
   postRestoreFixups(exec: Exec): Promise<void>;
 
   listTables(exec: Exec): Promise<string[]>;
+  dropAllTables(exec: Exec): Promise<void>;
 
   executeSql(exec: Exec, sql: string): Promise<string>;
 

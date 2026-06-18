@@ -13,6 +13,14 @@ describe('createDbDriver', () => {
     expect(createDbDriver({ ...base, client: 'mysql' } as never, logger).client).toBe('mysql');
   });
 
+  it('returns a pg driver for client=pg', () => {
+    expect(createDbDriver({ ...base, client: 'pg' } as never, logger).client).toBe('pg');
+  });
+
+  it('returns a sqlite3 driver for client=sqlite3', () => {
+    expect(createDbDriver({ ...base, client: 'sqlite3' } as never, logger).client).toBe('sqlite3');
+  });
+
   it('throws on an unknown client', () => {
     expect(() => createDbDriver({ ...base, client: 'oracle' } as never, logger)).toThrow(
       /Unsupported database client: oracle/,

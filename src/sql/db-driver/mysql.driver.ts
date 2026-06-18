@@ -148,6 +148,20 @@ export class MysqlDriver implements DbDriver {
       .filter(Boolean);
   }
 
+  public async dropAllTables(exec: Exec): Promise<void> {
+    const tables = await this.listTables(exec);
+    if (tables.length === 0) {
+      return;
+    }
+    const escapedTables = tables
+      .map((t) => escapeMysqlIdentifier(assertSafeIdentifier(t, 'table_name')))
+      .join(', ');
+    await this.executeSql(
+      exec,
+      `SET foreign_key_checks = 0; DROP TABLE IF EXISTS ${escapedTables}; SET foreign_key_checks = 1`,
+    );
+  }
+
   public async executeSql(exec: Exec, sql: string): Promise<string> {
     const { host, port, user, password, name } = this.config;
     const command = [

@@ -5,4 +5,5 @@ export interface DatabaseConfig {
   name: string;
   user: string;
   password: string;
+  filename?: string;
 }
