@@ -17,7 +17,7 @@ export abstract class BackupPerformer {
   constructor(
     protected readonly logger: Logger,
     private readonly directusAssetService: DirectusAssetService,
-    private readonly sqlService: SqlService,
+    protected readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly config: ConfigService,
     private readonly progressService: ProgressService,
@@ -27,6 +27,14 @@ export abstract class BackupPerformer {
   public async backup(backupFile: string) {
     const backupDir = await this.createTemporaryDirectory();
 
+    if (this.sqlService.usesSidecar) {
+      await this.backupServerFlow(backupDir, backupFile);
+    } else {
+      await this.backupFileFlow(backupDir, backupFile);
+    }
+  }
+
+  private async backupServerFlow(backupDir: string, backupFile: string) {
     try {
       await this.setup(backupDir);
       // NOTE: cross-engine (pgloader) restore needs an image bundling psql+pgloader; the per-driver clientImage selects the native CLI image. A bundled tools image must be supplied via --image for the pgloader path (UNVERIFIED).
@@ -83,6 +91,28 @@ export abstract class BackupPerformer {
     }
   }
 
+  private async backupFileFlow(backupDir: string, backupFile: string) {
+    try {
+      await this.setup(backupDir);
+
+      this.progressService.advance('💾 Copy database file');
+      await this.copyDatabaseOut(backupDir);
+
+      this.progressService.advance('🏷️ Save backup metadata');
+      await this.storeFileMetadata(backupDir);
+      this.progressService.advance('📦 Create backup archive');
+      const size = await this.createBackupArchive(backupDir, backupFile);
+      this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
+    } catch (error: any) {
+      this.progressService.fail(error);
+    } finally {
+      this.progressService.advance('🛁 Clean-up');
+      await this.cleanUp();
+      await this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
+    }
+  }
+
   protected abstract setup(backupDir: string): Promise<void>;
 
   protected afterMysqlDump(): Promise<void> {
@@ -95,12 +125,36 @@ export abstract class BackupPerformer {
     return Promise.resolve();
   }
 
+  /** File-based (SQLite) platforms implement this to copy the DB file and uploads out of the Directus container. */
+  protected copyDatabaseOut(_backupDir: string): Promise<void> {
+    throw new Error('copyDatabaseOut is not implemented for this platform');
+  }
+
+  /**
+   * Returns the Directus version string parsed from the container image tag when available.
+   * Subclasses on platforms that have container metadata override this.
+   * Default: undefined (version omitted from file-based meta.json on platforms without it).
+   */
+  protected getDirectusVersionHint(): string | undefined {
+    return undefined;
+  }
+
   private async storeMetadata(directusPort: number, backupDir: string) {
     const version = await this.directusVersionService.getVersion(directusPort);
     const client = this.sqlService.client;
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
       JSON.stringify({ version, client, timestamp: new Date().toISOString() }, null, 2),
+    );
+  }
+
+  private async storeFileMetadata(backupDir: string) {
+    const client = this.sqlService.client;
+    const dbFilename = this.sqlService.databaseFilename;
+    const version = this.getDirectusVersionHint();
+    await fs.promises.writeFile(
+      join(backupDir, 'meta.json'),
+      JSON.stringify({ version, client, dbFilename, timestamp: new Date().toISOString() }, null, 2),
     );
   }
 

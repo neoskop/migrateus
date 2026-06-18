@@ -29,6 +29,8 @@ function build(clientImage = 'neoskop/migrateus:latest'): Built {
   const sqlService = {
     client: 'mysql' as const,
     clientImage,
+    usesSidecar: true,
+    databaseFilename: undefined as string | undefined,
     performMysqlDump: jest.fn(async () => undefined) as AnyMock,
     setupDirectusUser: jest.fn(async () => undefined) as AnyMock,
     cleanUpDirectusUser: jest.fn(async () => undefined) as AnyMock,

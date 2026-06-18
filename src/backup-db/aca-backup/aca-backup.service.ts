@@ -51,4 +51,10 @@ export class AcaBackupService extends BackupPerformer {
     // TODO(verify): ACA Directus HTTP reachability is UNVERIFIED — assumes Directus reachable on 8055 from the tooling context.
     return Promise.resolve(8055);
   }
+
+  protected copyDatabaseOut(_backupDir: string): Promise<void> {
+    return Promise.reject(
+      new Error('SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA'),
+    );
+  }
 }

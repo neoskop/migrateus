@@ -58,4 +58,10 @@ export class K8sBackupService extends BackupPerformer {
     this.portForwardService.stop();
     await this.k8sService.cleanUp();
   }
+
+  protected copyDatabaseOut(_backupDir: string): Promise<void> {
+    return Promise.reject(
+      new Error('SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA'),
+    );
+  }
 }

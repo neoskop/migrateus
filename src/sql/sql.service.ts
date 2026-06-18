@@ -47,6 +47,10 @@ export class SqlService {
     return this.driver.usesSidecar;
   }
 
+  public get databaseFilename(): string | undefined {
+    return this._config?.filename;
+  }
+
   private get driver(): DbDriver {
     return this._driver;
   }
