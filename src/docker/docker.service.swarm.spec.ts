@@ -77,3 +77,19 @@ describe('DockerService swarm `service` resolution', () => {
     );
   });
 });
+
+describe('DockerService.ensureDatabaseContainerIsRunning', () => {
+  beforeEach(() => execMock.mockReset());
+
+  it('is a no-op for a file-based (sqlite) env with no host — never lists/starts containers', async () => {
+    const service = build({ platform: 'docker', name: 'dev', service: 'svc' });
+    (service as any).containerConfig = {
+      Config: { Env: ['DB_CLIENT=sqlite3', 'DB_FILENAME=/database/sqlite.db'] },
+    };
+    (service as any).networks = ['dokploy-network'];
+
+    await (service as any).ensureDatabaseContainerIsRunning();
+
+    expect(execMock).not.toHaveBeenCalled();
+  });
+});

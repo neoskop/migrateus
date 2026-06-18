@@ -175,6 +175,15 @@ export class DockerService {
   }
 
   private async ensureDatabaseContainerIsRunning() {
+    // A file-based engine (sqlite) has no separate database container — the DB
+    // file lives inside the Directus container, which is ensured running on its
+    // own below. Skip when there is no host: otherwise the name filter
+    // (`Name.includes(host)`) matches every container (`includes('')` is always
+    // true) and tries to start them all.
+    if (!this.databaseConfig.host) {
+      return;
+    }
+
     const containersOutput = (
       await exec(this.withHost('docker ps -a --format json'), {
         silent: true,
