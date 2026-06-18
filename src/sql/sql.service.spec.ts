@@ -75,7 +75,7 @@ describe('SqlService.client getter', () => {
 });
 
 describe('SqlService.clientImage getter', () => {
-  it('returns "postgres:17-alpine" when databaseConfig client is "pg"', () => {
+  it('returns the bundled image for client pg', () => {
     const { service } = build();
     service.databaseConfig = {
       client: 'pg',
@@ -85,16 +85,16 @@ describe('SqlService.clientImage getter', () => {
       password: 'p',
       name: 'mydb',
     } as never;
-    expect(service.clientImage).toBe('postgres:17-alpine');
+    expect(service.clientImage).toBe('neoskop/migrateus:latest');
   });
 
-  it('returns the mysql image when databaseConfig client is "mysql"', () => {
+  it('returns the bundled image for client mysql', () => {
     const { service } = build();
     // already set to mysql in build()
-    expect(service.clientImage).toBe('mysql:9.5.0-oraclelinux9');
+    expect(service.clientImage).toBe('neoskop/migrateus:latest');
   });
 
-  it('returns "keinos/sqlite3:latest" when databaseConfig client is "sqlite3"', () => {
+  it('returns the bundled image for client sqlite3', () => {
     const { service } = build();
     service.databaseConfig = {
       client: 'sqlite3',
@@ -104,7 +104,7 @@ describe('SqlService.clientImage getter', () => {
       password: '',
       name: 'mydb.sqlite',
     } as never;
-    expect(service.clientImage).toBe('keinos/sqlite3:latest');
+    expect(service.clientImage).toBe('neoskop/migrateus:latest');
   });
 });
 

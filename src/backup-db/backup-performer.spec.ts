@@ -24,7 +24,7 @@ interface Built {
   containerService: { setup: AnyMock; cleanUp: AnyMock; image: string };
 }
 
-function build(clientImage = 'mysql:9.5.0-oraclelinux9'): Built {
+function build(clientImage = 'neoskop/migrateus:latest'): Built {
   const logger = { debug: jest.fn() };
   const sqlService = {
     client: 'mysql' as const,
@@ -40,7 +40,7 @@ function build(clientImage = 'mysql:9.5.0-oraclelinux9'): Built {
   const containerService = {
     setup: jest.fn(async () => undefined) as AnyMock,
     cleanUp: jest.fn(async () => undefined) as AnyMock,
-    image: 'mysql:9.5.0-oraclelinux9',
+    image: 'neoskop/migrateus:latest',
   };
   const config = { noAssets: true } as never;
   const progressService = {
@@ -110,7 +110,7 @@ describe('BackupPerformer: containerService.image set from sqlService.clientImag
   });
 
   it('sets containerService.image to sqlService.clientImage before calling containerService.setup()', async () => {
-    const pgImage = 'postgres:17-alpine';
+    const pgImage = 'neoskop/migrateus:latest';
     built = build(pgImage);
     const { performer, containerService } = built;
 
@@ -126,7 +126,7 @@ describe('BackupPerformer: containerService.image set from sqlService.clientImag
   });
 
   it('uses the mysql image for a mysql driver (no behavior change for existing mysql deployments)', async () => {
-    const mysqlImage = 'mysql:9.5.0-oraclelinux9';
+    const mysqlImage = 'neoskop/migrateus:latest';
     built = build(mysqlImage);
     const { performer, containerService } = built;
 

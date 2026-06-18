@@ -1,1 +1,1 @@
-export const DEFAULT_CONTAINER_IMAGE = 'mysql:9.5.0-oraclelinux9';
+export const DEFAULT_CONTAINER_IMAGE = 'neoskop/migrateus:latest';

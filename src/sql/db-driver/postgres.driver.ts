@@ -7,10 +7,11 @@ import {
   escapeAnsiIdentifier,
   escapeAnsiString,
 } from '../sql-escape.js';
+import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js';
 
 export class PostgresDriver implements DbDriver {
   public readonly client = 'pg' as const;
-  public readonly clientImage = 'postgres:17-alpine';
+  public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
 
   constructor(
     private readonly config: DatabaseConfig,

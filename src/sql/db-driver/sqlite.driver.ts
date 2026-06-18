@@ -6,10 +6,11 @@ import {
   escapeAnsiIdentifier,
   escapeAnsiString,
 } from '../sql-escape.js';
+import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js';
 
 export class SqliteDriver implements DbDriver {
   public readonly client = 'sqlite3' as const;
-  public readonly clientImage = 'keinos/sqlite3:latest';
+  public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
 
   constructor(
     private readonly config: DatabaseConfig,
