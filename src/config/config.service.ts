@@ -62,7 +62,13 @@ export class ConfigService {
       );
       await this.injectEnvFile();
       this.envConfig = await this.loadEnvFile();
-      const subsitutedConfig = configFileContents.replaceAll(
+      // First pass: interpolate ${VAR} (braces form) from process.env
+      const processEnvSubstituted = configFileContents.replaceAll(
+        /\$\{(\w+)\}/g,
+        (_match, name) => process.env[name] ?? '',
+      );
+      // Second pass: interpolate $VAR (no-braces form) from .env file (envConfig)
+      const subsitutedConfig = processEnvSubstituted.replaceAll(
         /\$(\w+)/g,
         (_match, name) => this.envConfig[name] || '',
       );

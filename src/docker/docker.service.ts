@@ -39,12 +39,16 @@ export class DockerService {
   }
 
   public get databaseConfig(): DatabaseConfig {
+    const client = this.getOptionalDockerEnvValue('DB_CLIENT');
+    const filename = this.getOptionalDockerEnvValue('DB_FILENAME');
     return {
       host: this.getDockerEnvValue('DB_HOST'),
       port: this.getDockerEnvValue('DB_PORT'),
       name: this.getDockerEnvValue('DB_DATABASE'),
       user: this.getDockerEnvValue('DB_USER'),
       password: this.getDockerEnvValue('DB_PASSWORD'),
+      ...(client ? { client: client as DatabaseConfig['client'] } : {}),
+      ...(filename ? { filename } : {}),
     };
   }
 
@@ -103,11 +107,23 @@ export class DockerService {
 
   private getDockerEnvValue(name: string) {
     const variable = this.containerConfig.Config.Env.find((env: string) =>
-      env.startsWith(name),
+      env.startsWith(`${name}=`),
     );
 
     if (!variable) {
       throw new Error(`Environment variable ${name} not found`);
+    }
+
+    return variable.split('=')[1];
+  }
+
+  private getOptionalDockerEnvValue(name: string): string | undefined {
+    const variable = this.containerConfig.Config.Env.find((env: string) =>
+      env.startsWith(`${name}=`),
+    );
+
+    if (!variable) {
+      return undefined;
     }
 
     return variable.split('=')[1];

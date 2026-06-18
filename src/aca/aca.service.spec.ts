@@ -204,6 +204,41 @@ describe('AcaService', () => {
       expect(sqlService.databaseConfig.client).toBeUndefined();
       expect(sqlService.databaseConfig.filename).toBeUndefined();
     });
+
+    it('does not set client when DB_CLIENT is an empty string (secretRef fallback)', async () => {
+      const envVars = [
+        { name: 'DB_HOST', value: 'db.example.com' },
+        { name: 'DB_PORT', value: '5432' },
+        { name: 'DB_DATABASE', value: 'mydb' },
+        { name: 'DB_USER', value: 'admin' },
+        { name: 'DB_PASSWORD', value: 's3cret' },
+        // secretRef → empty string in envMap
+        { name: 'DB_CLIENT', secretRef: 'some-secret-ref' },
+      ];
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' });
+
+      await service.setup();
+
+      expect(sqlService.databaseConfig.client).toBeUndefined();
+    });
+
+    it('does not set filename when DB_FILENAME is an empty string (secretRef fallback)', async () => {
+      const envVars = [
+        { name: 'DB_HOST', value: 'db.example.com' },
+        { name: 'DB_PORT', value: '5432' },
+        { name: 'DB_DATABASE', value: 'mydb' },
+        { name: 'DB_USER', value: 'admin' },
+        { name: 'DB_PASSWORD', value: 's3cret' },
+        { name: 'DB_CLIENT', value: 'pg' },
+        // secretRef → empty string in envMap
+        { name: 'DB_FILENAME', secretRef: 'some-secret-ref' },
+      ];
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' });
+
+      await service.setup();
+
+      expect(sqlService.databaseConfig.filename).toBeUndefined();
+    });
   });
 
   describe('restartDirectus()', () => {

@@ -55,11 +55,11 @@ export class AcaService {
       password: envMap['DB_PASSWORD'] ?? '',
     };
 
-    if (envMap['DB_CLIENT'] !== undefined) {
+    if (envMap['DB_CLIENT']) {
       config.client = envMap['DB_CLIENT'] as DatabaseConfig['client'];
     }
 
-    if (envMap['DB_FILENAME'] !== undefined) {
+    if (envMap['DB_FILENAME']) {
       config.filename = envMap['DB_FILENAME'];
     }
 

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
+import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { Logger } from 'winston';
 import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { exec } from '../util/exec.js';
@@ -310,13 +311,16 @@ export class K8sService {
       )}`,
     );
 
-    const result = {
+    const result: DatabaseConfig = {
       host: envMap['DB_HOST'],
       port: envMap['DB_PORT'],
       user: envMap['DB_USER'],
       password: envMap['DB_PASSWORD'],
       name: envMap['DB_DATABASE'],
     };
+
+    if (envMap['DB_CLIENT']) result.client = envMap['DB_CLIENT'] as DatabaseConfig['client'];
+    if (envMap['DB_FILENAME']) result.filename = envMap['DB_FILENAME'];
 
     return result;
   }
