@@ -28,6 +28,22 @@ export function escapeMysqlIdentifier(identifier: string): string {
   return `\`${identifier.replaceAll('`', '``')}\``;
 }
 
+export function escapeAnsiString(value: string): string {
+  if (value === null || value === undefined) {
+    return 'NULL';
+  }
+
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+export function escapeAnsiIdentifier(identifier: string): string {
+  if (typeof identifier !== 'string' || identifier.length === 0) {
+    throw new Error('Identifier must be a non-empty string');
+  }
+
+  return `"${identifier.replaceAll('"', '""')}"`;
+}
+
 const SAFE_IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_$]{0,63}$/;
 
 export function assertSafeIdentifier(

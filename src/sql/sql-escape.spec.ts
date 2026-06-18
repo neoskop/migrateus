@@ -5,6 +5,8 @@ import {
   assertUuid,
   escapeMysqlIdentifier,
   escapeMysqlString,
+  escapeAnsiString,
+  escapeAnsiIdentifier,
 } from './sql-escape.js';
 
 describe('escapeMysqlString', () => {
@@ -145,4 +147,44 @@ describe('assertSafeCharsetOrCollation', () => {
       ).toThrow(/Invalid charset\/collation for default collation/);
     },
   );
+});
+
+describe('escapeAnsiString', () => {
+  it('wraps plain ASCII in single quotes', () => {
+    expect(escapeAnsiString('users')).toBe("'users'");
+  });
+
+  it("doubles embedded single quotes", () => {
+    expect(escapeAnsiString("a'b")).toBe("'a''b'");
+  });
+
+  it('returns literal NULL for null', () => {
+    expect(escapeAnsiString(null as unknown as string)).toBe('NULL');
+  });
+
+  it('returns literal NULL for undefined', () => {
+    expect(escapeAnsiString(undefined as unknown as string)).toBe('NULL');
+  });
+});
+
+describe('escapeAnsiIdentifier', () => {
+  it('wraps in double quotes', () => {
+    expect(escapeAnsiIdentifier('users')).toBe('"users"');
+  });
+
+  it('doubles embedded double quotes', () => {
+    expect(escapeAnsiIdentifier('a"b')).toBe('"a""b"');
+  });
+
+  it('throws on empty string', () => {
+    expect(() => escapeAnsiIdentifier('')).toThrow(
+      'Identifier must be a non-empty string',
+    );
+  });
+
+  it('throws on non-string input', () => {
+    expect(() => escapeAnsiIdentifier(42 as unknown as string)).toThrow(
+      'Identifier must be a non-empty string',
+    );
+  });
 });
