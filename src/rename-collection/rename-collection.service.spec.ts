@@ -15,7 +15,14 @@ interface Mocks {
   environmentService: { environment: unknown };
   containerServices: Record<string, unknown>;
   progressService: { advance: AnyMock; finish: AnyMock; fail: AnyMock };
-  sqlService: { listTables: AnyMock; executeSql: AnyMock };
+  sqlService: {
+    listTables: AnyMock;
+    executeSql: AnyMock;
+    escapeIdentifier: AnyMock;
+    escapeString: AnyMock;
+    disableForeignKeys: AnyMock;
+    enableForeignKeys: AnyMock;
+  };
   k8sService: { setup: AnyMock };
   dockerService: { setup: AnyMock };
   containerStub: { cleanUp: AnyMock };
@@ -43,6 +50,11 @@ function build(): { service: RenameCollectionService; mocks: Mocks } {
     sqlService: {
       listTables: jest.fn(async () => []) as AnyMock,
       executeSql: jest.fn(async () => '') as AnyMock,
+      // Mock with portable/Postgres-style quoting so assertions are driver-neutral
+      escapeIdentifier: jest.fn((id: string) => `"${id}"`) as AnyMock,
+      escapeString: jest.fn((v: string) => `'${v}'`) as AnyMock,
+      disableForeignKeys: jest.fn(() => 'SET session_replication_role = replica') as AnyMock,
+      enableForeignKeys: jest.fn(() => 'SET session_replication_role = DEFAULT') as AnyMock,
     },
     k8sService: { setup: jest.fn(async () => undefined) as AnyMock },
     dockerService: { setup: jest.fn(async () => undefined) as AnyMock },
@@ -87,7 +99,7 @@ describe('RenameCollectionService.renameCollection', () => {
     expect(mocks.sqlService.executeSql).not.toHaveBeenCalled();
   });
 
-  it('emits ALTER TABLE with backtick-escaped identifiers when table exists', async () => {
+  it('emits ALTER TABLE using escapeIdentifier from the driver when table exists', async () => {
     const { service, mocks } = built;
     mocks.sqlService.listTables.mockResolvedValueOnce(['old_table']);
 
@@ -95,16 +107,49 @@ describe('RenameCollectionService.renameCollection', () => {
 
     const calls = mocks.sqlService.executeSql.mock.calls;
     expect(calls.length).toBeGreaterThanOrEqual(2);
-    expect(calls[0][0]).toBe(
-      'ALTER TABLE `old_table` RENAME TO `new_table`;',
-    );
+    // ALTER TABLE statement uses driver-provided identifier quoting
+    expect(calls[0][0]).toBe('ALTER TABLE "old_table" RENAME TO "new_table";');
+  });
+
+  it('emits fk-toggle SQL via driver helpers (not literal foreign_key_checks)', async () => {
+    const { service, mocks } = built;
+    mocks.sqlService.listTables.mockResolvedValueOnce(['old_table']);
+
+    await service.renameCollection('dev', 'old_table', 'new_table');
+
+    const calls = mocks.sqlService.executeSql.mock.calls;
     const updateBatch = calls[1][0] as string;
-    expect(updateBatch).toContain("'old_table'");
-    expect(updateBatch).toContain("'new_table'");
-    expect(updateBatch).toContain('SET foreign_key_checks = 0;');
-    expect(updateBatch).toContain('SET foreign_key_checks = 1;');
+
+    // Must use the driver's fk helpers, not MySQL-specific literals
+    expect(updateBatch).toContain('SET session_replication_role = replica;');
+    expect(updateBatch).toContain('SET session_replication_role = DEFAULT;');
+    expect(updateBatch).not.toContain('foreign_key_checks');
+  });
+
+  it('emits UPDATE directus_collections group using escapeIdentifier for column name', async () => {
+    const { service, mocks } = built;
+    mocks.sqlService.listTables.mockResolvedValueOnce(['old_table']);
+
+    await service.renameCollection('dev', 'old_table', 'new_table');
+
+    const calls = mocks.sqlService.executeSql.mock.calls;
+    const updateBatch = calls[1][0] as string;
+
+    // The group column must be quoted via escapeIdentifier (no table alias)
     expect(updateBatch).toContain(
-      "UPDATE directus_collections SET collection = 'new_table' WHERE collection = 'old_table';",
+      `UPDATE directus_collections SET "group" = 'new_table' WHERE "group" = 'old_table';`,
+    );
+  });
+
+  it('emits UPDATE directus_collections collection using escaped string literals', async () => {
+    const { service, mocks } = built;
+    mocks.sqlService.listTables.mockResolvedValueOnce(['old_table']);
+
+    await service.renameCollection('dev', 'old_table', 'new_table');
+
+    const updateBatch = mocks.sqlService.executeSql.mock.calls[1][0] as string;
+    expect(updateBatch).toContain(
+      `UPDATE directus_collections SET collection = 'new_table' WHERE collection = 'old_table';`,
     );
   });
 

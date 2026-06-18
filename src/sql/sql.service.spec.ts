@@ -87,6 +87,32 @@ describe('SqlService.setAssetStorage', () => {
   });
 });
 
+describe('SqlService pass-throughs to the driver', () => {
+  it('escapeIdentifier delegates to the active driver', () => {
+    const { service } = build();
+    // MySQL driver wraps identifiers in backticks
+    expect(service.escapeIdentifier('my_table')).toBe('`my_table`');
+  });
+
+  it('escapeString delegates to the active driver', () => {
+    const { service } = build();
+    // MySQL driver wraps strings in single quotes
+    expect(service.escapeString('hello')).toBe("'hello'");
+  });
+
+  it('disableForeignKeys delegates to the active driver', () => {
+    const { service } = build();
+    // MySQL driver emits SET foreign_key_checks = 0
+    expect(service.disableForeignKeys()).toBe('SET foreign_key_checks = 0');
+  });
+
+  it('enableForeignKeys delegates to the active driver', () => {
+    const { service } = build();
+    // MySQL driver emits SET foreign_key_checks = 1
+    expect(service.enableForeignKeys()).toBe('SET foreign_key_checks = 1');
+  });
+});
+
 describe('SqlService delegates to the driver', () => {
   it('builds a mysql driver from databaseConfig and routes executeSql through it', async () => {
     const { service, containerService } = build(() => ({ code: 0, stdout: 'ok\n', stderr: '' }));

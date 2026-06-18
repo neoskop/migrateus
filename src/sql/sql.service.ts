@@ -12,7 +12,6 @@ import { createDbDriver } from './db-driver/db-driver.factory.js';
 
 @Injectable()
 export class SqlService {
-  private _databaseConfig: DatabaseConfig;
   private _driver: DbDriver;
 
   constructor(
@@ -27,7 +26,6 @@ export class SqlService {
     this.logger.debug(
       `Database config: ${highlight(JSON.stringify(config), { language: 'json' })}`,
     );
-    this._databaseConfig = config;
     this._driver = createDbDriver(config, this.logger);
   }
 
@@ -93,5 +91,21 @@ export class SqlService {
 
   public async executeSql(sql: string, containerService: ContainerService) {
     return this.driver.executeSql(this.execFor(containerService), sql);
+  }
+
+  public escapeIdentifier(id: string): string {
+    return this.driver.escapeIdentifier(id);
+  }
+
+  public escapeString(v: string): string {
+    return this.driver.escapeString(v);
+  }
+
+  public disableForeignKeys(): string {
+    return this.driver.disableFks();
+  }
+
+  public enableForeignKeys(): string {
+    return this.driver.enableFks();
   }
 }
