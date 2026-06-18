@@ -107,7 +107,7 @@ export class SqlService {
     const { mode } = this.transferPlanner.plan(sourceClient, this.driver.client);
     if (mode === 'native') {
       const exec = this.execFor(containerService);
-      await this.driver.restore(exec, '/tmp/backup.sql');
+      await this.driver.restore(exec, sqliteArtifact);
       await this.driver.postRestoreFixups(exec);
     } else {
       await this.pgloaderService.run({

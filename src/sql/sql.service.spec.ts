@@ -189,6 +189,28 @@ describe('SqlService.transferRestore (native path)', () => {
     // postRestoreFixups emits charset conversion
     expect(cmds.some((c) => c.includes('CONVERT TO CHARACTER SET utf8mb4'))).toBe(true);
   });
+
+  it('honors the sqliteArtifact parameter in the native path (not hardcoded /tmp/backup.sql)', async () => {
+    const { service, containerService, transferPlanner } = build((cmd) =>
+      cmd.includes('DEFAULT_COLLATION_NAME')
+        ? { code: 0, stdout: 'utf8mb4_unicode_ci\n', stderr: '' }
+        : cmd.includes('default_character_set_name')
+          ? { code: 0, stdout: 'utf8mb4\n', stderr: '' }
+          : cmd.includes('TABLE_TYPE')
+            ? { code: 0, stdout: 't1\n', stderr: '' }
+            : { code: 0, stdout: '', stderr: '' },
+    );
+    transferPlanner.plan.mockReturnValue({ mode: 'native' });
+
+    // Pass a custom artifact path that differs from the old hardcoded value
+    await service.transferRestore(containerService as never, 'mysql', '/custom/path/dump.sql');
+
+    const cmds = containerService.execute.mock.calls.map((c: any[]) => c[0] as string);
+    // The custom artifact path must appear in the restore command
+    expect(cmds.some((c) => c.includes('/custom/path/dump.sql'))).toBe(true);
+    // The old hardcoded path must NOT appear
+    expect(cmds.some((c) => c.includes('/tmp/backup.sql'))).toBe(false);
+  });
 });
 
 describe('SqlService.transferRestore (pgloader path)', () => {

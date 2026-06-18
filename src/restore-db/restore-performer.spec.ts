@@ -22,6 +22,7 @@ import { RestorePerformer } from './restore-performer.js';
 type AnyMock = jest.Mock<any>;
 
 interface MockSqlService {
+  client: 'mysql' | 'pg' | 'sqlite3';
   dropAllTables: AnyMock;
   transferRestore: AnyMock;
   restoreMysqlDump: AnyMock;
@@ -31,8 +32,9 @@ interface MockSqlService {
   setAssetStorage: AnyMock;
 }
 
-function makeMockSqlService(): MockSqlService {
+function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql'): MockSqlService {
   return {
+    client,
     dropAllTables: jest.fn(async () => undefined),
     transferRestore: jest.fn(async () => undefined),
     restoreMysqlDump: jest.fn(async () => undefined),
@@ -130,10 +132,16 @@ describe('RestorePerformer.readManifest', () => {
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanTempDir(tmpDir); });
 
-  it('returns { client: "mysql" } when meta.json is absent', async () => {
-    const { performer } = buildPerformer(makeMockSqlService());
+  it('returns target engine client when meta.json is absent (mysql target)', async () => {
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
     const manifest = await performer.readManifestPublic(tmpDir);
     expect(manifest).toEqual({ client: 'mysql' });
+  });
+
+  it('returns target engine client when meta.json is absent (pg target)', async () => {
+    const { performer } = buildPerformer(makeMockSqlService('pg'));
+    const manifest = await performer.readManifestPublic(tmpDir);
+    expect(manifest).toEqual({ client: 'pg' });
   });
 
   it('returns parsed client from meta.json', async () => {
@@ -141,20 +149,31 @@ describe('RestorePerformer.readManifest', () => {
       path.join(tmpDir, 'meta.json'),
       JSON.stringify({ version: '10.1.0', client: 'pg' }),
     );
-    const { performer } = buildPerformer(makeMockSqlService());
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
     const manifest = await performer.readManifestPublic(tmpDir);
     expect(manifest.client).toBe('pg');
     expect(manifest.version).toBe('10.1.0');
   });
 
-  it('defaults client to "mysql" when meta.json has no client field', async () => {
+  it('defaults client to target engine when meta.json has no client field (mysql target)', async () => {
     fs.writeFileSync(
       path.join(tmpDir, 'meta.json'),
       JSON.stringify({ version: '9.0.0' }),
     );
-    const { performer } = buildPerformer(makeMockSqlService());
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
     const manifest = await performer.readManifestPublic(tmpDir);
     expect(manifest.client).toBe('mysql');
+    expect(manifest.version).toBe('9.0.0');
+  });
+
+  it('defaults client to target engine when meta.json has no client field (pg target)', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'meta.json'),
+      JSON.stringify({ version: '9.0.0' }),
+    );
+    const { performer } = buildPerformer(makeMockSqlService('pg'));
+    const manifest = await performer.readManifestPublic(tmpDir);
+    expect(manifest.client).toBe('pg');
     expect(manifest.version).toBe('9.0.0');
   });
 });
@@ -165,7 +184,7 @@ describe('RestorePerformer.restore() — drop + transfer flow', () => {
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanTempDir(tmpDir); });
 
-  it('calls dropAllTables then transferRestore with mysql client for legacy backup (no meta.json)', async () => {
+  it('calls dropAllTables then transferRestore with mysql client for legacy backup (no meta.json, mysql target)', async () => {
     // We need an actual backup archive; create a minimal tar with backup.sql
     const backupSql = path.join(tmpDir, 'backup.sql');
     fs.writeFileSync(backupSql, '-- sql content');
@@ -173,7 +192,7 @@ describe('RestorePerformer.restore() — drop + transfer flow', () => {
     const { execSync } = await import('node:child_process');
     execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
 
-    const sqlService = makeMockSqlService();
+    const sqlService = makeMockSqlService('mysql');
     const { performer, progressService } = buildPerformer(sqlService, { force: true });
 
     await performer.restore(archivePath);
@@ -182,6 +201,23 @@ describe('RestorePerformer.restore() — drop + transfer flow', () => {
     expect(sqlService.transferRestore).toHaveBeenCalledTimes(1);
     const [, sourceClient] = sqlService.transferRestore.mock.calls[0] as any[];
     expect(sourceClient).toBe('mysql');
+  });
+
+  it('calls transferRestore with target engine ("pg") for manifest-less backup when target is pg', async () => {
+    const backupSql = path.join(tmpDir, 'backup.sql');
+    fs.writeFileSync(backupSql, '-- pg dump');
+    const archivePath = path.join(tmpDir, 'backup.tar');
+    const { execSync } = await import('node:child_process');
+    execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
+
+    const sqlService = makeMockSqlService('pg');
+    const { performer } = buildPerformer(sqlService, { force: true });
+
+    await performer.restore(archivePath);
+
+    expect(sqlService.transferRestore).toHaveBeenCalledTimes(1);
+    const [, sourceClient] = sqlService.transferRestore.mock.calls[0] as any[];
+    expect(sourceClient).toBe('pg');
   });
 
   it('calls transferRestore with "pg" client when meta.json declares pg', async () => {
