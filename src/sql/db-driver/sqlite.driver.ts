@@ -49,7 +49,7 @@ export class SqliteDriver implements DbDriver {
   }
 
   public async dump(exec: Exec, artifact: string): Promise<void> {
-    const command = `cp ${this.file()} ${artifact}`;
+    const command = `cp "${this.file()}" "${artifact}"`;
     const output = await exec(command);
     if (output.code !== 0) {
       throw new Error(`Backup failed with status code ${output.code}: ${output.stderr}`);
@@ -57,7 +57,7 @@ export class SqliteDriver implements DbDriver {
   }
 
   public async restore(exec: Exec, artifact: string): Promise<void> {
-    const command = `cp ${artifact} ${this.file()}`;
+    const command = `cp "${artifact}" "${this.file()}"`;
     const output = await exec(command);
     if (output.code !== 0) {
       throw new Error(`Restore failed with status code ${output.code}: ${output.stderr}`);

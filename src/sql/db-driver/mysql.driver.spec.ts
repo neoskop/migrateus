@@ -1,6 +1,7 @@
 import { describe, it, expect, jest } from '@jest/globals';
 import { MysqlDriver } from './mysql.driver.js';
 import { Exec } from './db-driver.interface.js';
+import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js';
 
 type ExecOutput = { code: number; stdout: string; stderr: string };
 
@@ -23,6 +24,10 @@ function driverWith(execImpl?: (cmd: string) => ExecOutput): {
 describe('MysqlDriver basics', () => {
   it('reports its client', () => {
     expect(driverWith().driver.client).toBe('mysql');
+  });
+
+  it('clientImage equals DEFAULT_CONTAINER_IMAGE (mysql image)', () => {
+    expect(driverWith().driver.clientImage).toBe(DEFAULT_CONTAINER_IMAGE);
   });
 
   it('quotes identifiers with backticks and bool literal as 1', () => {

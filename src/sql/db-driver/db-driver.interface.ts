@@ -4,6 +4,7 @@ export type Exec = (command: string) => Promise<ExecOutputReturnValue>;
 
 export interface DbDriver {
   readonly client: 'mysql' | 'pg' | 'sqlite3';
+  readonly clientImage: string;
 
   dump(exec: Exec, artifact: string, tables?: string[]): Promise<void>;
   restore(exec: Exec, artifact: string): Promise<void>;

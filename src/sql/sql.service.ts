@@ -39,6 +39,10 @@ export class SqlService {
     return this.driver.client;
   }
 
+  public get clientImage(): string {
+    return this.driver.clientImage;
+  }
+
   private get driver(): DbDriver {
     return this._driver;
   }

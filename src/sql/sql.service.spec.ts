@@ -74,6 +74,40 @@ describe('SqlService.client getter', () => {
   });
 });
 
+describe('SqlService.clientImage getter', () => {
+  it('returns "postgres:17-alpine" when databaseConfig client is "pg"', () => {
+    const { service } = build();
+    service.databaseConfig = {
+      client: 'pg',
+      host: 'h',
+      port: '5432',
+      user: 'u',
+      password: 'p',
+      name: 'mydb',
+    } as never;
+    expect(service.clientImage).toBe('postgres:17-alpine');
+  });
+
+  it('returns the mysql image when databaseConfig client is "mysql"', () => {
+    const { service } = build();
+    // already set to mysql in build()
+    expect(service.clientImage).toBe('mysql:9.5.0-oraclelinux9');
+  });
+
+  it('returns "keinos/sqlite3:latest" when databaseConfig client is "sqlite3"', () => {
+    const { service } = build();
+    service.databaseConfig = {
+      client: 'sqlite3',
+      host: 'localhost',
+      port: '0',
+      user: '',
+      password: '',
+      name: 'mydb.sqlite',
+    } as never;
+    expect(service.clientImage).toBe('keinos/sqlite3:latest');
+  });
+});
+
 describe('SqlService.databaseConfig setter', () => {
   it('registers two redactions and stores config', () => {
     const { redact } = build();

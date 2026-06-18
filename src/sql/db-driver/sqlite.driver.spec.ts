@@ -101,6 +101,14 @@ describe('SqliteDriver.dump', () => {
     expect(cmd).toContain('/tmp/backup.db');
   });
 
+  it('quotes both operands in the cp command (spaces-safe)', async () => {
+    const { driver, exec, calls } = driverWith(undefined, '/data/my db.sqlite');
+    await driver.dump(exec as unknown as Exec, '/tmp/my backup.db');
+    const cmd = calls()[0];
+    expect(cmd).toContain('"/data/my db.sqlite"');
+    expect(cmd).toContain('"/tmp/my backup.db"');
+  });
+
   it('throws on non-zero exit', async () => {
     const { driver, exec } = driverWith(() => ({ code: 1, stdout: '', stderr: 'no such file' }));
     await expect(driver.dump(exec as unknown as Exec, '/tmp/backup.db')).rejects.toThrow(
@@ -117,6 +125,14 @@ describe('SqliteDriver.restore', () => {
     expect(cmd).toContain('cp');
     expect(cmd).toContain('/tmp/backup.db');
     expect(cmd).toContain('mydb.sqlite');
+  });
+
+  it('quotes both operands in the cp command (spaces-safe)', async () => {
+    const { driver, exec, calls } = driverWith(undefined, '/data/my db.sqlite');
+    await driver.restore(exec as unknown as Exec, '/tmp/my backup.db');
+    const cmd = calls()[0];
+    expect(cmd).toContain('"/tmp/my backup.db"');
+    expect(cmd).toContain('"/data/my db.sqlite"');
   });
 
   it('throws on non-zero exit', async () => {

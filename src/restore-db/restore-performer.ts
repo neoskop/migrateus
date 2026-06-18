@@ -34,6 +34,8 @@ export abstract class RestorePerformer {
       this.progressService.advance('📦 Extract backup archive');
       await this.extractBackupArchive(backupDir, backupFile);
       await this.setup(backupDir);
+      // NOTE: cross-engine (pgloader) restore needs an image bundling psql+pgloader; the per-driver clientImage selects the native CLI image. A bundled tools image must be supplied via --image for the pgloader path (UNVERIFIED).
+      this.containerService.image = this.sqlService.clientImage;
       this.progressService.advance('🚀 Set-up Migrateus container');
       await this.containerService.setup();
       await this.beforeMysqlDumpRestore();

@@ -9,9 +9,11 @@ import {
   escapeMysqlIdentifier,
   escapeMysqlString,
 } from '../sql-escape.js';
+import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js';
 
 export class MysqlDriver implements DbDriver {
   public readonly client = 'mysql' as const;
+  public readonly clientImage = DEFAULT_CONTAINER_IMAGE;
 
   constructor(
     private readonly config: DatabaseConfig,

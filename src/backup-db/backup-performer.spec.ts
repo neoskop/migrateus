@@ -18,15 +18,17 @@ type AnyMock = jest.Mock<any>;
 interface Built {
   performer: TestBackupPerformer;
   logger: { debug: AnyMock };
-  sqlService: { client: string; performMysqlDump: AnyMock; setupDirectusUser: AnyMock; cleanUpDirectusUser: AnyMock };
+  sqlService: { client: string; clientImage: string; performMysqlDump: AnyMock; setupDirectusUser: AnyMock; cleanUpDirectusUser: AnyMock };
   directusVersionService: { getVersion: AnyMock };
   writeFileSpy: jest.SpiedFunction<typeof fs.promises.writeFile>;
+  containerService: { setup: AnyMock; cleanUp: AnyMock; image: string };
 }
 
-function build(): Built {
+function build(clientImage = 'mysql:9.5.0-oraclelinux9'): Built {
   const logger = { debug: jest.fn() };
   const sqlService = {
     client: 'mysql' as const,
+    clientImage,
     performMysqlDump: jest.fn(async () => undefined) as AnyMock,
     setupDirectusUser: jest.fn(async () => undefined) as AnyMock,
     cleanUpDirectusUser: jest.fn(async () => undefined) as AnyMock,
@@ -36,9 +38,10 @@ function build(): Built {
   };
   const directusAssetService = {} as never;
   const containerService = {
-    setup: jest.fn(async () => undefined),
-    cleanUp: jest.fn(async () => undefined),
-  } as never;
+    setup: jest.fn(async () => undefined) as AnyMock,
+    cleanUp: jest.fn(async () => undefined) as AnyMock,
+    image: 'mysql:9.5.0-oraclelinux9',
+  };
   const config = { noAssets: true } as never;
   const progressService = {
     advance: jest.fn(),
@@ -53,7 +56,7 @@ function build(): Built {
     logger as never,
     directusAssetService,
     sqlService as never,
-    containerService,
+    containerService as never,
     config,
     progressService,
     directusVersionService as never,
@@ -61,7 +64,7 @@ function build(): Built {
 
   const writeFileSpy = jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined as never);
 
-  return { performer, logger, sqlService, directusVersionService, writeFileSpy };
+  return { performer, logger, sqlService, directusVersionService, writeFileSpy, containerService };
 }
 
 describe('BackupPerformer.storeMetadata', () => {
@@ -96,5 +99,44 @@ describe('BackupPerformer.storeMetadata', () => {
     const written = JSON.parse(writeCall![1] as string);
     expect(written).toHaveProperty('version', '10.0.0');
     expect(written).toHaveProperty('timestamp');
+  });
+});
+
+describe('BackupPerformer: containerService.image set from sqlService.clientImage before setup()', () => {
+  let built: Built;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('sets containerService.image to sqlService.clientImage before calling containerService.setup()', async () => {
+    const pgImage = 'postgres:17-alpine';
+    built = build(pgImage);
+    const { performer, containerService } = built;
+
+    let imageAtSetupTime: string | undefined;
+    (containerService.setup as jest.Mock<any>).mockImplementation(async () => {
+      imageAtSetupTime = containerService.image;
+    });
+
+    await performer.backup('output.tar.gz');
+
+    expect(imageAtSetupTime).toBe(pgImage);
+    expect(containerService.image).toBe(pgImage);
+  });
+
+  it('uses the mysql image for a mysql driver (no behavior change for existing mysql deployments)', async () => {
+    const mysqlImage = 'mysql:9.5.0-oraclelinux9';
+    built = build(mysqlImage);
+    const { performer, containerService } = built;
+
+    let imageAtSetupTime: string | undefined;
+    (containerService.setup as jest.Mock<any>).mockImplementation(async () => {
+      imageAtSetupTime = containerService.image;
+    });
+
+    await performer.backup('output.tar.gz');
+
+    expect(imageAtSetupTime).toBe(mysqlImage);
   });
 });

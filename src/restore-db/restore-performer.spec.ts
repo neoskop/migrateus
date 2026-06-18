@@ -23,6 +23,7 @@ type AnyMock = jest.Mock<any>;
 
 interface MockSqlService {
   client: 'mysql' | 'pg' | 'sqlite3';
+  clientImage: string;
   dropAllTables: AnyMock;
   transferRestore: AnyMock;
   restoreMysqlDump: AnyMock;
@@ -32,9 +33,16 @@ interface MockSqlService {
   setAssetStorage: AnyMock;
 }
 
-function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql'): MockSqlService {
+const CLIENT_IMAGE_MAP: Record<'mysql' | 'pg' | 'sqlite3', string> = {
+  mysql: 'mysql:9.5.0-oraclelinux9',
+  pg: 'postgres:17-alpine',
+  sqlite3: 'keinos/sqlite3:latest',
+};
+
+function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql', clientImage?: string): MockSqlService {
   return {
     client,
+    clientImage: clientImage ?? CLIENT_IMAGE_MAP[client],
     dropAllTables: jest.fn(async () => undefined),
     transferRestore: jest.fn(async () => undefined),
     restoreMysqlDump: jest.fn(async () => undefined),
@@ -51,7 +59,7 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
   directusPort?: number;
 }) {
   const logger = { debug: jest.fn(), warn: jest.fn() };
-  const containerService = { setup: jest.fn(async () => undefined), cleanUp: jest.fn(async () => undefined), execute: jest.fn(async () => ({ code: 0, stdout: '', stderr: '' })) };
+  const containerService = { setup: jest.fn(async () => undefined) as AnyMock, cleanUp: jest.fn(async () => undefined) as AnyMock, execute: jest.fn(async () => ({ code: 0, stdout: '', stderr: '' })) as AnyMock, image: 'mysql:9.5.0-oraclelinux9' };
   const environmentService = {
     environment: {
       credentials: [],
@@ -111,7 +119,7 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
     configService as never,
   );
 
-  return { performer, containerService, progressService, sqlService, directusAssetService };
+  return { performer, containerService: containerService as { setup: AnyMock; cleanUp: AnyMock; execute: AnyMock; image: string }, progressService, sqlService, directusAssetService };
 }
 
 // ---- helpers for temp dirs/files ----------------------------------------
@@ -276,5 +284,55 @@ describe('RestorePerformer.restore() — drop + transfer flow', () => {
     } finally {
       cleanTempDir(srcDir);
     }
+  });
+});
+
+describe('RestorePerformer: containerService.image set from sqlService.clientImage before setup()', () => {
+  let tmpDir: string;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanTempDir(tmpDir); });
+
+  it('sets containerService.image to sqlService.clientImage before calling containerService.setup()', async () => {
+    const backupSql = path.join(tmpDir, 'backup.sql');
+    fs.writeFileSync(backupSql, '-- sql content');
+    const archivePath = path.join(tmpDir, 'backup.tar');
+    const { execSync } = await import('node:child_process');
+    execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
+
+    const pgImage = 'postgres:17-alpine';
+    const sqlService = makeMockSqlService('pg', pgImage);
+    const { performer, containerService } = buildPerformer(sqlService, { force: true });
+
+    let imageAtSetupTime: string | undefined;
+    containerService.setup.mockImplementation(async () => {
+      imageAtSetupTime = containerService.image;
+    });
+
+    await performer.restore(archivePath);
+
+    expect(imageAtSetupTime).toBe(pgImage);
+    expect(containerService.image).toBe(pgImage);
+  });
+
+  it('uses the mysql image for a mysql driver (no behavior change for existing mysql deployments)', async () => {
+    const backupSql = path.join(tmpDir, 'backup.sql');
+    fs.writeFileSync(backupSql, '-- sql content');
+    const archivePath = path.join(tmpDir, 'backup.tar');
+    const { execSync } = await import('node:child_process');
+    execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
+
+    const mysqlImage = 'mysql:9.5.0-oraclelinux9';
+    const sqlService = makeMockSqlService('mysql', mysqlImage);
+    const { performer, containerService } = buildPerformer(sqlService, { force: true });
+
+    let imageAtSetupTime: string | undefined;
+    containerService.setup.mockImplementation(async () => {
+      imageAtSetupTime = containerService.image;
+    });
+
+    await performer.restore(archivePath);
+
+    expect(imageAtSetupTime).toBe(mysqlImage);
   });
 });
