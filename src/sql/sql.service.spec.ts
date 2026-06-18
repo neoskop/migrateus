@@ -3,6 +3,7 @@ import {
   it,
   expect,
   jest,
+  beforeEach,
 } from '@jest/globals';
 import { SqlService } from './sql.service.js';
 
@@ -25,6 +26,8 @@ interface Built {
     setCredentials: AnyMock;
   };
   logger: { debug: AnyMock };
+  transferPlanner: { plan: AnyMock };
+  pgloaderService: { run: AnyMock };
 }
 
 function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Built {
@@ -43,21 +46,25 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
         : ({ code: 0, stdout: '', stderr: '' } satisfies ExecOutput),
     ) as AnyMock,
   };
+  const transferPlanner = { plan: jest.fn().mockReturnValue({ mode: 'native' }) as AnyMock };
+  const pgloaderService = { run: jest.fn(async () => undefined) as AnyMock };
 
   const service = new SqlService(
     logger as never,
     directusUser as never,
     redact as never,
+    transferPlanner as never,
+    pgloaderService as never,
   );
   service.databaseConfig = {
     host: 'h',
-    port: 3306,
+    port: '3306',
     user: 'u',
     password: 'p@ss',
     name: 'mydb',
   } as never;
 
-  return { service, containerService, redact, directusUser, logger };
+  return { service, containerService, redact, directusUser, logger, transferPlanner, pgloaderService };
 }
 
 describe('SqlService.client getter', () => {
@@ -148,5 +155,70 @@ describe('SqlService delegates to the driver', () => {
     await service.restoreMysqlDump(containerService as never);
     const cmds = containerService.execute.mock.calls.map((c: any[]) => c[0] as string);
     expect(cmds.some((c) => c.includes('CONVERT TO CHARACTER SET utf8mb4'))).toBe(true);
+  });
+});
+
+describe('SqlService.dropAllTables', () => {
+  it('delegates to driver.dropAllTables via execFor', async () => {
+    const { service, containerService } = build();
+    await service.dropAllTables(containerService as never);
+    // MySQL dropAllTables runs multiple queries; at minimum the execute was called
+    expect(containerService.execute).toHaveBeenCalled();
+  });
+});
+
+describe('SqlService.transferRestore (native path)', () => {
+  it('calls driver.restore and driver.postRestoreFixups when TransferPlanner returns native', async () => {
+    const { service, containerService, transferPlanner } = build((cmd) =>
+      cmd.includes('DEFAULT_COLLATION_NAME')
+        ? { code: 0, stdout: 'utf8mb4_unicode_ci\n', stderr: '' }
+        : cmd.includes('default_character_set_name')
+          ? { code: 0, stdout: 'utf8mb4\n', stderr: '' }
+          : cmd.includes('TABLE_TYPE')
+            ? { code: 0, stdout: 't1\n', stderr: '' }
+            : { code: 0, stdout: '', stderr: '' },
+    );
+    transferPlanner.plan.mockReturnValue({ mode: 'native' });
+
+    await service.transferRestore(containerService as never, 'mysql', '/tmp/backup.sql');
+
+    expect(transferPlanner.plan).toHaveBeenCalledWith('mysql', 'mysql');
+    const cmds = containerService.execute.mock.calls.map((c: any[]) => c[0] as string);
+    // restore command uses mysql CLI with the backup file
+    expect(cmds.some((c) => c.includes('/tmp/backup.sql'))).toBe(true);
+    // postRestoreFixups emits charset conversion
+    expect(cmds.some((c) => c.includes('CONVERT TO CHARACTER SET utf8mb4'))).toBe(true);
+  });
+});
+
+describe('SqlService.transferRestore (pgloader path)', () => {
+  it('calls pgloaderService.run with stored config when TransferPlanner returns pgloader', async () => {
+    const { service, containerService, transferPlanner, pgloaderService } = build();
+
+    // Override to a pg-target driver
+    service.databaseConfig = {
+      client: 'pg',
+      host: 'pghost',
+      port: '5432',
+      user: 'pguser',
+      password: 'pgpass',
+      name: 'pgdb',
+    } as never;
+    transferPlanner.plan.mockReturnValue({ mode: 'pgloader' });
+
+    await service.transferRestore(containerService as never, 'sqlite3', '/tmp/backup.sqlite');
+
+    expect(transferPlanner.plan).toHaveBeenCalledWith('sqlite3', 'pg');
+    expect(pgloaderService.run).toHaveBeenCalledWith({
+      containerService,
+      sqliteArtifact: '/tmp/backup.sqlite',
+      pg: {
+        host: 'pghost',
+        port: '5432',
+        user: 'pguser',
+        password: 'pgpass',
+        name: 'pgdb',
+      },
+    });
   });
 });

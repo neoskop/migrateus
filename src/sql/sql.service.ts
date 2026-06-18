@@ -9,18 +9,24 @@ import { Credential } from '../directus/directus-user/credential.type.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DbDriver, Exec } from './db-driver/db-driver.interface.js';
 import { createDbDriver } from './db-driver/db-driver.factory.js';
+import { TransferPlanner } from '../transfer/transfer-planner.js';
+import { PgloaderService } from '../transfer/pgloader.service.js';
 
 @Injectable()
 export class SqlService {
   private _driver: DbDriver;
+  private _config: DatabaseConfig;
 
   constructor(
     @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
+    private readonly transferPlanner: TransferPlanner,
+    private readonly pgloaderService: PgloaderService,
   ) {}
 
   public set databaseConfig(config: DatabaseConfig) {
+    this._config = config;
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
     this.redactService.addRedaction(config.password);
     this.logger.debug(
@@ -87,6 +93,35 @@ export class SqlService {
     const exec = this.execFor(containerService);
     await this.driver.restore(exec, '/tmp/backup.sql');
     await this.driver.postRestoreFixups(exec);
+  }
+
+  public async dropAllTables(containerService: ContainerService) {
+    await this.driver.dropAllTables(this.execFor(containerService));
+  }
+
+  public async transferRestore(
+    containerService: ContainerService,
+    sourceClient: 'mysql' | 'pg' | 'sqlite3',
+    sqliteArtifact: string,
+  ) {
+    const { mode } = this.transferPlanner.plan(sourceClient, this.driver.client);
+    if (mode === 'native') {
+      const exec = this.execFor(containerService);
+      await this.driver.restore(exec, '/tmp/backup.sql');
+      await this.driver.postRestoreFixups(exec);
+    } else {
+      await this.pgloaderService.run({
+        containerService,
+        sqliteArtifact,
+        pg: {
+          host: this._config.host,
+          port: this._config.port,
+          user: this._config.user,
+          password: this._config.password,
+          name: this._config.name,
+        },
+      });
+    }
   }
 
   public async listTables(containerService: ContainerService) {

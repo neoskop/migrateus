@@ -39,15 +39,19 @@ export abstract class RestorePerformer {
       await this.beforeMysqlDumpRestore();
       const directusPort = await this.getDirectusPort();
 
+      const manifest = await this.readManifest(backupDir);
+
       if (!this.configService.force) {
         this.progressService.advance('👤 Set-up Directus user');
         await this.sqlService.setupDirectusUser(this.containerService);
         this.progressService.advance('🔎 Compare Directus versions');
-        await this.compareDirectusVersions(directusPort, backupDir);
+        await this.compareDirectusVersions(directusPort, manifest.version);
       }
 
+      this.progressService.advance('🧨 Dropping existing tables');
+      await this.sqlService.dropAllTables(this.containerService);
       this.progressService.advance('🔄 Restore database dump');
-      await this.sqlService.restoreMysqlDump(this.containerService);
+      await this.sqlService.transferRestore(this.containerService, manifest.client, '/tmp/backup.sql');
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(this.containerService);
       await this.sqlService.setCredentials(
@@ -98,22 +102,28 @@ export abstract class RestorePerformer {
     }
   }
 
+  private async readManifest(backupDir: string): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3' }> {
+    const metaFilePath = join(backupDir, 'meta.json');
+    if (!(await fileExists(metaFilePath))) {
+      return { client: 'mysql' };
+    }
+    const parsed = JSON.parse(await fs.promises.readFile(metaFilePath, 'utf8'));
+    return {
+      version: parsed.version,
+      client: parsed.client ?? 'mysql',
+    };
+  }
+
   private async compareDirectusVersions(
     directusPort: number,
-    backupDir: string,
+    backupVersion: string | undefined,
   ) {
     const serverVersion =
       await this.directusVersionService.getVersion(directusPort);
 
-    const metaFilePath = join(backupDir, 'meta.json');
-
-    if (!fileExists(metaFilePath)) {
+    if (backupVersion === undefined) {
       return;
     }
-
-    const backupVersion = JSON.parse(
-      await fs.promises.readFile(metaFilePath, 'utf8'),
-    ).version;
 
     if (
       this.directusVersionService.isDangerousMismatch(
@@ -151,54 +161,6 @@ export abstract class RestorePerformer {
     await exec(`tar -xf ${backupFile} -C ${backupDir}`, {
       silent: true,
     });
-
-    const dropTablesSql = `
-    DROP PROCEDURE IF EXISTS \`drop_all_tables\`;
-
-    DELIMITER $$
-    CREATE PROCEDURE \`drop_all_tables\`()
-    BEGIN
-        DECLARE _done INT DEFAULT FALSE;
-        DECLARE _tableName VARCHAR(255);
-        DECLARE _cursor CURSOR FOR
-            SELECT table_name
-            FROM information_schema.TABLES
-            WHERE table_schema = SCHEMA();
-        DECLARE CONTINUE HANDLER FOR NOT FOUND SET _done = TRUE;
-
-        SET FOREIGN_KEY_CHECKS = 0;
-
-        OPEN _cursor;
-
-        REPEAT FETCH _cursor INTO _tableName;
-
-        IF NOT _done THEN
-            SET @stmt_sql = CONCAT('DROP TABLE \`', _tableName, '\`');
-            PREPARE stmt1 FROM @stmt_sql;
-            EXECUTE stmt1;
-            DEALLOCATE PREPARE stmt1;
-        END IF;
-
-        UNTIL _done END REPEAT;
-
-        CLOSE _cursor;
-        SET FOREIGN_KEY_CHECKS = 1;
-    END$$
-
-    DELIMITER ;
-
-    call drop_all_tables();
-
-    DROP PROCEDURE IF EXISTS \`drop_all_tables\`;
-    `;
-
-    const restoreSqlPath = join(backupDir, 'backup.sql');
-    const data = await fs.promises.readFile(restoreSqlPath);
-    const fd = await fs.promises.open(restoreSqlPath, 'w+');
-    const insert = Buffer.from(dropTablesSql);
-    await fd.write(insert, 0, insert.length, 0);
-    await fd.write(data, 0, data.length, insert.length);
-    await fd.close();
   }
 
   private async deleteTemporaryDirectory(backupDir: string) {
