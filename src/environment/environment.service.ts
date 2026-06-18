@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AcaEnvironment,
   DockerComposeEnvironment,
   DockerEnvironment,
   K8sEnvironment,
@@ -10,5 +11,6 @@ export class EnvironmentService {
   public environment:
     | K8sEnvironment
     | DockerEnvironment
-    | DockerComposeEnvironment;
+    | DockerComposeEnvironment
+    | AcaEnvironment;
 }

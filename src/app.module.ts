@@ -11,6 +11,7 @@ import { SqlModule } from './sql/sql.module.js';
 import { ContainerModule } from './container/container.module.js';
 import { K8sModule } from './k8s/k8s.module.js';
 import { DockerModule } from './docker/docker.module.js';
+import { AcaModule } from './aca/aca.module.js';
 import { EnvironmentModule } from './environment/environment.module.js';
 import { RedactModule } from './redact/redact.module.js';
 import { RedactService } from './redact/redact.service.js';
@@ -64,6 +65,7 @@ import { RenameCollectionModule } from './rename-collection/rename-collection.mo
     ContainerModule,
     K8sModule,
     DockerModule,
+    AcaModule,
     EnvironmentModule,
     RedactModule,
     DependenciesModule,

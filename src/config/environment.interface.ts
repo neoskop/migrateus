@@ -3,11 +3,16 @@ import { ProjectSettings } from './project-settings.type.js';
 
 export interface Environment {
   name: string;
-  platform: 'docker' | 'docker-compose' | 'k8s';
+  platform: 'docker' | 'docker-compose' | 'k8s' | 'aca';
   credentials?: Credential[];
   doubleCheck?: boolean;
   settings?: ProjectSettings;
   assetStorage?: string;
+}
+
+export interface AcaEnvironment extends Environment {
+  platform: 'aca';
+  aca: { subscription: string; resourceGroup: string; environment: string; app: string; filesShare?: string };
 }
 
 export interface K8sEnvironment extends Environment {
