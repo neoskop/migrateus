@@ -56,11 +56,19 @@ export class DockerService {
     let containerName: string;
 
     switch (this.environmentService.environment.platform) {
-      case 'docker':
-        containerName = (
-          this.environmentService.environment as DockerEnvironment
-        ).containerName;
+      case 'docker': {
+        const env = this.environmentService.environment as DockerEnvironment;
+        if (env.containerName) {
+          containerName = env.containerName;
+        } else if (env.service) {
+          containerName = await this.getSwarmServiceContainerId(env.service);
+        } else {
+          throw new Error(
+            'A `docker` environment requires either `containerName` or `service`',
+          );
+        }
         break;
+      }
 
       case 'docker-compose':
         containerName = await this.getComposeContainerName();
@@ -83,6 +91,33 @@ export class DockerService {
     }
 
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
+  }
+
+  private async getSwarmServiceContainerId(service: string): Promise<string> {
+    // Dokploy (and any Docker Swarm) runs a service as task containers labelled
+    // `com.docker.swarm.service.name`. Resolve the running task container's id.
+    const psOutput = await exec(
+      this.withHost(
+        `docker ps --filter "label=com.docker.swarm.service.name=${service}" --format "{{.ID}}"`,
+      ),
+      { silent: true },
+    );
+
+    if (psOutput.code !== 0) {
+      throw new Error(
+        `Failed to resolve service ${chalk.bold(service)} with code ${psOutput.code}: ${psOutput.stderr}`,
+      );
+    }
+
+    const containerId = psOutput.stdout.split('\n').filter(Boolean)[0];
+
+    if (!containerId) {
+      throw new Error(
+        `No running container found for service ${chalk.bold(service)}`,
+      );
+    }
+
+    return containerId;
   }
 
   private async getComposeContainerName(): Promise<string> {

@@ -58,12 +58,20 @@ export class SqlService {
   }
 
   public async cleanUpDirectusUser(containerService: ContainerService) {
+    // Nothing to clean up if setup failed before the driver/config was set —
+    // guard so a setup error is not masked by a driver-undefined crash here.
+    if (!this._driver) {
+      return;
+    }
     await this.directusUserService.removeUser(this.driver, (sql) =>
       this.driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {
+    if (!this._driver) {
+      return;
+    }
     await this.directusUserService.cleanUp(this.driver, (sql) =>
       this.driver.executeSql(this.execFor(containerService), sql),
     );

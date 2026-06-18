@@ -74,6 +74,29 @@ describe('SqlService.client getter', () => {
   });
 });
 
+describe('SqlService cleanup guards (no driver / setup failed)', () => {
+  it('cleanUpDirectusUser is a no-op when databaseConfig was never set', async () => {
+    const directusUser = {
+      setupUser: jest.fn(async () => undefined) as AnyMock,
+      removeUser: jest.fn(async () => undefined) as AnyMock,
+      cleanUp: jest.fn(async () => undefined) as AnyMock,
+      setCredentials: jest.fn(async () => undefined) as AnyMock,
+    };
+    const service = new SqlService(
+      { debug: jest.fn() } as never,
+      directusUser as never,
+      { addRedaction: jest.fn() } as never,
+      { plan: jest.fn() } as never,
+      { run: jest.fn() } as never,
+    );
+    // No service.databaseConfig assignment → no driver (simulates setup failure).
+    await expect(
+      service.cleanUpDirectusUser({ execute: jest.fn() } as never),
+    ).resolves.toBeUndefined();
+    expect(directusUser.removeUser).not.toHaveBeenCalled();
+  });
+});
+
 describe('SqlService.clientImage getter', () => {
   it('returns the bundled image for client pg', () => {
     const { service } = build();
