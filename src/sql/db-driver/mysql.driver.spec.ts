@@ -46,6 +46,12 @@ describe('MysqlDriver.executeSql', () => {
     expect(calls()[0]).toContain('\\\\\\$x');
   });
 
+  it('escapes backticks in the wire command (regression)', async () => {
+    const { driver, exec, calls } = driverWith();
+    await driver.executeSql(exec as unknown as Exec, 'ALTER TABLE `t1` CONVERT TO CHARACTER SET utf8mb4');
+    expect(calls()[0]).toContain('\\\\\\\`t1\\\\\\\`');
+  });
+
   it('throws on non-zero exit, including stderr', async () => {
     const { driver, exec } = driverWith(() => ({ code: 1, stdout: '', stderr: 'boom' }));
     await expect(driver.executeSql(exec as unknown as Exec, 'SELECT 1')).rejects.toThrow(
@@ -60,9 +66,18 @@ describe('MysqlDriver.executeSql', () => {
 });
 
 describe('MysqlDriver.listTables', () => {
-  it('drops the header row and trims blanks', async () => {
+  it('returns table names, filtering blank lines', async () => {
     const { driver, exec } = driverWith(() => ({ code: 0, stdout: 'foo\nbar\n', stderr: '' }));
     expect(await driver.listTables(exec as unknown as Exec)).toEqual(['foo', 'bar']);
+  });
+});
+
+describe('MysqlDriver.restore', () => {
+  it('throws when mysql exits non-zero', async () => {
+    const { driver, exec } = driverWith(() => ({ code: 2, stdout: '', stderr: 'corrupt' }));
+    await expect(driver.restore(exec as unknown as Exec, '/tmp/backup.sql')).rejects.toThrow(
+      /Restore failed with status code 2: corrupt/,
+    );
   });
 });
 
