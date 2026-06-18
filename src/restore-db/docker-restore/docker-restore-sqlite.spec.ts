@@ -17,6 +17,7 @@ function buildDockerRestoreService(overrides?: {
   directusStorageIsLocal?: boolean;
   directusStorageRoot?: string;
   databaseFilename?: string;
+  noFilename?: boolean;
 }) {
   const copyToDirectus = jest.fn(async () => undefined) as AnyMock;
 
@@ -46,7 +47,7 @@ function buildDockerRestoreService(overrides?: {
     client: 'sqlite3' as const,
     clientImage: 'neoskop/migrateus:latest',
     usesSidecar: false,
-    databaseFilename: overrides?.databaseFilename ?? '/database/sqlite.db',
+    databaseFilename: overrides?.noFilename ? undefined : (overrides?.databaseFilename ?? '/database/sqlite.db'),
     dropAllTables: jest.fn(async () => undefined) as AnyMock,
     transferRestore: jest.fn(async () => undefined) as AnyMock,
     setupDirectusUser: jest.fn(async () => undefined) as AnyMock,
@@ -258,6 +259,20 @@ describe('DockerRestoreService.copyDatabaseIn', () => {
       await (service as any).copyDatabaseIn(tmpDir);
 
       expect(dockerContainerService.mount).toBeUndefined();
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws a clear error when databaseFilename is undefined', async () => {
+    const { service } = buildDockerRestoreService({ noFilename: true });
+    const tmpDir = makeTempDir();
+    try {
+      fs.writeFileSync(path.join(tmpDir, 'database.sqlite'), 'fake sqlite');
+
+      await expect((service as any).copyDatabaseIn(tmpDir)).rejects.toThrow(
+        /SQLite database path not found/,
+      );
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

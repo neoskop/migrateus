@@ -291,6 +291,35 @@ describe('SqlService.transferRestore (native path)', () => {
   });
 });
 
+describe('SqlService.databaseFilename getter', () => {
+  it('returns filename when set explicitly on a sqlite3 config', () => {
+    const { service } = build();
+    service.databaseConfig = {
+      client: 'sqlite3',
+      filename: '/data/mydb.sqlite',
+      host: '',
+      port: '',
+      user: '',
+      password: '',
+      name: 'mydb',
+    } as never;
+    expect(service.databaseFilename).toBe('/data/mydb.sqlite');
+  });
+
+  it('falls back to name when filename is absent', () => {
+    const { service } = build();
+    service.databaseConfig = {
+      client: 'sqlite3',
+      host: '',
+      port: '',
+      user: '',
+      password: '',
+      name: 'mydb.sqlite',
+    } as never;
+    expect(service.databaseFilename).toBe('mydb.sqlite');
+  });
+});
+
 describe('SqlService.transferRestore (pgloader path)', () => {
   it('calls pgloaderService.run with stored config when TransferPlanner returns pgloader', async () => {
     const { service, containerService, transferPlanner, pgloaderService } = build();

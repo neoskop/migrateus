@@ -57,6 +57,9 @@ export class DockerRestoreService extends RestorePerformer {
 
   protected async copyDatabaseIn(backupDir: string): Promise<void> {
     const file = this.sqlService.databaseFilename;
+    if (!file) {
+      throw new Error('SQLite database path not found — set DB_FILENAME (or DB_DATABASE) on the Directus environment');
+    }
     await this.dockerContainerService.copyToDirectus(`${backupDir}/database.sqlite`, file);
 
     // Best-effort: copy WAL and SHM sidecars back if they exist locally

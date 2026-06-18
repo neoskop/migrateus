@@ -48,7 +48,7 @@ export class SqlService {
   }
 
   public get databaseFilename(): string | undefined {
-    return this._config?.filename;
+    return this._config?.filename ?? this._config?.name;
   }
 
   private get driver(): DbDriver {

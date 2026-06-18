@@ -46,6 +46,9 @@ export class DockerBackupService extends BackupPerformer {
 
   protected async copyDatabaseOut(backupDir: string): Promise<void> {
     const file = this.sqlService.databaseFilename;
+    if (!file) {
+      throw new Error('SQLite database path not found — set DB_FILENAME (or DB_DATABASE) on the Directus environment');
+    }
     await this.dockerContainerService.copyFromDirectus(file, `${backupDir}/database.sqlite`);
 
     // Best-effort: copy WAL and SHM sidecars — they may not exist
