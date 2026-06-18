@@ -41,12 +41,22 @@ export class DockerService {
   public get databaseConfig(): DatabaseConfig {
     const client = this.getOptionalDockerEnvValue('DB_CLIENT');
     const filename = this.getOptionalDockerEnvValue('DB_FILENAME');
+
+    // SQLite is file-based — it has no DB_HOST/DB_PORT/DB_USER/DB_PASSWORD/
+    // DB_DATABASE. Read the connection fields optionally for sqlite (defaulting
+    // to ''), but keep them required for server engines so a misconfigured
+    // mysql/pg environment still fails fast.
+    const read =
+      client === 'sqlite3'
+        ? (name: string) => this.getOptionalDockerEnvValue(name) ?? ''
+        : (name: string) => this.getDockerEnvValue(name);
+
     return {
-      host: this.getDockerEnvValue('DB_HOST'),
-      port: this.getDockerEnvValue('DB_PORT'),
-      name: this.getDockerEnvValue('DB_DATABASE'),
-      user: this.getDockerEnvValue('DB_USER'),
-      password: this.getDockerEnvValue('DB_PASSWORD'),
+      host: read('DB_HOST'),
+      port: read('DB_PORT'),
+      name: read('DB_DATABASE'),
+      user: read('DB_USER'),
+      password: read('DB_PASSWORD'),
       ...(client ? { client: client as DatabaseConfig['client'] } : {}),
       ...(filename ? { filename } : {}),
     };

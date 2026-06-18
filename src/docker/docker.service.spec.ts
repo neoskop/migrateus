@@ -87,6 +87,20 @@ describe('DockerService', () => {
       expect(service.databaseConfig.filename).toBeUndefined();
     });
 
+    it('does not require DB_HOST/DB_PORT/etc. for a sqlite3 (file-based) environment', () => {
+      const service = makeServiceWithContainerEnv([
+        'DB_CLIENT=sqlite3',
+        'DB_FILENAME=/database/sqlite.db',
+        // intentionally no DB_HOST / DB_PORT / DB_DATABASE / DB_USER / DB_PASSWORD
+      ]);
+
+      expect(() => service.databaseConfig).not.toThrow();
+      const config = service.databaseConfig;
+      expect(config.client).toBe('sqlite3');
+      expect(config.filename).toBe('/database/sqlite.db');
+      expect(config.host).toBe('');
+    });
+
     it('does not throw when DB_CLIENT is absent (required fields still present)', () => {
       const service = makeServiceWithContainerEnv([
         'DB_HOST=db.example.com',
