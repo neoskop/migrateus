@@ -34,5 +34,14 @@ RUN apt-get update \
  && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/*
 
+# Run as a non-root user. The docker platform overrides this at runtime with the
+# host user (`--user $uid:$gid`); k8s/ACA use this image default. A numeric UID
+# keeps it compatible with Kubernetes `runAsNonRoot`. /tmp (1777) and the bind-
+# mounted backup dir (created mode 0777) stay writable for any UID.
+RUN groupadd -g 1000 migrateus \
+ && useradd -m -u 1000 -g 1000 -s /bin/bash migrateus
+ENV HOME=/home/migrateus
+USER 1000
+
 # The container is kept alive and exec'd into by migrateus; this is a fallback.
 CMD ["sleep", "infinity"]
