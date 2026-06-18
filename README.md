@@ -61,7 +61,7 @@ An environment under the key `environments` takes the following options:
 | Name          | Type                                    | Description                                        |
 | ------------- | --------------------------------------- | -------------------------------------------------- |
 | `name`        | `string`                                | The name used on the command-line or in selections |
-| `platform`    | `"docker" \| "k8s" \| "docker-compose"` | The platform type of the environment               |
+| `platform`    | `"docker" \| "k8s" \| "docker-compose" \| "aca"` | The platform type of the environment      |
 | `credentials` | `object[]`                              | Credentials to enforce during restore              |
 | `doubleCheck` | `boolean`                               | Whether to ask before restores / schema diffs      |
 | `settings`    | `object`                                | Specify Directus [project settings][2]             |
@@ -80,11 +80,16 @@ Depending on the `platform` the following options are furthermore available:
 
 #### Docker config
 
-When `platform` is set to `docker`, the following options are required:
+When `platform` is set to `docker`, the following options are available:
 
 | Name            | Type     | Description                             |
 | --------------- | -------- | --------------------------------------- |
 | `containerName` | `string` | The full name of the Directus container |
+| `host?`         | `string` | Talk to a **remote Docker daemon over SSH** (e.g. `ssh://deploy@host`). When set, `DOCKER_HOST` is applied to every docker command, so the same code targets a remote host transparently. Covers Dokploy, Coolify, or any remote `dockerd`. |
+| `service?`      | `string` | On Docker **Swarm** (e.g. Dokploy), the service name whose running task container should be resolved instead of a fixed `containerName`. |
+
+> [!NOTE]
+> With `host`, only the Docker **daemon** is reached over SSH. Directus HTTP access (asset transfer, version checks, schema diff) still targets `localhost:8055`, so you must tunnel that port yourself (e.g. `ssh -L 8055:directus:8055 …`) until native tunneling lands. On multi-node Swarm, `exec`/`cp` only reach containers on the daemon's own node — fine for the common single-node Dokploy install.
 
 #### Docker compose config
 
@@ -94,6 +99,72 @@ When `platform` is set to `docker-compose`, the following options are required:
 | ------------- | -------- | -------------------- | -------------------------------------------------- |
 | `serviceName` | `string` | `directus`           | The name of the service in the docker-compose file |
 | `composeFile` | `string` | `docker-compose.yml` | The path to the docker-compose file                |
+
+`docker-compose` also accepts the `host?` option for a remote daemon over SSH (same semantics as the Docker config above).
+
+#### Azure Container Apps (ACA) config
+
+> [!WARNING]
+> The ACA platform is **experimental**. The `az containerapp` command shapes, `exec` stdout capture, file transfer, and Directus HTTP reachability are not yet verified against a live Azure environment.
+
+When `platform` is set to `aca`, the following options are required under an `aca` key. The [`az` CLI][3] must be installed and authenticated.
+
+| Name                 | Type     | Description                                                                 |
+| -------------------- | -------- | --------------------------------------------------------------------------- |
+| `aca.subscription`   | `string` | Azure subscription ID                                                       |
+| `aca.resourceGroup`  | `string` | Resource group containing the Directus Container App                        |
+| `aca.environment`    | `string` | The ACA managed environment — the throwaway migrateus sidecar joins it (shared VNet) so it can reach the database |
+| `aca.app`            | `string` | The Directus Container App name                                             |
+| `aca.filesShare?`    | `string` | Azure Files share used to transfer large artifacts (e.g. a SQLite file)     |
+
+### Database engines & cross-engine migration
+
+Migrateus detects the database engine from the Directus container's environment — `DB_CLIENT` (`mysql`, `pg`, or `sqlite3`) and, for SQLite, `DB_FILENAME`. No engine option is needed in `migrateus.yaml`; it is read at runtime.
+
+`backup-db` always produces an **engine-agnostic artifact** (its manifest records the source engine), so a single backup can be restored to any supported target. `restore-db` then picks the path:
+
+- **Same engine** (e.g. Postgres → Postgres between two ACAs) — native dump/restore (`mysqldump`/`pg_dump`/SQLite file copy).
+- **Cross-engine to Postgres** (e.g. SQLite → Postgres) — conversion via [pgloader][4], including the `directus_*` tables (users, roles, policies, settings).
+
+> [!NOTE]
+> Cross-engine transfer only targets **PostgreSQL** (pgloader's limitation). `MySQL → Postgres` is not yet supported (pgloader cannot read a `mysqldump` file). The SQLite→Postgres pgloader cast rules are tuned for the Directus schema but should be validated against your data.
+
+#### The migrateus sidecar image
+
+For every operation Migrateus launches a short-lived sidecar next to the database and runs the engine's CLI tools in it. Cross-engine restore needs `pgloader` **and** the target client in that image, so use the bundled image which ships `mysql`/`mysqldump`, `psql`/`pg_dump`, `sqlite3`, and `pgloader`:
+
+```bash
+migrateus restore-db --image neoskop/migrateus:latest ./backup.tgz dokploy-prod
+```
+
+The default image is `neoskop/migrateus` (override per-run with `--image`). See [Sidecar image](docs/sidecar-image.md) for how it is built and published.
+
+### Example: SQLite on Dokploy → PostgreSQL on ACA
+
+```yml
+environments:
+  - name: dokploy-prod            # source: Directus + SQLite on a remote Dokploy host
+    platform: docker
+    host: ssh://deploy@dokploy.example.com
+    service: directus             # resolved to the running Swarm task container
+                                  # engine auto-detected: DB_CLIENT=sqlite3, DB_FILENAME=/directus/database/data.db
+
+  - name: aca-prod                # target: Directus + PostgreSQL on Azure Container Apps
+    platform: aca
+    assetStorage: local
+    aca:
+      subscription: ${AZ_SUBSCRIPTION}
+      resourceGroup: rg-directus
+      environment: cae-directus
+      app: directus
+                                  # engine auto-detected: DB_CLIENT=pg
+```
+
+```bash
+# back up the SQLite instance, then restore (converting to PostgreSQL via pgloader)
+migrateus backup-db dokploy-prod ./prod.tgz
+migrateus restore-db ./prod.tgz aca-prod
+```
 
 To subsitute the variables in the config file and specifically in the credentials section, you can create a `.env` file - i.e.:
 
@@ -240,3 +311,5 @@ See [License](LICENSE).
 
 [1]: https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
 [2]: https://docs.directus.io/reference/system/settings.html#the-settings-object
+[3]: https://learn.microsoft.com/cli/azure/install-azure-cli
+[4]: https://pgloader.io
