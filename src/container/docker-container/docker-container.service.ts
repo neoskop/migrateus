@@ -44,7 +44,7 @@ export class DockerContainerService extends ContainerService {
       `Creating container with command: ${highlight(command.join(' '), { language: 'bash' })}`,
     );
 
-    const createOutput = await exec(command.join(' '), {
+    const createOutput = await exec(this.dockerService.withHost(command.join(' ')), {
       silent: true,
     });
 
@@ -56,7 +56,7 @@ export class DockerContainerService extends ContainerService {
 
     this.migrateusContainerId = createOutput.stdout.trim();
 
-    const output = await exec(`docker start ${this.migrateusContainerId}`, {
+    const output = await exec(this.dockerService.withHost(`docker start ${this.migrateusContainerId}`), {
       silent: true,
     });
 
@@ -73,7 +73,7 @@ export class DockerContainerService extends ContainerService {
 
   public async cleanUpAll() {
     const containers = (
-      await exec(`docker ps -a -f name=migrateus --format '{{.Names}}'`, {
+      await exec(this.dockerService.withHost(`docker ps -a -f name=migrateus --format '{{.Names}}'`), {
         silent: true,
       })
     ).stdout
@@ -97,7 +97,7 @@ export class DockerContainerService extends ContainerService {
     this.logger.debug(
       `Executing ${highlight(fullCommand, { language: 'bash' })}`,
     );
-    return await exec(fullCommand, { silent: true });
+    return await exec(this.dockerService.withHost(fullCommand), { silent: true });
   }
 
   private async removeContainer(container: string) {
@@ -108,7 +108,7 @@ export class DockerContainerService extends ContainerService {
         .map((name) => chalk.bold(name))
         .join(', ')}`,
     );
-    await exec(`docker rm -f ${container}`, { silent: true });
+    await exec(this.dockerService.withHost(`docker rm -f ${container}`), { silent: true });
   }
 
   public async exfilFile(source: string, destination: string): Promise<void> {
@@ -119,7 +119,7 @@ export class DockerContainerService extends ContainerService {
       destination,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(command, { silent: true });
+    const ouput = await exec(this.dockerService.withHost(command), { silent: true });
 
     if (ouput.code !== 0) {
       throw new Error(
@@ -136,7 +136,7 @@ export class DockerContainerService extends ContainerService {
       `${this.migrateusContainerId}:${destination}`,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(command, { silent: true });
+    const ouput = await exec(this.dockerService.withHost(command), { silent: true });
 
     if (ouput.code !== 0) {
       throw new Error(

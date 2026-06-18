@@ -68,7 +68,7 @@ export class DockerService {
         );
     }
 
-    const inspectOutput = await exec(`docker inspect ${containerName}`, {
+    const inspectOutput = await exec(this.withHost(`docker inspect ${containerName}`), {
       silent: true,
     });
 
@@ -84,7 +84,9 @@ export class DockerService {
   private async getComposeContainerName(): Promise<string> {
     const env = this.environmentService.environment as DockerComposeEnvironment;
     const psOutput = await exec(
-      `docker compose -f ${env.composeFile || 'docker-compose.yml'} ps -a --format '{{.Name}}' ${env.serviceName || 'directus'}`,
+      this.withHost(
+        `docker compose -f ${env.composeFile || 'docker-compose.yml'} ps -a --format '{{.Name}}' ${env.serviceName || 'directus'}`,
+      ),
       {
         silent: true,
       },
@@ -113,7 +115,7 @@ export class DockerService {
 
   private async ensureDatabaseContainerIsRunning() {
     const containersOutput = (
-      await exec('docker ps -a --format json', {
+      await exec(this.withHost('docker ps -a --format json'), {
         silent: true,
       })
     ).stdout;
@@ -138,7 +140,7 @@ export class DockerService {
           this.logger.debug(
             `Starting database container ${chalk.bold(ID)} since it is not running`,
           );
-          await exec(`docker start ${ID}`, { silent: true });
+          await exec(this.withHost(`docker start ${ID}`), { silent: true });
           await new Promise((resolve) => setTimeout(resolve, 10000));
         }),
     );
@@ -152,7 +154,7 @@ export class DockerService {
     this.logger.debug(
       `Starting Directus container ${chalk.bold(this.containerConfig.Id)} since it is not running`,
     );
-    await exec(`docker start ${this.containerConfig.Id}`, {
+    await exec(this.withHost(`docker start ${this.containerConfig.Id}`), {
       silent: true,
     });
     await this.waitUntilDirectusIsRunning();
@@ -191,6 +193,14 @@ export class DockerService {
   }
 
   public async restartDirectus() {
-    await exec(`docker restart ${this.containerConfig.Id}`, { silent: true });
+    await exec(this.withHost(`docker restart ${this.containerConfig.Id}`), { silent: true });
+  }
+
+  public withHost(command: string): string {
+    const env = this.environmentService.environment as
+      | DockerEnvironment
+      | DockerComposeEnvironment;
+    const host = env?.host;
+    return host ? `DOCKER_HOST=${host} ${command}` : command;
   }
 }

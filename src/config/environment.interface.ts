@@ -21,10 +21,13 @@ export interface K8sEnvironment extends Environment {
 export interface DockerEnvironment extends Environment {
   platform: 'docker';
   containerName: string;
+  host?: string;
+  service?: string;
 }
 
 export interface DockerComposeEnvironment extends Environment {
   platform: 'docker-compose';
   serviceName?: string;
   composeFile?: string;
+  host?: string;
 }
