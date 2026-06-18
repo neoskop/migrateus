@@ -6,6 +6,7 @@ import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { DockerModule } from '../docker/docker.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
+import { AcaModule } from '../aca/aca.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { UpdateModule } from '../update/update.module.js';
@@ -20,6 +21,7 @@ import { RenameCollectionService } from './rename-collection.service.js';
     ContainerModule,
     EnvironmentModule,
     K8sModule,
+    AcaModule,
     DockerModule,
     DependenciesModule,
     ProgressModule,

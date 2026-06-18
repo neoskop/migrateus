@@ -14,7 +14,9 @@ import { DockerService } from '../docker/docker.service.js';
 import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
 import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
 import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
+import { AcaContainerService } from '../container/aca-container/aca-container.service.js';
 import { K8sService } from '../k8s/k8s.service.js';
+import { AcaService } from '../aca/aca.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
 import { ContainerService } from '../container/container.service.js';
@@ -41,6 +43,8 @@ export class SchemaDiffService {
     private readonly dockerService: DockerService,
     private readonly portForwardService: PortForwardService,
     private readonly k8sService: K8sService,
+    private readonly acaService: AcaService,
+    private readonly acaContainerService: AcaContainerService,
     private readonly sqlService: SqlService,
     private readonly directusUserService: DirectusUserService,
     private readonly environmentService: EnvironmentService,
@@ -152,6 +156,8 @@ export class SchemaDiffService {
 
     if (env.platform === 'k8s') {
       await this.k8sService.setup();
+    } else if (env.platform === 'aca') {
+      await this.acaService.setup();
     } else {
       await this.dockerService.setup();
     }
@@ -181,6 +187,12 @@ export class SchemaDiffService {
       containerService = new K8sContainerService(this.logger, this.k8sService);
       await this.k8sService.setup();
       port = await this.portForwardService.forward();
+    } else if (env.platform === 'aca') {
+      this.progressService.advance(
+        `🔌 Set-up ACA environment (${chalk.bold(name)})`,
+      );
+      containerService = this.acaContainerService;
+      await this.acaService.setup();
     } else {
       containerService = new DockerContainerService(
         this.logger,

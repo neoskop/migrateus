@@ -5,6 +5,7 @@ import { SchemaDiffQuestions } from './schema-diff.questions.js';
 import { SchemaDiffService } from './schema-diff.service.js';
 import { K8sModule } from '../k8s/k8s.module.js';
 import { DockerModule } from '../docker/docker.module.js';
+import { AcaModule } from '../aca/aca.module.js';
 import { DirectusModule } from '../directus/directus.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { ContainerModule } from '../container/container.module.js';
@@ -26,6 +27,7 @@ import { ErrorFormatterModule } from '../error-formatter/error-formatter.module.
     ConfigModule,
     K8sModule,
     DockerModule,
+    AcaModule,
     DirectusModule,
     SqlModule,
     ContainerModule,

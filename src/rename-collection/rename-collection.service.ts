@@ -8,15 +8,27 @@ import { ProgressService } from '../progress/progress.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
 import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
+import { AcaContainerService } from '../container/aca-container/aca-container.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { K8sService } from '../k8s/k8s.service.js';
 import { DockerService } from '../docker/docker.service.js';
+import { AcaService } from '../aca/aca.service.js';
 import { assertSafeIdentifier } from '../sql/sql-escape.js';
 
 @Injectable()
 export class RenameCollectionService {
-    constructor(@Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger, private readonly config: ConfigService, private readonly environmentService: EnvironmentService, @Inject('ContainerServices') private readonly containerServices: { [name: string]: any }, private readonly progressService: ProgressService, private readonly sqlService: SqlService, private readonly k8sService: K8sService,
-        private readonly dockerService: DockerService,) { }
+    constructor(
+        @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+        private readonly config: ConfigService,
+        private readonly environmentService: EnvironmentService,
+        @Inject('ContainerServices') private readonly containerServices: { [name: string]: any },
+        private readonly progressService: ProgressService,
+        private readonly sqlService: SqlService,
+        private readonly k8sService: K8sService,
+        private readonly dockerService: DockerService,
+        private readonly acaService: AcaService,
+        private readonly acaContainerService: AcaContainerService,
+    ) { }
 
     public async renameCollection(environmentName: string, oldName: string, newName: string) {
         assertSafeIdentifier(oldName, 'oldName');
@@ -82,6 +94,9 @@ export class RenameCollectionService {
         if (env.platform === 'k8s') {
             containerService = new K8sContainerService(this.logger, this.k8sService);
             await this.k8sService.setup();
+        } else if (env.platform === 'aca') {
+            containerService = this.acaContainerService;
+            await this.acaService.setup();
         } else {
             containerService = new DockerContainerService(
                 this.logger,

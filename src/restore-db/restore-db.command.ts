@@ -8,6 +8,7 @@ import chalk from 'chalk';
 import { RestoreDbAnswers } from './restore-db-answers.interface.js';
 import { DockerRestoreService } from './docker-restore/docker-restore.service.js';
 import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
+import { AcaRestoreService } from './aca-restore/aca-restore.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
@@ -33,6 +34,7 @@ export class RestoreDbCommand extends MigrateusCommand {
     private readonly inquirer: InquirerService,
     private readonly dockerRestoreService: DockerRestoreService,
     private readonly k8sRestoreService: K8sRestoreService,
+    private readonly acaRestoreService: AcaRestoreService,
     private readonly environmentService: EnvironmentService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,
@@ -103,6 +105,8 @@ export class RestoreDbCommand extends MigrateusCommand {
 
     if (environment.platform.startsWith('docker')) {
       await this.dockerRestoreService.restore(from);
+    } else if (environment.platform === 'aca') {
+      await this.acaRestoreService.restore(from);
     } else {
       await this.k8sRestoreService.restore(from);
     }

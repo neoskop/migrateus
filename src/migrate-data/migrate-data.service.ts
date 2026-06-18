@@ -5,9 +5,11 @@ import { ConfigService } from '../config/config.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
 import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
+import { AcaContainerService } from '../container/aca-container/aca-container.service.js';
 import { DockerService } from '../docker/docker.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sService } from '../k8s/k8s.service.js';
+import { AcaService } from '../aca/aca.service.js';
 import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { MigrateDataPromptService } from './migrate-data-prompt/migrate-data-prompt.service.js';
@@ -25,6 +27,8 @@ export class MigrateDataService {
     private readonly dockerService: DockerService,
     private readonly portForwardService: PortForwardService,
     private readonly k8sService: K8sService,
+    private readonly acaService: AcaService,
+    private readonly acaContainerService: AcaContainerService,
     private readonly sqlService: SqlService,
     private readonly environmentService: EnvironmentService,
     private readonly migrateDataPromptService: MigrateDataPromptService,
@@ -128,6 +132,9 @@ export class MigrateDataService {
     if (env.platform === 'k8s') {
       containerService = new K8sContainerService(this.logger, this.k8sService);
       await this.k8sService.setup();
+    } else if (env.platform === 'aca') {
+      containerService = this.acaContainerService;
+      await this.acaService.setup();
     } else {
       containerService = new DockerContainerService(
         this.logger,

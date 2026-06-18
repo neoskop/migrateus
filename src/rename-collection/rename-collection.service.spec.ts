@@ -25,10 +25,12 @@ interface Mocks {
   };
   k8sService: { setup: AnyMock };
   dockerService: { setup: AnyMock };
+  acaService: { setup: AnyMock };
+  acaContainerService: { setup: AnyMock; cleanUp: AnyMock };
   containerStub: { cleanUp: AnyMock };
 }
 
-function build(): { service: RenameCollectionService; mocks: Mocks } {
+function build(platform = 'k8s'): { service: RenameCollectionService; mocks: Mocks } {
   const containerStub = { cleanUp: jest.fn(async () => undefined) as AnyMock };
   const mocks: Mocks = {
     logger: {
@@ -38,7 +40,7 @@ function build(): { service: RenameCollectionService; mocks: Mocks } {
       error: jest.fn(),
     },
     config: {
-      getEnvironment: jest.fn(() => ({ platform: 'k8s' })) as AnyMock,
+      getEnvironment: jest.fn(() => ({ platform })) as AnyMock,
     },
     environmentService: { environment: undefined },
     containerServices: { dev: containerStub },
@@ -56,8 +58,16 @@ function build(): { service: RenameCollectionService; mocks: Mocks } {
       disableForeignKeys: jest.fn(() => 'SET session_replication_role = replica') as AnyMock,
       enableForeignKeys: jest.fn(() => 'SET session_replication_role = origin') as AnyMock,
     },
-    k8sService: { setup: jest.fn(async () => undefined) as AnyMock },
+    k8sService: {
+      setup: jest.fn(async () => undefined) as AnyMock,
+      kubectlApply: jest.fn(async () => ({ code: 0, stdout: '', stderr: '' })) as AnyMock,
+    },
     dockerService: { setup: jest.fn(async () => undefined) as AnyMock },
+    acaService: { setup: jest.fn(async () => undefined) as AnyMock },
+    acaContainerService: {
+      setup: jest.fn(async () => undefined) as AnyMock,
+      cleanUp: jest.fn(async () => undefined) as AnyMock,
+    },
     containerStub,
   };
 
@@ -70,6 +80,8 @@ function build(): { service: RenameCollectionService; mocks: Mocks } {
     mocks.sqlService as never,
     mocks.k8sService as never,
     mocks.dockerService as never,
+    mocks.acaService as never,
+    mocks.acaContainerService as never,
   );
 
   return { service, mocks };
@@ -176,5 +188,41 @@ describe('RenameCollectionService.renameCollection', () => {
 
     expect(mocks.progressService.fail).toHaveBeenCalledWith(boom);
     expect(mocks.containerStub.cleanUp).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('RenameCollectionService — ACA platform dispatch', () => {
+  it('calls AcaService.setup when platform is aca', async () => {
+    const { service, mocks } = build('aca');
+    // No tables → only setup path runs (no SQL executed)
+    mocks.config.getEnvironment.mockReturnValue({ platform: 'aca' });
+    mocks.sqlService.listTables.mockResolvedValueOnce([]);
+
+    await service.renameCollection('aca-env', 'old_col', 'new_col');
+
+    expect(mocks.acaService.setup).toHaveBeenCalled();
+    expect(mocks.k8sService.setup).not.toHaveBeenCalled();
+    expect(mocks.dockerService.setup).not.toHaveBeenCalled();
+  });
+
+  it('calls AcaContainerService.setup when platform is aca', async () => {
+    const { service, mocks } = build('aca');
+    mocks.config.getEnvironment.mockReturnValue({ platform: 'aca' });
+    mocks.sqlService.listTables.mockResolvedValueOnce([]);
+
+    await service.renameCollection('aca-env', 'old_col', 'new_col');
+
+    expect(mocks.acaContainerService.setup).toHaveBeenCalled();
+  });
+
+  it('does not call AcaService.setup for k8s platform', async () => {
+    const { service, mocks } = build('k8s');
+    // The pre-cached 'dev' container is used — no setupContainerService call needed.
+    // We verify the aca branch is never entered for a k8s environment.
+    mocks.sqlService.listTables.mockResolvedValueOnce([]);
+
+    await service.renameCollection('dev', 'old_col', 'new_col');
+
+    expect(mocks.acaService.setup).not.toHaveBeenCalled();
   });
 });

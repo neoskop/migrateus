@@ -1,4 +1,5 @@
 import {
+  AcaEnvironment,
   DockerComposeEnvironment,
   DockerEnvironment,
   K8sEnvironment,
@@ -12,5 +13,6 @@ export interface Config {
     | K8sEnvironment
     | DockerEnvironment
     | DockerComposeEnvironment
+    | AcaEnvironment
   )[];
 }

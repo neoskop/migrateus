@@ -5,11 +5,13 @@ import { BackupDbQuestions } from './backup-db.questions.js';
 import { BackupDbService } from './backup-db.service.js';
 import { DockerBackupService } from './docker-backup/docker-backup.service.js';
 import { K8sBackupService } from './k8s-backup/k8s-backup.service.js';
+import { AcaBackupService } from './aca-backup/aca-backup.service.js';
 import { DirectusModule } from '../directus/directus.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { ContainerModule } from '../container/container.module.js';
 import { DockerModule } from '../docker/docker.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
+import { AcaModule } from '../aca/aca.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
@@ -22,6 +24,7 @@ import { UpdateModule } from '../update/update.module.js';
     BackupDbService,
     DockerBackupService,
     K8sBackupService,
+    AcaBackupService,
   ],
   imports: [
     ConfigModule,
@@ -30,6 +33,7 @@ import { UpdateModule } from '../update/update.module.js';
     ContainerModule,
     DockerModule,
     K8sModule,
+    AcaModule,
     EnvironmentModule,
     DependenciesModule,
     ProgressModule,
