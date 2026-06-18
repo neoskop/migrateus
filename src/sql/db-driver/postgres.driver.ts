@@ -47,7 +47,9 @@ export class PostgresDriver implements DbDriver {
 
   public async dump(exec: Exec, artifact: string, tables?: string[]): Promise<void> {
     const { host, port, user, password, name } = this.config;
-    const tableFlags = tables ? tables.map((t) => `-t ${t}`).join(' ') : '';
+    const tableFlags = tables
+      ? tables.map((t) => `-t ${assertSafeIdentifier(t, 'table_name')}`).join(' ')
+      : '';
     const command = [
       `PGPASSWORD=${password}`,
       'pg_dump',

@@ -54,7 +54,7 @@ function build(): { service: RenameCollectionService; mocks: Mocks } {
       escapeIdentifier: jest.fn((id: string) => `"${id}"`) as AnyMock,
       escapeString: jest.fn((v: string) => `'${v}'`) as AnyMock,
       disableForeignKeys: jest.fn(() => 'SET session_replication_role = replica') as AnyMock,
-      enableForeignKeys: jest.fn(() => 'SET session_replication_role = DEFAULT') as AnyMock,
+      enableForeignKeys: jest.fn(() => 'SET session_replication_role = origin') as AnyMock,
     },
     k8sService: { setup: jest.fn(async () => undefined) as AnyMock },
     dockerService: { setup: jest.fn(async () => undefined) as AnyMock },
@@ -122,7 +122,7 @@ describe('RenameCollectionService.renameCollection', () => {
 
     // Must use the driver's fk helpers, not MySQL-specific literals
     expect(updateBatch).toContain('SET session_replication_role = replica;');
-    expect(updateBatch).toContain('SET session_replication_role = DEFAULT;');
+    expect(updateBatch).toContain('SET session_replication_role = origin;');
     expect(updateBatch).not.toContain('foreign_key_checks');
   });
 

@@ -126,6 +126,22 @@ describe('PostgresDriver.dump', () => {
       /Backup failed with status code 3: denied/,
     );
   });
+
+  it('rejects unsafe table names before executing', async () => {
+    const { driver, exec } = driverWith();
+    await expect(
+      driver.dump(exec as unknown as Exec, '/tmp/b.sql', ['users; DROP']),
+    ).rejects.toThrow(/Invalid SQL identifier for table_name/);
+    expect(exec).not.toHaveBeenCalled();
+  });
+
+  it('produces -t flags for each valid table name', async () => {
+    const { driver, exec, calls } = driverWith();
+    await driver.dump(exec as unknown as Exec, '/tmp/b.sql', ['a', 'b']);
+    const cmd = calls()[0];
+    expect(cmd).toContain('-t a');
+    expect(cmd).toContain('-t b');
+  });
 });
 
 describe('PostgresDriver.restore', () => {
