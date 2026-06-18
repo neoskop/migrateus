@@ -131,7 +131,10 @@ Migrateus detects the database engine from the Directus container's environment 
 
 #### The migrateus sidecar image
 
-For every operation Migrateus launches a short-lived sidecar next to the database and runs the engine's CLI tools in it. Cross-engine restore needs `pgloader` **and** the target client in that image, so use the bundled image which ships `mysql`/`mysqldump`, `psql`/`pg_dump`, `sqlite3`, and `pgloader`:
+> [!NOTE]
+> The sidecar runs only for **server** databases (MySQL/PostgreSQL). For **SQLite**, Migrateus copies the DB file (and local-storage uploads) directly to/from the Directus container — no sidecar. See [docs/architecture.md](docs/architecture.md) for the full mental model.
+
+For server databases, Migrateus launches a short-lived sidecar next to the database and runs the engine's CLI tools in it. Cross-engine restore needs `pgloader` **and** the target client in that image, so use the bundled image which ships `mysql`/`mysqldump`, `psql`/`pg_dump`, `sqlite3`, and `pgloader`:
 
 ```bash
 migrateus restore-db --image neoskop/migrateus:latest ./backup.tgz dokploy-prod
