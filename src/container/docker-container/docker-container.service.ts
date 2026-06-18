@@ -144,4 +144,30 @@ export class DockerContainerService extends ContainerService {
       );
     }
   }
+
+  public async copyFromDirectus(remotePath: string, localPath: string): Promise<void> {
+    const directusId = this.dockerService.containerConfig.Id;
+    const command = ['docker', 'cp', `${directusId}:${remotePath}`, localPath].join(' ');
+    this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
+    const output = await exec(this.dockerService.withHost(command), { silent: true });
+
+    if (output.code !== 0) {
+      throw new Error(
+        `Failed to copy ${directusId}:${chalk.bold(remotePath)} to ${chalk.bold(localPath)}: ${output.stderr}`,
+      );
+    }
+  }
+
+  public async copyToDirectus(localPath: string, remotePath: string): Promise<void> {
+    const directusId = this.dockerService.containerConfig.Id;
+    const command = ['docker', 'cp', localPath, `${directusId}:${remotePath}`].join(' ');
+    this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
+    const output = await exec(this.dockerService.withHost(command), { silent: true });
+
+    if (output.code !== 0) {
+      throw new Error(
+        `Failed to copy ${chalk.bold(localPath)} to ${directusId}:${chalk.bold(remotePath)}: ${output.stderr}`,
+      );
+    }
+  }
 }

@@ -15,4 +15,8 @@ export abstract class ContainerService {
   public abstract exfilFile(source: string, destination: string): Promise<void>;
 
   public abstract infilFile(source: string, destination: string): Promise<void>;
+
+  public abstract copyFromDirectus(remotePath: string, localPath: string): Promise<void>;
+
+  public abstract copyToDirectus(localPath: string, remotePath: string): Promise<void>;
 }

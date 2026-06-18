@@ -205,4 +205,114 @@ describe('DockerContainerService', () => {
       expect(psCall).toMatch(/^DOCKER_HOST=ssh:\/\/deploy@example docker ps/);
     });
   });
+
+  describe('copyFromDirectus / copyToDirectus (no DOCKER_HOST)', () => {
+    let service: InstanceType<typeof DockerContainerService>;
+    const DIRECTUS_ID = 'directus123';
+
+    beforeEach(() => {
+      mockExecFn.mockReset();
+      const logger = {
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+      };
+      const dockerService = {
+        networks: ['app_network'],
+        withHost: jest.fn((cmd: string) => cmd),
+        containerConfig: { Id: DIRECTUS_ID },
+      };
+      service = new DockerContainerService(logger as any, dockerService as any);
+      // migrateusContainerId intentionally NOT set — these methods must work without the sidecar
+    });
+
+    it('copyFromDirectus runs docker cp <directusId>:<remotePath> <localPath>', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyFromDirectus('/database/sqlite.db', '/tmp/out');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).toBe(`docker cp ${DIRECTUS_ID}:/database/sqlite.db /tmp/out`);
+    });
+
+    it('copyFromDirectus does not prefix DOCKER_HOST when host is unset', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyFromDirectus('/database/sqlite.db', '/tmp/out');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).not.toMatch(/^DOCKER_HOST=/);
+    });
+
+    it('copyFromDirectus throws on non-zero exit code', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'no such file' });
+
+      await expect(service.copyFromDirectus('/database/sqlite.db', '/tmp/out')).rejects.toThrow();
+    });
+
+    it('copyToDirectus runs docker cp <localPath> <directusId>:<remotePath>', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyToDirectus('/tmp/in', '/database/sqlite.db');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).toBe(`docker cp /tmp/in ${DIRECTUS_ID}:/database/sqlite.db`);
+    });
+
+    it('copyToDirectus does not prefix DOCKER_HOST when host is unset', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyToDirectus('/tmp/in', '/database/sqlite.db');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).not.toMatch(/^DOCKER_HOST=/);
+    });
+
+    it('copyToDirectus throws on non-zero exit code', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'permission denied' });
+
+      await expect(service.copyToDirectus('/tmp/in', '/database/sqlite.db')).rejects.toThrow();
+    });
+  });
+
+  describe('copyFromDirectus / copyToDirectus (with DOCKER_HOST)', () => {
+    let service: InstanceType<typeof DockerContainerService>;
+    const DIRECTUS_ID = 'directus456';
+    const HOST_PREFIX = 'DOCKER_HOST=ssh://deploy@example';
+
+    beforeEach(() => {
+      mockExecFn.mockReset();
+      const logger = {
+        debug: jest.fn(),
+        info: jest.fn(),
+        warn: jest.fn(),
+        error: jest.fn(),
+      };
+      const dockerService = {
+        networks: ['app_network'],
+        withHost: jest.fn((cmd: string) => `${HOST_PREFIX} ${cmd}`),
+        containerConfig: { Id: DIRECTUS_ID },
+      };
+      service = new DockerContainerService(logger as any, dockerService as any);
+    });
+
+    it('copyFromDirectus prefixes DOCKER_HOST when host is set', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyFromDirectus('/database/sqlite.db', '/tmp/out');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).toBe(`${HOST_PREFIX} docker cp ${DIRECTUS_ID}:/database/sqlite.db /tmp/out`);
+    });
+
+    it('copyToDirectus prefixes DOCKER_HOST when host is set', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.copyToDirectus('/tmp/in', '/database/sqlite.db');
+
+      const cpCall = mockExecFn.mock.calls[0][0] as string;
+      expect(cpCall).toBe(`${HOST_PREFIX} docker cp /tmp/in ${DIRECTUS_ID}:/database/sqlite.db`);
+    });
+  });
 });

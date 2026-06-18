@@ -262,6 +262,16 @@ export class DockerService {
     throw new Error('Failed to start Directus container');
   }
 
+  public get directusStorageRoot(): string | undefined {
+    return this.getOptionalDockerEnvValue('STORAGE_LOCAL_ROOT');
+  }
+
+  public get directusStorageIsLocal(): boolean {
+    const locations = this.getOptionalDockerEnvValue('STORAGE_LOCATIONS');
+    // Directus defaults to 'local' when unset; treat unset OR a comma list containing 'local' as local.
+    return !locations || locations.split(',').map((s) => s.trim()).includes('local');
+  }
+
   public async restartDirectus() {
     await exec(this.withHost(`docker restart ${this.containerConfig.Id}`), { silent: true });
   }

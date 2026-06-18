@@ -330,4 +330,22 @@ describe('AcaContainerService', () => {
       await expect(service.infilFile('/local/source.sql', '/tmp/dest.sql')).rejects.toThrow();
     });
   });
+
+  describe('copyFromDirectus()', () => {
+    it('rejects with a message about docker-only support', async () => {
+      const { service } = makeService();
+      await expect(service.copyFromDirectus('/database/sqlite.db', '/tmp/out')).rejects.toThrow(
+        /only supported on docker/,
+      );
+    });
+  });
+
+  describe('copyToDirectus()', () => {
+    it('rejects with a message about docker-only support', async () => {
+      const { service } = makeService();
+      await expect(service.copyToDirectus('/tmp/in', '/database/sqlite.db')).rejects.toThrow(
+        /only supported on docker/,
+      );
+    });
+  });
 });

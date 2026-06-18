@@ -92,4 +92,16 @@ export class AcaContainerService extends ContainerService {
       );
     }
   }
+
+  public async copyFromDirectus(_remotePath: string, _localPath: string): Promise<void> {
+    throw new Error(
+      'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
+    );
+  }
+
+  public async copyToDirectus(_localPath: string, _remotePath: string): Promise<void> {
+    throw new Error(
+      'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
+    );
+  }
 }

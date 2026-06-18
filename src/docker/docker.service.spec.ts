@@ -214,4 +214,53 @@ describe('DockerService', () => {
       expect(service.withHost('docker compose ps')).toBe('docker compose ps');
     });
   });
+
+  describe('directusStorageRoot', () => {
+    it('returns the value of STORAGE_LOCAL_ROOT when present', () => {
+      const service = makeServiceWithContainerEnv([
+        'STORAGE_LOCAL_ROOT=/uploads',
+      ]);
+      expect(service.directusStorageRoot).toBe('/uploads');
+    });
+
+    it('returns undefined when STORAGE_LOCAL_ROOT is absent', () => {
+      const service = makeServiceWithContainerEnv([]);
+      expect(service.directusStorageRoot).toBeUndefined();
+    });
+  });
+
+  describe('directusStorageIsLocal', () => {
+    it('returns true when STORAGE_LOCATIONS is "local"', () => {
+      const service = makeServiceWithContainerEnv([
+        'STORAGE_LOCATIONS=local',
+      ]);
+      expect(service.directusStorageIsLocal).toBe(true);
+    });
+
+    it('returns true when STORAGE_LOCATIONS is absent (Directus default is local)', () => {
+      const service = makeServiceWithContainerEnv([]);
+      expect(service.directusStorageIsLocal).toBe(true);
+    });
+
+    it('returns false when STORAGE_LOCATIONS is "s3"', () => {
+      const service = makeServiceWithContainerEnv([
+        'STORAGE_LOCATIONS=s3',
+      ]);
+      expect(service.directusStorageIsLocal).toBe(false);
+    });
+
+    it('returns true when STORAGE_LOCATIONS is a comma list containing "local"', () => {
+      const service = makeServiceWithContainerEnv([
+        'STORAGE_LOCATIONS=s3, local, azure',
+      ]);
+      expect(service.directusStorageIsLocal).toBe(true);
+    });
+
+    it('returns false when STORAGE_LOCATIONS is a comma list not containing "local"', () => {
+      const service = makeServiceWithContainerEnv([
+        'STORAGE_LOCATIONS=s3,azure',
+      ]);
+      expect(service.directusStorageIsLocal).toBe(false);
+    });
+  });
 });
