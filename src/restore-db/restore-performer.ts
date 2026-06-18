@@ -19,7 +19,7 @@ export abstract class RestorePerformer {
     protected readonly logger: Logger,
     private readonly directusAssetService: DirectusAssetService,
     private readonly directusSettingService: DirectusSettingService,
-    private readonly sqlService: SqlService,
+    protected readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly environmentService: EnvironmentService,
     private readonly progressService: ProgressService,
@@ -30,6 +30,14 @@ export abstract class RestorePerformer {
   public async restore(backupFile: string) {
     const backupDir = await this.createTemporaryDirectory();
 
+    if (this.sqlService.usesSidecar) {
+      await this.restoreServerFlow(backupDir, backupFile);
+    } else {
+      await this.restoreFileFlow(backupDir, backupFile);
+    }
+  }
+
+  private async restoreServerFlow(backupDir: string, backupFile: string) {
     try {
       this.progressService.advance('📦 Extract backup archive');
       await this.extractBackupArchive(backupDir, backupFile);
@@ -53,7 +61,11 @@ export abstract class RestorePerformer {
       this.progressService.advance('🧨 Dropping existing tables');
       await this.sqlService.dropAllTables(this.containerService);
       this.progressService.advance('🔄 Restore database dump');
-      await this.sqlService.transferRestore(this.containerService, manifest.client, '/tmp/backup.sql');
+      // Use the correct in-sidecar artifact path based on the source client:
+      // sqlite3 sources use database.sqlite; all server sources use backup.sql.
+      // TODO: infil database.sqlite for k8s/aca sqlite→pg (that cross-engine combo is an unverified edge).
+      const artifactName = manifest.client === 'sqlite3' ? 'database.sqlite' : 'backup.sql';
+      await this.sqlService.transferRestore(this.containerService, manifest.client, `/tmp/${artifactName}`);
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(this.containerService);
       await this.sqlService.setCredentials(
@@ -99,6 +111,27 @@ export abstract class RestorePerformer {
       await this.sqlService.cleanUpDirectusUser(this.containerService);
       await this.cleanUp();
       await this.containerService.cleanUp();
+      await this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
+    }
+  }
+
+  private async restoreFileFlow(backupDir: string, backupFile: string) {
+    try {
+      this.progressService.advance('📦 Extract backup archive');
+      await this.extractBackupArchive(backupDir, backupFile);
+      await this.setup(backupDir);
+
+      this.progressService.advance('💾 Copy database file');
+      await this.copyDatabaseIn(backupDir);
+
+      this.progressService.advance('🔄 Restarting Directus');
+      await this.restartDirectus();
+    } catch (error: any) {
+      this.progressService.fail(error);
+    } finally {
+      this.progressService.advance('🛁 Clean-up');
+      await this.cleanUp();
       await this.deleteTemporaryDirectory(backupDir);
       this.progressService.finish();
     }
@@ -151,6 +184,11 @@ export abstract class RestorePerformer {
 
   protected cleanUp(): Promise<void> {
     return Promise.resolve();
+  }
+
+  /** File-based (SQLite) platforms implement this to copy the DB file and uploads into the Directus container. */
+  protected copyDatabaseIn(_backupDir: string): Promise<void> {
+    throw new Error('copyDatabaseIn is not implemented for this platform');
   }
 
   private createTemporaryDirectory() {

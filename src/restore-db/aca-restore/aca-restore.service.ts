@@ -61,4 +61,8 @@ export class AcaRestoreService extends RestorePerformer {
   protected async restartDirectus(): Promise<void> {
     await this.acaService.restartDirectus();
   }
+
+  protected async copyDatabaseIn(_backupDir: string): Promise<void> {
+    throw new Error('SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA');
+  }
 }

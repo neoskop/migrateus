@@ -24,6 +24,7 @@ type AnyMock = jest.Mock<any>;
 interface MockSqlService {
   client: 'mysql' | 'pg' | 'sqlite3';
   clientImage: string;
+  usesSidecar: boolean;
   dropAllTables: AnyMock;
   transferRestore: AnyMock;
   restoreMysqlDump: AnyMock;
@@ -43,6 +44,7 @@ function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql', client
   return {
     client,
     clientImage: clientImage ?? CLIENT_IMAGE_MAP[client],
+    usesSidecar: true, // server engines use sidecar; SQLite does not
     dropAllTables: jest.fn(async () => undefined),
     transferRestore: jest.fn(async () => undefined),
     restoreMysqlDump: jest.fn(async () => undefined),
@@ -334,5 +336,79 @@ describe('RestorePerformer: containerService.image set from sqlService.clientIma
     await performer.restore(archivePath);
 
     expect(imageAtSetupTime).toBe(mysqlImage);
+  });
+});
+
+describe('RestorePerformer server flow: artifact path is manifest-aware', () => {
+  let tmpDir: string;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanTempDir(tmpDir); });
+
+  it('passes /tmp/backup.sql to transferRestore when manifest.client is pg (server→server)', async () => {
+    const srcDir = makeTempDir();
+    try {
+      fs.writeFileSync(path.join(srcDir, 'backup.sql'), '-- pg dump');
+      fs.writeFileSync(path.join(srcDir, 'meta.json'), JSON.stringify({ client: 'pg', version: '10.0.0' }));
+      const archivePath = path.join(tmpDir, 'backup.tar');
+      const { execSync } = await import('node:child_process');
+      execSync(`tar -cf ${archivePath} -C ${srcDir} backup.sql meta.json`);
+
+      const sqlService = makeMockSqlService('pg'); // target is pg, usesSidecar=true
+      const { performer } = buildPerformer(sqlService, { force: true });
+
+      await performer.restore(archivePath);
+
+      expect(sqlService.transferRestore).toHaveBeenCalledTimes(1);
+      const [, , artifactPath] = sqlService.transferRestore.mock.calls[0] as any[];
+      expect(artifactPath).toBe('/tmp/backup.sql');
+    } finally {
+      cleanTempDir(srcDir);
+    }
+  });
+
+  it('passes /tmp/database.sqlite to transferRestore when manifest.client is sqlite3 (cross-engine sqlite→pg)', async () => {
+    const srcDir = makeTempDir();
+    try {
+      fs.writeFileSync(path.join(srcDir, 'database.sqlite'), 'fake sqlite binary');
+      fs.writeFileSync(path.join(srcDir, 'meta.json'), JSON.stringify({ client: 'sqlite3', dbFilename: '/database/sqlite.db', version: '10.0.0' }));
+      const archivePath = path.join(tmpDir, 'backup.tar');
+      const { execSync } = await import('node:child_process');
+      execSync(`tar -cf ${archivePath} -C ${srcDir} database.sqlite meta.json`);
+
+      const sqlService = makeMockSqlService('pg'); // target is pg server, usesSidecar=true
+      const { performer } = buildPerformer(sqlService, { force: true });
+
+      await performer.restore(archivePath);
+
+      expect(sqlService.transferRestore).toHaveBeenCalledTimes(1);
+      const [, sourceClient, artifactPath] = sqlService.transferRestore.mock.calls[0] as any[];
+      expect(sourceClient).toBe('sqlite3');
+      expect(artifactPath).toBe('/tmp/database.sqlite');
+    } finally {
+      cleanTempDir(srcDir);
+    }
+  });
+
+  it('passes /tmp/backup.sql to transferRestore when manifest.client is mysql (server→server)', async () => {
+    const srcDir = makeTempDir();
+    try {
+      fs.writeFileSync(path.join(srcDir, 'backup.sql'), '-- mysql dump');
+      fs.writeFileSync(path.join(srcDir, 'meta.json'), JSON.stringify({ client: 'mysql', version: '10.0.0' }));
+      const archivePath = path.join(tmpDir, 'backup.tar');
+      const { execSync } = await import('node:child_process');
+      execSync(`tar -cf ${archivePath} -C ${srcDir} backup.sql meta.json`);
+
+      const sqlService = makeMockSqlService('mysql'); // target is mysql, usesSidecar=true
+      const { performer } = buildPerformer(sqlService, { force: true });
+
+      await performer.restore(archivePath);
+
+      expect(sqlService.transferRestore).toHaveBeenCalledTimes(1);
+      const [, , artifactPath] = sqlService.transferRestore.mock.calls[0] as any[];
+      expect(artifactPath).toBe('/tmp/backup.sql');
+    } finally {
+      cleanTempDir(srcDir);
+    }
   });
 });
