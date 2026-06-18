@@ -29,6 +29,10 @@ export class SqlService {
     this._driver = createDbDriver(config, this.logger);
   }
 
+  public get client(): DbDriver['client'] {
+    return this.driver.client;
+  }
+
   private get driver(): DbDriver {
     return this._driver;
   }

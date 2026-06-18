@@ -60,6 +60,13 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
   return { service, containerService, redact, directusUser, logger };
 }
 
+describe('SqlService.client getter', () => {
+  it('returns "mysql" when databaseConfig has no explicit client (default)', () => {
+    const { service } = build();
+    expect(service.client).toBe('mysql');
+  });
+});
+
 describe('SqlService.databaseConfig setter', () => {
   it('registers two redactions and stores config', () => {
     const { redact } = build();

@@ -95,9 +95,10 @@ export abstract class BackupPerformer {
 
   private async storeMetadata(directusPort: number, backupDir: string) {
     const version = await this.directusVersionService.getVersion(directusPort);
+    const client = this.sqlService.client;
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
-      JSON.stringify({ version, timestamp: new Date().toISOString() }, null, 2),
+      JSON.stringify({ version, client, timestamp: new Date().toISOString() }, null, 2),
     );
   }
 
