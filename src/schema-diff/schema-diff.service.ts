@@ -167,7 +167,7 @@ export class SchemaDiffService {
     const containerService = this.containerServices[name];
 
     if (containerService) {
-      await this.sqlService.cleanUpDirectusUser(containerService);
+      await this.sqlService.cleanUpDirectusUser();
       await containerService.cleanUp();
     }
 
@@ -211,7 +211,7 @@ export class SchemaDiffService {
     this.progressService.advance(
       `👤 Set-up Directus user in environment ${chalk.bold(name)}`,
     );
-    await this.sqlService.setupDirectusUser(containerService);
+    await this.sqlService.setupDirectusUser(containerService, port);
     return this.directus.getClient(port, this.directusUserService.token);
   }
 

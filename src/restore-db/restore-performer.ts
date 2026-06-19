@@ -63,7 +63,10 @@ export abstract class RestorePerformer {
 
       if (!this.configService.force) {
         this.progressService.advance('👤 Set-up Directus user');
-        await this.sqlService.setupDirectusUser(this.containerService);
+        await this.sqlService.setupDirectusUser(
+          this.containerService,
+          directusPort,
+        );
         this.progressService.advance('🔎 Compare Directus versions');
         await this.compareDirectusVersions(directusPort, manifest.version);
       }
@@ -82,7 +85,10 @@ export abstract class RestorePerformer {
         `/tmp/${artifactName}`,
       );
       this.progressService.advance('👤 Set-up Directus user');
-      await this.sqlService.setupDirectusUser(this.containerService);
+      await this.sqlService.setupDirectusUser(
+        this.containerService,
+        directusPort,
+      );
       await this.sqlService.setCredentials(
         this.environmentService.environment.credentials,
         this.containerService,
@@ -123,7 +129,7 @@ export abstract class RestorePerformer {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');
-      await this.sqlService.cleanUpDirectusUser(this.containerService);
+      await this.sqlService.cleanUpDirectusUser();
       await this.cleanUp();
       await this.containerService.cleanUp();
       await this.deleteTemporaryDirectory(backupDir);

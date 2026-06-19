@@ -34,16 +34,6 @@ describe('SqliteDriver basics', () => {
     expect(driver.escapeIdentifier('my_table')).toBe('"my_table"');
   });
 
-  it('boolLiteral returns 1/0', () => {
-    const { driver } = driverWith();
-    expect(driver.boolLiteral(true)).toBe('1');
-    expect(driver.boolLiteral(false)).toBe('0');
-  });
-
-  it('deleteOne does NOT append LIMIT', () => {
-    const { driver } = driverWith();
-    expect(driver.deleteOne('"users"', 'id = 1')).toBe('DELETE FROM "users" WHERE id = 1');
-  });
 
   it('disableFks returns PRAGMA foreign_keys=OFF', () => {
     expect(driverWith().driver.disableFks()).toBe('PRAGMA foreign_keys=OFF');

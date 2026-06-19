@@ -31,14 +31,6 @@ export class PostgresDriver implements DbDriver {
     return assertSafeIdentifier(identifier, context);
   }
 
-  public boolLiteral(value: boolean): string {
-    return value ? 'true' : 'false';
-  }
-
-  public deleteOne(table: string, where: string): string {
-    return `DELETE FROM ${table} WHERE ${where}`;
-  }
-
   public disableFks(): string {
     return 'SET session_replication_role = replica';
   }

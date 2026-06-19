@@ -35,14 +35,6 @@ export class SqliteDriver implements DbDriver {
     return assertSafeIdentifier(identifier, context);
   }
 
-  public boolLiteral(value: boolean): string {
-    return value ? '1' : '0';
-  }
-
-  public deleteOne(table: string, where: string): string {
-    return `DELETE FROM ${table} WHERE ${where}`;
-  }
-
   public disableFks(): string {
     return 'PRAGMA foreign_keys=OFF';
   }

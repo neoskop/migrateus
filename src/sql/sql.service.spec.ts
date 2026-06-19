@@ -17,7 +17,7 @@ interface ExecOutput {
 
 interface Built {
   service: SqlService;
-  containerService: { execute: AnyMock };
+  containerService: { execute: AnyMock; execInDirectus: AnyMock };
   redact: { addRedaction: AnyMock };
   directusUser: {
     setupUser: AnyMock;
@@ -25,6 +25,7 @@ interface Built {
     cleanUp: AnyMock;
     setCredentials: AnyMock;
   };
+  directus: { getClient: AnyMock };
   logger: { debug: AnyMock };
   transferPlanner: { plan: AnyMock };
   pgloaderService: { run: AnyMock };
@@ -38,12 +39,18 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
     cleanUp: jest.fn(async () => undefined) as AnyMock,
     setCredentials: jest.fn(async () => undefined) as AnyMock,
   };
+  const directus = {
+    getClient: jest.fn(() => ({ request: jest.fn() })) as AnyMock,
+  };
   const redact = { addRedaction: jest.fn() };
   const containerService = {
     execute: jest.fn(async (cmd: string) =>
       execImpl
         ? await execImpl(cmd)
         : ({ code: 0, stdout: '', stderr: '' } satisfies ExecOutput),
+    ) as AnyMock,
+    execInDirectus: jest.fn(async () =>
+      ({ code: 0, stdout: '', stderr: '' } satisfies ExecOutput),
     ) as AnyMock,
   };
   const transferPlanner = { plan: jest.fn().mockReturnValue({ mode: 'native' }) as AnyMock };
@@ -55,6 +62,7 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
     redact as never,
     transferPlanner as never,
     pgloaderService as never,
+    directus as never,
   );
   service.databaseConfig = {
     host: 'h',
@@ -64,7 +72,7 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
     name: 'mydb',
   } as never;
 
-  return { service, containerService, redact, directusUser, logger, transferPlanner, pgloaderService };
+  return { service, containerService, redact, directusUser, directus, logger, transferPlanner, pgloaderService };
 }
 
 describe('SqlService.client getter', () => {
@@ -109,12 +117,52 @@ describe('SqlService cleanup guards (no driver / setup failed)', () => {
       { addRedaction: jest.fn() } as never,
       { plan: jest.fn() } as never,
       { run: jest.fn() } as never,
+      { getClient: jest.fn() } as never,
     );
-    // No service.databaseConfig assignment → no driver (simulates setup failure).
-    await expect(
-      service.cleanUpDirectusUser({ execute: jest.fn() } as never),
-    ).resolves.toBeUndefined();
-    expect(directusUser.removeUser).not.toHaveBeenCalled();
+    // cleanUpDirectusUser delegates to removeUser, which self-guards when the
+    // temp admin was never created (setup failed) — so this is a safe no-op.
+    await expect(service.cleanUpDirectusUser()).resolves.toBeUndefined();
+  });
+});
+
+describe('SqlService.setupDirectusUser (CLI temp-admin wiring)', () => {
+  it('delegates to directusUserService.setupUser with execInDirectus, getClient and port', async () => {
+    const { service, containerService, directusUser, directus } = build();
+
+    await service.setupDirectusUser(containerService as never, 9001);
+
+    expect(directusUser.setupUser).toHaveBeenCalledTimes(1);
+    const [execInDirectus, getClient, port] =
+      directusUser.setupUser.mock.calls[0];
+    expect(typeof execInDirectus).toBe('function');
+    expect(typeof getClient).toBe('function');
+    expect(port).toBe(9001);
+
+    // The passed execInDirectus delegates to the container's execInDirectus.
+    await execInDirectus('node /directus/cli.js roles create --role r --admin');
+    expect(containerService.execInDirectus).toHaveBeenCalledWith(
+      'node /directus/cli.js roles create --role r --admin',
+    );
+
+    // The passed getClient delegates to DirectusService.getClient.
+    getClient(9001, 'tok');
+    expect(directus.getClient).toHaveBeenCalledWith(9001, 'tok');
+  });
+});
+
+describe('SqlService.cleanUpDirectusUser', () => {
+  it('delegates to directusUserService.removeUser', async () => {
+    const { service, directusUser } = build();
+    await service.cleanUpDirectusUser();
+    expect(directusUser.removeUser).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SqlService.cleanUpAllDirectusUsers (SQL sweep, unchanged)', () => {
+  it('delegates to directusUserService.cleanUp with the driver and an exec', async () => {
+    const { service, containerService, directusUser } = build();
+    await service.cleanUpAllDirectusUsers(containerService as never);
+    expect(directusUser.cleanUp).toHaveBeenCalledTimes(1);
   });
 });
 

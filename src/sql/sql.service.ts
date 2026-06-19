@@ -11,6 +11,7 @@ import { DbDriver, Exec } from './db-driver/db-driver.interface.js';
 import { createDbDriver } from './db-driver/db-driver.factory.js';
 import { TransferPlanner } from '../transfer/transfer-planner.js';
 import { PgloaderService } from '../transfer/pgloader.service.js';
+import { DirectusService } from '../directus/directus.service.js';
 
 @Injectable()
 export class SqlService {
@@ -23,6 +24,7 @@ export class SqlService {
     private readonly redactService: RedactService,
     private readonly transferPlanner: TransferPlanner,
     private readonly pgloaderService: PgloaderService,
+    private readonly directus: DirectusService,
   ) {}
 
   public set databaseConfig(config: DatabaseConfig) {
@@ -59,21 +61,27 @@ export class SqlService {
     return (command: string) => containerService.execute(command);
   }
 
-  public async setupDirectusUser(containerService: ContainerService) {
-    await this.directusUserService.setupUser(this._driver, (sql) =>
-      this._driver.executeSql(this.execFor(containerService), sql),
+  /**
+   * Creates the engine-agnostic temporary Directus admin via the Directus CLI
+   * (run inside the Directus container) and logs in for an access token. The
+   * `port` is the Directus HTTP port reachable from this process (8055 for
+   * docker, the forwarded port for k8s).
+   */
+  public async setupDirectusUser(
+    containerService: ContainerService,
+    port: number,
+  ) {
+    await this.directusUserService.setupUser(
+      (command) => containerService.execInDirectus(command),
+      (p, token) => this.directus.getClient(p, token),
+      port,
     );
   }
 
-  public async cleanUpDirectusUser(containerService: ContainerService) {
-    // Nothing to clean up if setup failed before the driver/config was set —
-    // guard so a setup error is not masked by a driver-undefined crash here.
-    if (!this._driver) {
-      return;
-    }
-    await this.directusUserService.removeUser(this._driver, (sql) =>
-      this._driver.executeSql(this.execFor(containerService), sql),
-    );
+  public async cleanUpDirectusUser() {
+    // removeUser self-guards when the temp admin was never created (setup
+    // failed before setupDirectusUser ran), so this is a safe no-op then.
+    await this.directusUserService.removeUser();
   }
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {

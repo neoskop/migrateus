@@ -56,8 +56,11 @@ export abstract class BackupPerformer {
       await this.afterMysqlDump();
 
       this.progressService.advance('👤 Set-up Directus user');
-      await this.sqlService.setupDirectusUser(this.containerService);
       const directusPort = await this.getDirectusPort();
+      await this.sqlService.setupDirectusUser(
+        this.containerService,
+        directusPort,
+      );
 
       if (this.config.noAssets) {
         this.logger.debug('Skipping backup of assets');
@@ -92,7 +95,7 @@ export abstract class BackupPerformer {
     } finally {
       this.progressService.advance('🛁 Clean-up');
       if (!this.config.noAssets) {
-        await this.sqlService.cleanUpDirectusUser(this.containerService);
+        await this.sqlService.cleanUpDirectusUser();
       }
       await this.containerService.cleanUp();
       await this.cleanUp();

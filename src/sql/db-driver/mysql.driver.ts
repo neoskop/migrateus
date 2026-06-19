@@ -30,12 +30,6 @@ export class MysqlDriver implements DbDriver {
   public assertSafeIdentifier(identifier: string, context: string): string {
     return assertSafeIdentifier(identifier, context);
   }
-  public boolLiteral(value: boolean): string {
-    return value ? '1' : '0';
-  }
-  public deleteOne(table: string, where: string): string {
-    return `DELETE FROM ${table} WHERE ${where} LIMIT 1`;
-  }
   public disableFks(): string {
     return 'SET foreign_key_checks = 0';
   }

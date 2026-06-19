@@ -113,6 +113,10 @@ export class DockerContainerService extends ContainerService {
     });
   }
 
+  public execInDirectus(command: string) {
+    return this.dockerService.execInDirectus(command);
+  }
+
   private async removeContainer(container: string) {
     this.logger.debug(
       `Deleting container${container.includes(' ') ? 's' : ''} ${container

@@ -34,16 +34,6 @@ describe('PostgresDriver basics', () => {
     expect(driver.escapeIdentifier('my_table')).toBe('"my_table"');
   });
 
-  it('boolLiteral returns true/false strings', () => {
-    const { driver } = driverWith();
-    expect(driver.boolLiteral(true)).toBe('true');
-    expect(driver.boolLiteral(false)).toBe('false');
-  });
-
-  it('deleteOne does NOT append LIMIT', () => {
-    const { driver } = driverWith();
-    expect(driver.deleteOne('"users"', 'id = 1')).toBe('DELETE FROM "users" WHERE id = 1');
-  });
 
   it('disableFks returns SET session_replication_role = replica', () => {
     expect(driverWith().driver.disableFks()).toBe('SET session_replication_role = replica');

@@ -20,8 +20,6 @@ export interface DbDriver {
   escapeIdentifier(identifier: string): string;
   assertSafeIdentifier(identifier: string, context: string): string;
 
-  boolLiteral(value: boolean): string;
-  deleteOne(table: string, where: string): string;
   disableFks(): string;
   enableFks(): string;
 }

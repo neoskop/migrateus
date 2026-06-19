@@ -41,6 +41,10 @@ export class AcaContainerService extends ContainerService {
     );
   }
 
+  public execInDirectus(command: string): Promise<ExecOutputReturnValue> {
+    return this.acaService.execInDirectus(command);
+  }
+
   public async cleanUp(): Promise<void> {
     const { resourceGroup } = this.acaService.acaEnv;
     await this.acaService.az(

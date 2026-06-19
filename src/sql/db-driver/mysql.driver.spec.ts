@@ -34,17 +34,9 @@ describe('MysqlDriver basics', () => {
     expect(driverWith().driver.usesSidecar).toBe(true);
   });
 
-  it('quotes identifiers with backticks and bool literal as 1', () => {
+  it('quotes identifiers with backticks', () => {
     const { driver } = driverWith();
     expect(driver.escapeIdentifier('t1')).toBe('`t1`');
-    expect(driver.boolLiteral(true)).toBe('1');
-  });
-
-  it('deleteOne appends LIMIT 1', () => {
-    const { driver } = driverWith();
-    expect(driver.deleteOne('directus_users', 'id = 1')).toBe(
-      'DELETE FROM directus_users WHERE id = 1 LIMIT 1',
-    );
   });
 });
 

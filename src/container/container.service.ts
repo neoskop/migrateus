@@ -12,6 +12,11 @@ export abstract class ContainerService {
 
   public abstract execute(command: string): Promise<ExecOutputReturnValue>;
 
+  /** Runs a shell command inside the Directus container/pod (not the sidecar). */
+  public abstract execInDirectus(
+    command: string,
+  ): Promise<ExecOutputReturnValue>;
+
   public abstract exfilFile(source: string, destination: string): Promise<void>;
 
   public abstract infilFile(source: string, destination: string): Promise<void>;

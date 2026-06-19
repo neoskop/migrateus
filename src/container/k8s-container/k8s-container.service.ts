@@ -88,6 +88,10 @@ export class K8sContainerService extends ContainerService {
     );
   }
 
+  public execInDirectus(command: string) {
+    return this.k8sService.execInDirectus(command);
+  }
+
   public async exfilFile(source: string, destination: string): Promise<void> {
     const ouput = await this.k8sService.kubectl(
       `cp ${this.migrateusPodName}:${source} ${destination}`,
