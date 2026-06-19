@@ -156,15 +156,16 @@ export abstract class RestorePerformer {
 
   private async readManifest(
     backupDir: string,
-  ): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3' }> {
+  ): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3'; format: 'physical' | 'logical' }> {
     const metaFilePath = join(backupDir, 'meta.json');
     if (!(await fileExists(metaFilePath))) {
-      return { client: this.sqlService.client };
+      return { format: 'physical', client: this.sqlService.client };
     }
     const parsed = JSON.parse(await fs.promises.readFile(metaFilePath, 'utf8'));
     return {
       version: parsed.version,
       client: parsed.client ?? this.sqlService.client,
+      format: parsed.format ?? 'physical',
     };
   }
 

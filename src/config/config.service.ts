@@ -29,6 +29,7 @@ export class ConfigService {
     environments: [],
   };
   public noAssets = false;
+  public logical = false;
   public envConfig: dotenv.DotenvParseOutput;
   public force: boolean = false;
   public pageSize: number = 25;

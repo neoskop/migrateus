@@ -45,6 +45,7 @@ export class BackupDbQuestions {
   @DefaultFor({ name: 'to' })
   defaultTo(answers: BackupDbAnswers) {
     const date = new Date().toISOString().substring(0, 10).replaceAll('-', '');
-    return `migrateus-${answers.from}-${date}.tgz`;
+    const suffix = this.config.logical ? '-logical' : '';
+    return `migrateus-${answers.from}-${date}${suffix}.tgz`;
   }
 }

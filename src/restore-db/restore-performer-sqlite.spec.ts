@@ -192,6 +192,25 @@ describe('RestorePerformer SQLite path (usesSidecar=false)', () => {
     expect(containerService.cleanUp).not.toHaveBeenCalled();
   });
 
+  // NOTE: The SQLite restore path does not call readManifest (it goes directly to restoreFileFlow
+  // which only calls copyDatabaseIn + restartDirectus). The format field is therefore only
+  // observable via readManifest in the server flow tests. This test confirms the SQLite path
+  // does not break when meta.json contains a format field.
+  it('completes without error when meta.json in archive contains a format field', async () => {
+    const srcDir = makeTempDir();
+    try {
+      const metaPath = path.join(srcDir, 'meta.json');
+      fs.writeFileSync(metaPath, JSON.stringify({ client: 'sqlite3', dbFilename: '/database/sqlite.db', format: 'physical' }));
+      const archivePath = path.join(srcDir, 'backup.tar');
+      execSync(`tar -cf ${archivePath} -C ${srcDir} meta.json`);
+
+      const { performer } = buildSqliteRestorePerformer();
+      await expect(performer.restore(archivePath)).resolves.toBeUndefined();
+    } finally {
+      cleanTempDir(srcDir);
+    }
+  });
+
   // Regression: the driver (and thus `usesSidecar`) only exists AFTER platform
   // setup() runs. restore() must extract + setup before branching on usesSidecar.
   it('runs setup() before reading usesSidecar', async () => {

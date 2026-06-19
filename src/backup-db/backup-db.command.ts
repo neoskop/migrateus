@@ -55,6 +55,14 @@ export class BackupDbCommand extends MigrateusCommand {
     this.config.noAssets = true;
   }
 
+  @Option({
+    flags: '-l, --logical',
+    description: 'Logical (Directus-API) backup for cross-DBMS migration',
+  })
+  setLogical() {
+    this.config.logical = true;
+  }
+
   async execute(params: string[]): Promise<void> {
     let [from, to] = params;
 

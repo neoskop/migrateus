@@ -102,6 +102,18 @@ describe('BackupPerformer.storeMetadata', () => {
     expect(written).toHaveProperty('version', '10.0.0');
     expect(written).toHaveProperty('timestamp');
   });
+
+  it('includes format: "physical" in the written meta.json', async () => {
+    const { performer, writeFileSpy } = built;
+    await performer.backup('output.tar.gz');
+
+    const writeCall = writeFileSpy.mock.calls.find(
+      (c) => typeof c[0] === 'string' && (c[0] as string).endsWith('meta.json'),
+    );
+    expect(writeCall).toBeDefined();
+    const written = JSON.parse(writeCall![1] as string);
+    expect(written).toHaveProperty('format', 'physical');
+  });
 });
 
 describe('BackupPerformer: containerService.image set from sqlService.clientImage before setup()', () => {

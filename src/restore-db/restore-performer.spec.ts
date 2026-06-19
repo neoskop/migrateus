@@ -145,13 +145,13 @@ describe('RestorePerformer.readManifest', () => {
   it('returns target engine client when meta.json is absent (mysql target)', async () => {
     const { performer } = buildPerformer(makeMockSqlService('mysql'));
     const manifest = await performer.readManifestPublic(tmpDir);
-    expect(manifest).toEqual({ client: 'mysql' });
+    expect(manifest).toEqual({ client: 'mysql', format: 'physical' });
   });
 
   it('returns target engine client when meta.json is absent (pg target)', async () => {
     const { performer } = buildPerformer(makeMockSqlService('pg'));
     const manifest = await performer.readManifestPublic(tmpDir);
-    expect(manifest).toEqual({ client: 'pg' });
+    expect(manifest).toEqual({ client: 'pg', format: 'physical' });
   });
 
   it('returns parsed client from meta.json', async () => {
@@ -185,6 +185,32 @@ describe('RestorePerformer.readManifest', () => {
     const manifest = await performer.readManifestPublic(tmpDir);
     expect(manifest.client).toBe('pg');
     expect(manifest.version).toBe('9.0.0');
+  });
+
+  it('returns format: "physical" when meta.json is absent (no format field to read)', async () => {
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
+    const manifest = await performer.readManifestPublic(tmpDir);
+    expect(manifest).toHaveProperty('format', 'physical');
+  });
+
+  it('returns format: "physical" when meta.json exists but has no format field', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'meta.json'),
+      JSON.stringify({ version: '10.0.0', client: 'mysql' }),
+    );
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
+    const manifest = await performer.readManifestPublic(tmpDir);
+    expect(manifest).toHaveProperty('format', 'physical');
+  });
+
+  it('returns format: "logical" when meta.json contains format: "logical"', async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, 'meta.json'),
+      JSON.stringify({ version: '10.0.0', client: 'mysql', format: 'logical' }),
+    );
+    const { performer } = buildPerformer(makeMockSqlService('mysql'));
+    const manifest = await performer.readManifestPublic(tmpDir);
+    expect(manifest).toHaveProperty('format', 'logical');
   });
 });
 

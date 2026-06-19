@@ -165,6 +165,19 @@ describe('BackupPerformer SQLite path (usesSidecar=false)', () => {
     expect(written).toHaveProperty('version', '11.16.1');
   });
 
+  it('includes format: "physical" in meta.json for the SQLite path', async () => {
+    const { performer, writeFileSpy } = buildSqliteMock();
+
+    await performer.backup('output.tar.gz');
+
+    const writeCall = writeFileSpy.mock.calls.find(
+      (c) => typeof c[0] === 'string' && (c[0] as string).endsWith('meta.json'),
+    );
+    expect(writeCall).toBeDefined();
+    const written = JSON.parse(writeCall![1] as string);
+    expect(written).toHaveProperty('format', 'physical');
+  });
+
   // Regression: the driver (and thus `usesSidecar`) only exists AFTER platform
   // setup() runs. backup() must call setup() before branching on usesSidecar.
   it('runs setup() before reading usesSidecar', async () => {

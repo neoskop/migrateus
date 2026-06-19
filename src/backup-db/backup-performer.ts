@@ -156,7 +156,7 @@ export abstract class BackupPerformer {
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
       JSON.stringify(
-        { version, client, timestamp: new Date().toISOString() },
+        { version, client, format: 'physical', timestamp: new Date().toISOString() },
         null,
         2,
       ),
@@ -170,7 +170,7 @@ export abstract class BackupPerformer {
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
       JSON.stringify(
-        { version, client, dbFilename, timestamp: new Date().toISOString() },
+        { version, client, dbFilename, format: 'physical', timestamp: new Date().toISOString() },
         null,
         2,
       ),
