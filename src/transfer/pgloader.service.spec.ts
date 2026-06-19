@@ -28,7 +28,7 @@ describe('PgloaderService.run', () => {
   let service: PgloaderService;
 
   beforeEach(() => {
-    service = new PgloaderService();
+    service = new PgloaderService({ debug: jest.fn() } as never);
     jest.clearAllMocks();
   });
 
@@ -151,7 +151,7 @@ describe('PgloaderService.run', () => {
         sqliteArtifact: '/tmp/backup.sqlite',
         pg: { host: 'pg-host', port: '5432', user: 'pguser', password: 'pgpass', name: 'pgdb' },
       }),
-    ).rejects.toThrow('pgloader failed with status code 1: pgloader: connection refused');
+    ).rejects.toThrow(/pgloader failed with status code 1[\s\S]*connection refused/);
   });
 
   it('throws when the write command exits non-zero', async () => {

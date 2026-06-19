@@ -159,6 +159,19 @@ export class SqlService {
           name: this._config.name,
         },
       });
+      // pgloader exits 0 even when it loads nothing — verify the schema was
+      // actually created so the failure surfaces here (with pgloader's logged
+      // output) rather than as a confusing downstream "relation does not exist".
+      const tables = await this._driver.listTables(
+        this.execFor(containerService),
+      );
+      if (tables.length === 0) {
+        throw new Error(
+          'pgloader completed but created no tables in the target database. ' +
+            'The SQLite source may be empty/unreadable, or a cast rule may have failed — ' +
+            'see the pgloader output above (re-run with -v for the full report).',
+        );
+      }
     }
   }
 

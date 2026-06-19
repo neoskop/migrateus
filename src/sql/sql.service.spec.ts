@@ -321,8 +321,16 @@ describe('SqlService.databaseFilename getter', () => {
 });
 
 describe('SqlService.transferRestore (pgloader path)', () => {
+  // After pgloader, transferRestore verifies tables exist via the driver's
+  // listTables (an information_schema query). Return a table so it passes.
+  const withTables = (cmd: string) =>
+    cmd.includes('information_schema')
+      ? { code: 0, stdout: 'directus_collections\n', stderr: '' }
+      : { code: 0, stdout: '', stderr: '' };
+
   it('calls pgloaderService.run with stored config when TransferPlanner returns pgloader', async () => {
-    const { service, containerService, transferPlanner, pgloaderService } = build();
+    const { service, containerService, transferPlanner, pgloaderService } =
+      build(withTables);
 
     // Override to a pg-target driver
     service.databaseConfig = {
@@ -349,5 +357,28 @@ describe('SqlService.transferRestore (pgloader path)', () => {
         name: 'pgdb',
       },
     });
+  });
+
+  it('throws a clear error when pgloader creates no tables (listTables empty)', async () => {
+    // execute returns no rows for the information_schema query → 0 tables.
+    const { service, containerService, transferPlanner } = build(() => ({
+      code: 0,
+      stdout: '',
+      stderr: '',
+    }));
+
+    service.databaseConfig = {
+      client: 'pg',
+      host: 'pghost',
+      port: '5432',
+      user: 'pguser',
+      password: 'pgpass',
+      name: 'pgdb',
+    } as never;
+    transferPlanner.plan.mockReturnValue({ mode: 'pgloader' });
+
+    await expect(
+      service.transferRestore(containerService as never, 'sqlite3', '/tmp/backup.sqlite'),
+    ).rejects.toThrow(/created no tables/);
   });
 });
