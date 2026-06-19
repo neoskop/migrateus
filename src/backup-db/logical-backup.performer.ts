@@ -177,7 +177,15 @@ export class LogicalBackupPerformer {
   }
 
   private createTemporaryDirectory() {
-    const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
+    // Owner-only (0o700): the logical staging dir holds dumped directus_users
+    // (password hashes) + settings. Unlike the physical path it is written by
+    // this process directly (no uid-1000 sidecar bind-mount), so it needs no
+    // world access.
+    const tempDir = tmp.dirSync({
+      mode: 0o700,
+      prefix: 'migrateus-',
+      unsafeCleanup: true,
+    }).name;
     this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
     return tempDir;
   }
