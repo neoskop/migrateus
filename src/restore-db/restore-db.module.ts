@@ -5,6 +5,7 @@ import { RestoreDbQuestions } from './restore-db.questions.js';
 import { DockerRestoreService } from './docker-restore/docker-restore.service.js';
 import { K8sRestoreService } from './k8s-restore/k8s-restore.service.js';
 import { AcaRestoreService } from './aca-restore/aca-restore.service.js';
+import { LogicalRestorePerformer } from './logical-restore.performer.js';
 import { ContainerModule } from '../container/container.module.js';
 import { DirectusModule } from '../directus/directus.module.js';
 import { DockerModule } from '../docker/docker.module.js';
@@ -23,6 +24,7 @@ import { UpdateModule } from '../update/update.module.js';
     DockerRestoreService,
     K8sRestoreService,
     AcaRestoreService,
+    LogicalRestorePerformer,
   ],
   imports: [
     ConfigModule,
