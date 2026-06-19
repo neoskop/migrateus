@@ -136,31 +136,37 @@ export class DirectusLogicalService {
 
     while (true) {
       const query = { limit: LIMIT, page };
-      let rows: any[];
+      let rows: any;
 
       switch (collection as SystemCollection) {
         case 'directus_roles':
-          rows = (await client.request(readRoles(query))) as any[];
+          rows = await client.request(readRoles(query));
           break;
         case 'directus_policies':
-          rows = (await client.request(readPolicies(query))) as any[];
+          rows = await client.request(readPolicies(query));
           break;
         case 'directus_permissions':
-          rows = (await client.request(readPermissions(query))) as any[];
+          rows = await client.request(readPermissions(query));
           break;
         case 'directus_users':
-          rows = (await client.request(readUsers(query))) as any[];
+          rows = await client.request(readUsers(query));
           break;
         case 'directus_access':
-          rows = (await client.request(() => ({
+          rows = await client.request(() => ({
             path: '/access',
             params: { limit: LIMIT, offset: (page - 1) * LIMIT },
             method: 'GET',
-          }))) as any[];
+          }));
           break;
         default:
-          rows = (await client.request(readItems(collection as never, query))) as any[];
+          rows = await client.request(readItems(collection as never, query));
           break;
+      }
+
+      // A singleton user collection (meta.singleton) returns a single object
+      // from /items/<c>, not an array — wrap it and stop (no pagination).
+      if (!Array.isArray(rows)) {
+        return rows == null ? [] : [rows];
       }
 
       results.push(...rows);

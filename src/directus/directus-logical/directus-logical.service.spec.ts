@@ -162,6 +162,28 @@ describe('DirectusLogicalService.exportCollection — user collection', () => {
     expect(result).toHaveLength(601);
     expect(handler).toHaveBeenCalledTimes(4);
   });
+
+  it('wraps a user singleton (object response, not an array) in a one-element array', async () => {
+    // A singleton user collection returns a single object from /items/<c>,
+    // which must not be spread as if it were an array.
+    const singleton = { id: 1, value: 'only-row' };
+    const client = makeClient(async () => singleton);
+
+    const result = await service.exportCollection(client as never, 'theo_chat_response_description');
+
+    expect(result).toEqual([singleton]);
+    // No pagination for a singleton object.
+    expect(client.request).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns an empty array when a singleton response is null', async () => {
+    const client = makeClient(async () => null);
+
+    const result = await service.exportCollection(client as never, 'theo_singleton_empty');
+
+    expect(result).toEqual([]);
+    expect(client.request).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('DirectusLogicalService.exportCollection — directus_settings (singleton)', () => {
