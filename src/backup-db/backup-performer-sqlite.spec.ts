@@ -164,4 +164,65 @@ describe('BackupPerformer SQLite path (usesSidecar=false)', () => {
     expect(written).toHaveProperty('dbFilename', '/database/sqlite.db');
     expect(written).toHaveProperty('version', '11.16.1');
   });
+
+  // Regression: the driver (and thus `usesSidecar`) only exists AFTER platform
+  // setup() runs. backup() must call setup() before branching on usesSidecar.
+  it('runs setup() before reading usesSidecar', async () => {
+    jest.spyOn(fs.promises, 'writeFile').mockResolvedValue(undefined as never);
+    const sqlService: any = {
+      client: 'sqlite3',
+      clientImage: 'neoskop/migrateus:latest',
+      databaseFilename: '/database/sqlite.db',
+      _ready: false,
+      get usesSidecar() {
+        if (!this._ready) {
+          throw new TypeError(
+            "Cannot read properties of undefined (reading 'usesSidecar')",
+          );
+        }
+        return false;
+      },
+      performMysqlDump: jest.fn(async () => undefined),
+      setupDirectusUser: jest.fn(async () => undefined),
+      cleanUpDirectusUser: jest.fn(async () => undefined),
+    };
+
+    class P extends BackupPerformer {
+      public copied = false;
+      protected async setup(): Promise<void> {
+        sqlService._ready = true; // mimic platform setup creating the driver
+      }
+      protected async getDirectusPort(): Promise<number> {
+        return 8055;
+      }
+      protected async copyDatabaseOut(): Promise<void> {
+        this.copied = true;
+      }
+      protected getDirectusVersionHint(): string | undefined {
+        return undefined;
+      }
+    }
+
+    const progressService = {
+      advance: jest.fn(),
+      succeed: jest.fn(),
+      fail: jest.fn(),
+      finish: jest.fn(),
+      updateText: jest.fn(),
+      warn: jest.fn(),
+    } as never;
+
+    const performer = new P(
+      { debug: jest.fn() } as never,
+      {} as never,
+      sqlService as never,
+      { setup: jest.fn(), cleanUp: jest.fn(), image: '' } as never,
+      { noAssets: true } as never,
+      progressService,
+      { getVersion: jest.fn() } as never,
+    );
+
+    await expect(performer.backup('output.tar.gz')).resolves.toBeUndefined();
+    expect(performer.copied).toBe(true);
+  });
 });

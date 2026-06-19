@@ -30,6 +30,19 @@ export abstract class RestorePerformer {
   public async restore(backupFile: string) {
     const backupDir = this.createTemporaryDirectory();
 
+    // Extract + platform setup populate the database config (and thus the
+    // driver) — they MUST run before branching on `usesSidecar`.
+    try {
+      this.progressService.advance('📦 Extract backup archive');
+      await this.extractBackupArchive(backupDir, backupFile);
+      await this.setup(backupDir);
+    } catch (error: any) {
+      this.progressService.fail(error);
+      await this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
+      return;
+    }
+
     if (this.sqlService.usesSidecar) {
       await this.restoreServerFlow(backupDir, backupFile);
     } else {
@@ -39,9 +52,6 @@ export abstract class RestorePerformer {
 
   private async restoreServerFlow(backupDir: string, backupFile: string) {
     try {
-      this.progressService.advance('📦 Extract backup archive');
-      await this.extractBackupArchive(backupDir, backupFile);
-      await this.setup(backupDir);
       // NOTE: cross-engine (pgloader) restore needs an image bundling psql+pgloader; the per-driver clientImage selects the native CLI image. A bundled tools image must be supplied via --image for the pgloader path (UNVERIFIED).
       this.containerService.image = this.sqlService.clientImage;
       this.progressService.advance('🚀 Set-up Migrateus container');
@@ -123,10 +133,6 @@ export abstract class RestorePerformer {
 
   private async restoreFileFlow(backupDir: string, backupFile: string) {
     try {
-      this.progressService.advance('📦 Extract backup archive');
-      await this.extractBackupArchive(backupDir, backupFile);
-      await this.setup(backupDir);
-
       this.progressService.advance('💾 Copy database file');
       await this.copyDatabaseIn(backupDir);
 

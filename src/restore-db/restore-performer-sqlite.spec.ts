@@ -191,4 +191,60 @@ describe('RestorePerformer SQLite path (usesSidecar=false)', () => {
 
     expect(containerService.cleanUp).not.toHaveBeenCalled();
   });
+
+  // Regression: the driver (and thus `usesSidecar`) only exists AFTER platform
+  // setup() runs. restore() must extract + setup before branching on usesSidecar.
+  it('runs setup() before reading usesSidecar', async () => {
+    const archivePath = makeArchive(tmpDir);
+    const copyDatabaseIn = jest.fn(async () => undefined) as AnyMock;
+    const sqlService: any = {
+      client: 'sqlite3',
+      clientImage: 'neoskop/migrateus:latest',
+      databaseFilename: '/database/sqlite.db',
+      _ready: false,
+      get usesSidecar() {
+        if (!this._ready) {
+          throw new TypeError(
+            "Cannot read properties of undefined (reading 'usesSidecar')",
+          );
+        }
+        return false;
+      },
+      cleanUpDirectusUser: jest.fn(async () => undefined),
+    };
+
+    class P extends RestorePerformer {
+      protected async setup(): Promise<void> {
+        sqlService._ready = true; // mimic platform setup creating the driver
+      }
+      protected async getDirectusPort(): Promise<number> {
+        return 8055;
+      }
+      protected async restartDirectus(): Promise<void> {}
+      protected async copyDatabaseIn(dir: string): Promise<void> {
+        return copyDatabaseIn(dir);
+      }
+    }
+
+    const performer = new P(
+      { debug: jest.fn(), warn: jest.fn() } as never,
+      {} as never,
+      {} as never,
+      sqlService as never,
+      { setup: jest.fn(), cleanUp: jest.fn(), image: '' } as never,
+      { environment: {} } as never,
+      {
+        advance: jest.fn(),
+        warn: jest.fn(),
+        fail: jest.fn(),
+        finish: jest.fn(),
+        updateText: jest.fn(),
+      } as never,
+      { getVersion: jest.fn(), isDangerousMismatch: jest.fn(() => false) } as never,
+      { force: true } as never,
+    );
+
+    await expect(performer.restore(archivePath)).resolves.toBeUndefined();
+    expect(copyDatabaseIn).toHaveBeenCalledTimes(1);
+  });
 });

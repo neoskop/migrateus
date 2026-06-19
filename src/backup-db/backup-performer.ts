@@ -27,6 +27,17 @@ export abstract class BackupPerformer {
   public async backup(backupFile: string) {
     const backupDir = this.createTemporaryDirectory();
 
+    // Platform setup populates the database config (and thus the driver) — it
+    // MUST run before branching on `usesSidecar`, which reads the driver.
+    try {
+      await this.setup(backupDir);
+    } catch (error: any) {
+      this.progressService.fail(error);
+      await this.deleteTemporaryDirectory(backupDir);
+      this.progressService.finish();
+      return;
+    }
+
     if (this.sqlService.usesSidecar) {
       await this.backupServerFlow(backupDir, backupFile);
     } else {
@@ -36,7 +47,6 @@ export abstract class BackupPerformer {
 
   private async backupServerFlow(backupDir: string, backupFile: string) {
     try {
-      await this.setup(backupDir);
       // NOTE: cross-engine (pgloader) restore needs an image bundling psql+pgloader; the per-driver clientImage selects the native CLI image. A bundled tools image must be supplied via --image for the pgloader path (UNVERIFIED).
       this.containerService.image = this.sqlService.clientImage;
       this.progressService.advance('🚀 Set-up Migrateus container');
@@ -93,8 +103,6 @@ export abstract class BackupPerformer {
 
   private async backupFileFlow(backupDir: string, backupFile: string) {
     try {
-      await this.setup(backupDir);
-
       this.progressService.advance('💾 Copy database file');
       await this.copyDatabaseOut(backupDir);
 
