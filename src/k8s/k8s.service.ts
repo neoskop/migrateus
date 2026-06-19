@@ -6,6 +6,7 @@ import { K8sEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { exec } from '../util/exec.js';
+import { shquote } from '../util/sh-quote.js';
 import { ExecOptions } from 'shelljs';
 import { spawn } from 'child_process';
 import { highlight } from 'cli-highlight';
@@ -129,7 +130,7 @@ export class K8sService {
 
   public async execInDirectus(command: string) {
     return this.kubectl(
-      `exec deploy/directus -- /bin/sh -c "${command.replaceAll('"', '\\"')}"`,
+      `exec deploy/directus -- /bin/sh -c ${shquote(command)}`,
       { silent: true },
     );
   }

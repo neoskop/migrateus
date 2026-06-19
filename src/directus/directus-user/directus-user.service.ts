@@ -7,6 +7,7 @@ import { RedactService } from '../../redact/redact.service.js';
 import { assertUuid } from '../../sql/sql-escape.js';
 import { DbDriver } from '../../sql/db-driver/db-driver.interface.js';
 import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
+import { shquote } from '../../util/sh-quote.js';
 import argon2 from 'argon2';
 
 /** Runs a shell command inside the Directus container/pod and returns its output. */
@@ -53,12 +54,12 @@ export class DirectusUserService {
     this.port = port;
 
     const roleOutput = await execInDirectus(
-      `node /directus/cli.js roles create --role ${this.roleName} --admin`,
+      `node /directus/cli.js roles create --role ${shquote(this.roleName)} --admin`,
     );
     this.roleId = roleOutput.stdout.trim();
 
     const userOutput = await execInDirectus(
-      `node /directus/cli.js users create --email ${this.email} --password ${this.password} --role ${this.roleId}`,
+      `node /directus/cli.js users create --email ${shquote(this.email)} --password ${shquote(this.password)} --role ${shquote(this.roleId)}`,
     );
     this.userId = userOutput.stdout.trim();
 

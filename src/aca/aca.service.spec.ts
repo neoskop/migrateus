@@ -280,6 +280,9 @@ describe('AcaService', () => {
       expect(cmd).toMatch(/-n my-app/);
       expect(cmd).toMatch(/-g my-rg/);
       expect(cmd).toContain('node /directus/cli.js roles create --role r --admin');
+      // The --command value must be a single-quoted string containing /bin/sh -c '<innerquoted>'
+      expect(cmd).toContain("--command '/bin/sh -c ");
+      expect(cmd).toContain("'node /directus/cli.js roles create --role r --admin'");
       expect(result).toEqual({ code: 0, stdout: 'done', stderr: '' });
     });
 

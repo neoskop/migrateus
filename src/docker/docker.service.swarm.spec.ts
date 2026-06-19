@@ -115,9 +115,27 @@ describe('DockerService.execInDirectus', () => {
     expect(execMock).toHaveBeenCalledTimes(1);
     const cmd = execMock.mock.calls[0][0] as string;
     expect(cmd).toBe(
-      'DOCKER_HOST=ssh://h docker exec dir1 /bin/sh -c "node /directus/cli.js roles create --role r --admin"',
+      "DOCKER_HOST=ssh://h docker exec dir1 /bin/sh -c 'node /directus/cli.js roles create --role r --admin'",
     );
     expect(result).toEqual({ code: 0, stdout: 'ok', stderr: '' });
+  });
+
+  it('single-quotes a command containing $ or " (regression: no double-quote wrapping)', async () => {
+    execMock.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+    const service = build({
+      platform: 'docker',
+      name: 'dev',
+      containerName: 'dir1',
+    });
+    (service as any).containerConfig = { Id: 'dir1' };
+
+    await service.execInDirectus('echo "$HOME" && echo "hello"');
+
+    const cmd = execMock.mock.calls[0][0] as string;
+    // The command argument must be single-quoted, not double-quoted.
+    expect(cmd).toMatch(/\/bin\/sh -c '/);
+    expect(cmd).not.toMatch(/\/bin\/sh -c "/);
   });
 
   it('throws when the exec exits with a non-zero code', async () => {

@@ -65,8 +65,8 @@ describe('DirectusUserService.setupUser', () => {
     expect(calls[0]).toContain('roles create');
     expect(calls[0]).toContain('--admin');
     expect(calls[1]).toContain('users create');
-    // The user-create command references the parsed role id from the first call.
-    expect(calls[1]).toContain('role-id-123');
+    // The user-create command references the parsed role id (single-quoted) from the first call.
+    expect(calls[1]).toContain("'role-id-123'");
     // The login response token is stored on the public `token` field.
     expect(service.token).toBe('tok-from-login');
   }, 20000);
@@ -118,6 +118,24 @@ describe('DirectusUserService.setupUser', () => {
     await expect(
       service.setupUser(fn as never, jest.fn() as never, 8055),
     ).rejects.toThrow(/401/);
+  }, 20000);
+
+  it('single-quotes CLI args — a role name with $ or " is safely quoted (regression)', async () => {
+    const { service } = build();
+    const { fn, calls } = makeExec(['role-id-123\n', 'user-id-456\n']);
+
+    globalThis.fetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      }) as never) as never;
+
+    await service.setupUser(fn as never, jest.fn() as never, 8055);
+
+    // The roleName CLI arg must be wrapped in single quotes.
+    expect(calls[0]).toMatch(/--role '/);
+    // The password CLI arg must also be single-quoted.
+    expect(calls[1]).toMatch(/--password '/);
   }, 20000);
 });
 
@@ -176,7 +194,7 @@ describe('DirectusUserService.removeUser', () => {
   });
 });
 
-describe('DirectusUserService.setCredentials (unchanged, SQL-based)', () => {
+describe('DirectusUserService.setCredentials', () => {
   function fakeDriver() {
     return {
       escapeString: (v: string) => `'${v}'`,
@@ -225,9 +243,22 @@ describe('DirectusUserService.setCredentials (unchanged, SQL-based)', () => {
       /^UPDATE directus_users SET password = '\$argon2id\$[^']+' WHERE email = 'a@b\.c'$/,
     );
   }, 20000);
+
+  it('issues both token and password UPDATEs when both are provided', async () => {
+    const { service } = build();
+    const { fn, calls } = makeSqlExecutor();
+    await service.setCredentials(
+      [{ email: 'a@b.c', token: 'tok', password: 'pw' } as never],
+      fakeDriver(),
+      fn as never,
+    );
+    expect(calls).toHaveLength(2);
+    expect(calls.some(c => c.includes('SET token'))).toBe(true);
+    expect(calls.some(c => c.includes('SET password'))).toBe(true);
+  });
 });
 
-describe('DirectusUserService.cleanUp (unchanged, SQL-based sweep)', () => {
+describe('DirectusUserService.cleanUp', () => {
   function fakeDriver() {
     return {
       escapeString: (v: string) => `'${v}'`,
@@ -273,5 +304,15 @@ describe('DirectusUserService.cleanUp (unchanged, SQL-based sweep)', () => {
       /Invalid UUID for directus_users\.id/,
     );
     expect(calls.some((c) => c.startsWith('UPDATE directus_files'))).toBe(false);
+  });
+
+  it('throws when a returned policy id is not a UUID', async () => {
+    const { service } = build();
+    const u1 = '550e8400-e29b-41d4-a716-446655440000';
+    const replies = [`${u1}\n`, ``, ``, ``, `not-a-uuid\n`];
+    const { fn } = makeSqlExecutor(replies);
+    await expect(service.cleanUp(fakeDriver(), fn as never)).rejects.toThrow(
+      /Invalid UUID for directus_policies\.id/,
+    );
   });
 });

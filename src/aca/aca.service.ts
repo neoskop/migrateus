@@ -7,6 +7,7 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { AcaEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { exec } from '../util/exec.js';
+import { shquote } from '../util/sh-quote.js';
 import { ExecOptions, ExecOutputReturnValue } from 'shelljs';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 
@@ -77,10 +78,9 @@ export class AcaService {
 
   public async execInDirectus(command: string): Promise<ExecOutputReturnValue> {
     const { app, resourceGroup } = this.acaEnv;
-    const safeCommand = command.replaceAll('"', '\\"');
     // TODO(verify): az containerapp exec headless stdout
     return this.az(
-      `containerapp exec -n ${app} -g ${resourceGroup} --command "/bin/sh -c \\"${safeCommand}\\""`,
+      `containerapp exec -n ${app} -g ${resourceGroup} --command ${shquote('/bin/sh -c ' + shquote(command))}`,
     );
   }
 

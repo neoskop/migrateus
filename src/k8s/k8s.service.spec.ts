@@ -89,6 +89,18 @@ describe('K8sService', () => {
         service.execInDirectus('node /directus/cli.js'),
       ).rejects.toThrow('error');
     });
+
+    it('single-quotes a command containing $ (regression: no double-quote wrapping)', async () => {
+      const { service } = makeService();
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.execInDirectus('echo $SECRET');
+
+      const cmd = mockExecFn.mock.calls[0][0] as string;
+      // The shell arg must use single-quotes, never double-quotes.
+      expect(cmd).toMatch(/\/bin\/sh -c '/);
+      expect(cmd).not.toMatch(/\/bin\/sh -c "/);
+    });
   });
 
   describe('retrieveDatabaseConfig()', () => {

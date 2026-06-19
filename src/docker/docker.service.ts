@@ -12,6 +12,7 @@ import { SqlService } from '../sql/sql.service.js';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
 import { exec } from '../util/exec.js';
+import { shquote } from '../util/sh-quote.js';
 
 @Injectable()
 export class DockerService {
@@ -283,7 +284,7 @@ export class DockerService {
 
   public async execInDirectus(command: string) {
     const full = this.withHost(
-      `docker exec ${this.containerConfig.Id} /bin/sh -c "${command.replaceAll('"', '\\"')}"`,
+      `docker exec ${this.containerConfig.Id} /bin/sh -c ${shquote(command)}`,
     );
     const out = await exec(full, { silent: true });
     if (out.code !== 0) {
