@@ -30,7 +30,7 @@ export class PgloaderService {
       'LOAD DATABASE',
       `  FROM sqlite://${sqliteArtifact}`,
       `  INTO postgresql://${encodeURIComponent(pg.user)}:${encodeURIComponent(pg.password)}@${pg.host}:${pg.port}/${pg.name}`,
-      'WITH include drop, create tables, create indexes, reset sequences',
+      'WITH include drop, create tables, create indexes, reset sequences, quote identifiers',
       `SET work_mem to '128MB', maintenance_work_mem to '512MB'`,
       `${castRules};`,
     ].join('\n');
