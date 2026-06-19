@@ -59,7 +59,7 @@ function buildDockerBackupService(overrides?: {
 
   const directusAssetService = {} as never;
   const config = { noAssets: true } as never;
-  const logger = { debug: jest.fn() };
+  const logger = { debug: jest.fn(), warn: jest.fn() };
 
   const service = new DockerBackupService(
     logger as never,
@@ -72,7 +72,7 @@ function buildDockerBackupService(overrides?: {
     directusVersionService,
   );
 
-  return { service, dockerContainerService, dockerService, copyFromDirectus };
+  return { service, dockerContainerService, dockerService, copyFromDirectus, logger };
 }
 
 describe('DockerBackupService.copyDatabaseOut', () => {
@@ -133,6 +133,33 @@ describe('DockerBackupService.copyDatabaseOut', () => {
     expect(copyFromDirectus).toHaveBeenCalledWith(
       '/directus/uploads',
       '/tmp/backupdir/uploads',
+    );
+  });
+
+  it('warns but does not fail when the uploads directory is missing in the container', async () => {
+    const { service, copyFromDirectus, logger } = buildDockerBackupService({
+      directusStorageIsLocal: true,
+      directusStorageRoot: '/database/uploads',
+    });
+    // db file + sidecars succeed; the uploads dir copy fails (not found)
+    copyFromDirectus.mockImplementation(async (_src: string, dest: string) => {
+      if (dest.endsWith('/uploads')) {
+        throw new Error('Could not find the file /database/uploads in container');
+      }
+      return undefined;
+    });
+
+    await expect(
+      (service as any).copyDatabaseOut('/tmp/backupdir'),
+    ).resolves.not.toThrow();
+
+    // the db file was still copied, and a warning was emitted
+    expect(copyFromDirectus).toHaveBeenCalledWith(
+      '/database/sqlite.db',
+      '/tmp/backupdir/database.sqlite',
+    );
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('Uploads directory /database/uploads not found'),
     );
   });
 

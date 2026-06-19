@@ -72,10 +72,19 @@ export class DockerBackupService extends BackupPerformer {
       this.dockerService.directusStorageIsLocal &&
       this.dockerService.directusStorageRoot
     ) {
-      await this.dockerContainerService.copyFromDirectus(
-        this.dockerService.directusStorageRoot,
-        `${backupDir}/uploads`,
-      );
+      // Best-effort: the uploads dir may not exist yet (no assets uploaded, or
+      // Directus creates it lazily). A missing uploads dir must not fail the DB
+      // backup.
+      try {
+        await this.dockerContainerService.copyFromDirectus(
+          this.dockerService.directusStorageRoot,
+          `${backupDir}/uploads`,
+        );
+      } catch {
+        this.logger.warn(
+          `Uploads directory ${this.dockerService.directusStorageRoot} not found in the Directus container — assets skipped`,
+        );
+      }
     } else {
       this.logger.debug(
         'External storage detected — assets skipped for SQLite backup',
