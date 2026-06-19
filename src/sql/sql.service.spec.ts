@@ -28,7 +28,6 @@ interface Built {
   directus: { getClient: AnyMock };
   logger: { debug: AnyMock };
   transferPlanner: { plan: AnyMock };
-  pgloaderService: { run: AnyMock };
 }
 
 function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Built {
@@ -54,14 +53,12 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
     ) as AnyMock,
   };
   const transferPlanner = { plan: jest.fn().mockReturnValue({ mode: 'native' }) as AnyMock };
-  const pgloaderService = { run: jest.fn(async () => undefined) as AnyMock };
 
   const service = new SqlService(
     logger as never,
     directusUser as never,
     redact as never,
     transferPlanner as never,
-    pgloaderService as never,
     directus as never,
   );
   service.databaseConfig = {
@@ -72,7 +69,7 @@ function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Bu
     name: 'mydb',
   } as never;
 
-  return { service, containerService, redact, directusUser, directus, logger, transferPlanner, pgloaderService };
+  return { service, containerService, redact, directusUser, directus, logger, transferPlanner };
 }
 
 describe('SqlService.client getter', () => {
@@ -116,7 +113,6 @@ describe('SqlService cleanup guards (no driver / setup failed)', () => {
       directusUser as never,
       { addRedaction: jest.fn() } as never,
       { plan: jest.fn() } as never,
-      { run: jest.fn() } as never,
       { getClient: jest.fn() } as never,
     );
     // cleanUpDirectusUser delegates to removeUser, which self-guards when the
@@ -368,65 +364,3 @@ describe('SqlService.databaseFilename getter', () => {
   });
 });
 
-describe('SqlService.transferRestore (pgloader path)', () => {
-  // After pgloader, transferRestore verifies tables exist via the driver's
-  // listTables (an information_schema query). Return a table so it passes.
-  const withTables = (cmd: string) =>
-    cmd.includes('information_schema')
-      ? { code: 0, stdout: 'directus_collections\n', stderr: '' }
-      : { code: 0, stdout: '', stderr: '' };
-
-  it('calls pgloaderService.run with stored config when TransferPlanner returns pgloader', async () => {
-    const { service, containerService, transferPlanner, pgloaderService } =
-      build(withTables);
-
-    // Override to a pg-target driver
-    service.databaseConfig = {
-      client: 'pg',
-      host: 'pghost',
-      port: '5432',
-      user: 'pguser',
-      password: 'pgpass',
-      name: 'pgdb',
-    } as never;
-    transferPlanner.plan.mockReturnValue({ mode: 'pgloader' });
-
-    await service.transferRestore(containerService as never, 'sqlite3', '/tmp/backup.sqlite');
-
-    expect(transferPlanner.plan).toHaveBeenCalledWith('sqlite3', 'pg');
-    expect(pgloaderService.run).toHaveBeenCalledWith({
-      containerService,
-      sqliteArtifact: '/tmp/backup.sqlite',
-      pg: {
-        host: 'pghost',
-        port: '5432',
-        user: 'pguser',
-        password: 'pgpass',
-        name: 'pgdb',
-      },
-    });
-  });
-
-  it('throws a clear error when pgloader creates no tables (listTables empty)', async () => {
-    // execute returns no rows for the information_schema query → 0 tables.
-    const { service, containerService, transferPlanner } = build(() => ({
-      code: 0,
-      stdout: '',
-      stderr: '',
-    }));
-
-    service.databaseConfig = {
-      client: 'pg',
-      host: 'pghost',
-      port: '5432',
-      user: 'pguser',
-      password: 'pgpass',
-      name: 'pgdb',
-    } as never;
-    transferPlanner.plan.mockReturnValue({ mode: 'pgloader' });
-
-    await expect(
-      service.transferRestore(containerService as never, 'sqlite3', '/tmp/backup.sqlite'),
-    ).rejects.toThrow(/created no tables/);
-  });
-});

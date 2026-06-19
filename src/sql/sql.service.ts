@@ -10,7 +10,6 @@ import { RedactService } from '../redact/redact.service.js';
 import { DbDriver, Exec } from './db-driver/db-driver.interface.js';
 import { createDbDriver } from './db-driver/db-driver.factory.js';
 import { TransferPlanner } from '../transfer/transfer-planner.js';
-import { PgloaderService } from '../transfer/pgloader.service.js';
 import { DirectusService } from '../directus/directus.service.js';
 
 @Injectable()
@@ -23,7 +22,6 @@ export class SqlService {
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
     private readonly transferPlanner: TransferPlanner,
-    private readonly pgloaderService: PgloaderService,
     private readonly directus: DirectusService,
   ) {}
 
@@ -147,40 +145,11 @@ export class SqlService {
     sourceClient: 'mysql' | 'pg' | 'sqlite3',
     sqliteArtifact: string,
   ) {
-    const { mode } = this.transferPlanner.plan(
-      sourceClient,
-      this._driver.client,
-    );
-    if (mode === 'native') {
-      const exec = this.execFor(containerService);
-      await this._driver.restore(exec, sqliteArtifact);
-      await this._driver.postRestoreFixups(exec);
-    } else {
-      await this.pgloaderService.run({
-        containerService,
-        sqliteArtifact,
-        pg: {
-          host: this._config.host,
-          port: this._config.port,
-          user: this._config.user,
-          password: this._config.password,
-          name: this._config.name,
-        },
-      });
-      // pgloader exits 0 even when it loads nothing — verify the schema was
-      // actually created so the failure surfaces here (with pgloader's logged
-      // output) rather than as a confusing downstream "relation does not exist".
-      const tables = await this._driver.listTables(
-        this.execFor(containerService),
-      );
-      if (tables.length === 0) {
-        throw new Error(
-          'pgloader completed but created no tables in the target database. ' +
-            'The SQLite source may be empty/unreadable, or a cast rule may have failed — ' +
-            'see the pgloader output above (re-run with -v for the full report).',
-        );
-      }
-    }
+    // plan() throws for cross-DBMS pairs; only 'native' is ever returned.
+    this.transferPlanner.plan(sourceClient, this._driver.client);
+    const exec = this.execFor(containerService);
+    await this._driver.restore(exec, sqliteArtifact);
+    await this._driver.postRestoreFixups(exec);
   }
 
   public async listTables(containerService: ContainerService) {

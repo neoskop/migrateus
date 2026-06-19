@@ -17,40 +17,40 @@ describe('TransferPlanner.plan', () => {
     expect(planner.plan('sqlite3', 'sqlite3')).toEqual({ mode: 'native' });
   });
 
-  // sqlite3→pg: pgloader
-  it('returns pgloader for sqlite3→pg', () => {
-    expect(planner.plan('sqlite3', 'pg')).toEqual({ mode: 'pgloader' });
+  // Every cross-engine pair: throw pointing at logical backup
+  it('throws needs-logical-backup for sqlite3→pg', () => {
+    expect(() => planner.plan('sqlite3', 'pg')).toThrow(
+      /needs a logical backup/,
+    );
   });
 
-  // mysql→pg: not yet supported (special error)
-  it('throws a not-yet-supported error for mysql→pg', () => {
+  it('throws needs-logical-backup for mysql→pg', () => {
     expect(() => planner.plan('mysql', 'pg')).toThrow(
-      'MySQL→Postgres transfer is not yet supported',
+      /needs a logical backup/,
     );
   });
 
-  // Cross-engine targeting non-pg: unsupported
-  it('throws unsupported for pg→mysql', () => {
+  it('throws needs-logical-backup for pg→mysql', () => {
     expect(() => planner.plan('pg', 'mysql')).toThrow(
-      'Cross-engine transfer pg→mysql is unsupported',
+      /needs a logical backup/,
     );
   });
 
-  it('throws unsupported for sqlite3→mysql', () => {
+  it('throws needs-logical-backup for sqlite3→mysql', () => {
     expect(() => planner.plan('sqlite3', 'mysql')).toThrow(
-      'Cross-engine transfer sqlite3→mysql is unsupported',
+      /needs a logical backup/,
     );
   });
 
-  it('throws unsupported for pg→sqlite3', () => {
+  it('throws needs-logical-backup for pg→sqlite3', () => {
     expect(() => planner.plan('pg', 'sqlite3')).toThrow(
-      'Cross-engine transfer pg→sqlite3 is unsupported',
+      /needs a logical backup/,
     );
   });
 
-  it('throws unsupported for mysql→sqlite3', () => {
+  it('throws needs-logical-backup for mysql→sqlite3', () => {
     expect(() => planner.plan('mysql', 'sqlite3')).toThrow(
-      'Cross-engine transfer mysql→sqlite3 is unsupported',
+      /needs a logical backup/,
     );
   });
 });

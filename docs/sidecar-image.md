@@ -4,18 +4,19 @@ Migrateus performs every database operation from a short-lived **sidecar** conta
 
 ## Why one bundled image
 
-Earlier the sidecar defaulted to a MySQL image, which has no `psql`, `sqlite3`, or `pgloader` — so cross-engine restore (e.g. SQLite → PostgreSQL) failed with `command not found`. A per-engine image doesn't solve it either: the **cross-engine** path needs the target client **and** `pgloader` in the *same* container at the same time.
+Earlier the sidecar defaulted to a MySQL image, which has no `psql` or `sqlite3` — so operations against other engines failed with `command not found`. A per-engine image doesn't solve it either when a backup was made on one engine and is being restored to another: the sidecar always runs next to the *target* database and must carry that engine's client.
 
-The fix is a single bundled image, `neoskop/migrateus`, that carries every tool:
+The fix is a single bundled image, `neoskop/migrateus`, that carries the native CLI client for every supported engine:
 
 | Tool | Package | Used for |
 | --- | --- | --- |
 | `mysql`, `mysqldump` | `mariadb-client` (wire-compatible) | MySQL dump/restore/exec |
 | `psql`, `pg_dump` | `postgresql-client-17` (PGDG) | PostgreSQL dump/restore/exec |
 | `sqlite3` | `sqlite3` | SQLite introspection/exec |
-| `pgloader` | `pgloader` | cross-engine `* → PostgreSQL` conversion |
 
-One image → every engine and the cross-engine path work out of the box. See [`Dockerfile`](../Dockerfile).
+One image → every engine works out of the box. See [`Dockerfile`](../Dockerfile).
+
+> **Cross-DBMS transfers:** physical backups are engine-specific (a MySQL dump cannot be loaded into PostgreSQL directly). To migrate across engines, use a **logical backup** — re-run `backup-db -l` on the source. The logical path exports and imports Directus data through the API, independent of the underlying engine.
 
 ## How it's wired
 
@@ -47,6 +48,6 @@ migrateus restore-db --image neoskop/migrateus:dev ./backup.tgz some-env
 ## Caveats
 
 - **`pg_dump` version:** `pg_dump` must be ≥ the source server's major version. The image pins PostgreSQL **17** client (covers servers ≤ 17). Bump `postgresql-client-NN` in the `Dockerfile` when newer servers appear.
-- **Cross-engine direction:** `pgloader` only writes to PostgreSQL, so cross-engine restore targets Postgres only; `MySQL → Postgres` is not yet supported (pgloader can't read a `mysqldump` file).
+- **Cross-DBMS transfers:** physical backups are engine-specific. Attempting a cross-DBMS physical restore will error with a message pointing at `backup-db -l`. Use logical backup/restore for cross-engine migrations.
 - **Image size:** the bundled image is larger than a single-engine client image; acceptable for a throwaway sidecar. Trim packages in the `Dockerfile` if a deployment only needs a subset.
 - **Non-root:** the image runs as UID `1000` (`runAsNonRoot`-compatible). The docker platform overrides this at runtime with the host user (`--user $uid:$gid`) so bind-mounted artifacts stay host-owned; k8s/ACA use the image default. `/tmp` (1777) and the backup dir (created mode `0777`) are writable for any UID.
