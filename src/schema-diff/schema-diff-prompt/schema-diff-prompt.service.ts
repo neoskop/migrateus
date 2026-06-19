@@ -1,3 +1,5 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import {
   createPrompt,
   isEnterKey,
@@ -10,7 +12,7 @@ import {
   usePagination,
 } from '@inquirer/core';
 import { type Prompt } from '@inquirer/type';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '../../config/config.service.js';
 import chalk from 'chalk';
 import { SchemaDiffPromptConfig } from './types/schema-diff-prompt-config.type.js';
@@ -18,7 +20,6 @@ import { ChangeType } from './types/change-type.enum.js';
 import { SchemaDiffPromptItem } from './schema-diff-prompt-item.js';
 import { SchemaDiffOutput } from '@directus/sdk';
 import { Change } from './types/diff.type.js';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class SchemaDiffPromptService {
@@ -26,7 +27,7 @@ export class SchemaDiffPromptService {
 
   constructor(
     private readonly config: ConfigService,
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
   ) {
     this.setupPrompt();
   }

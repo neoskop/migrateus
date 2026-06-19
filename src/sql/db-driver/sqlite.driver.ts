@@ -1,4 +1,4 @@
-import { Logger } from 'winston';
+import { LoggerService } from '../../logger/logger.service.js';
 import { DatabaseConfig } from '../../backup-db/database-config.interface.js';
 import { DbDriver, Exec } from './db-driver.interface.js';
 import {
@@ -16,7 +16,7 @@ export class SqliteDriver implements DbDriver {
 
   constructor(
     private readonly config: DatabaseConfig,
-    private readonly logger: Logger,
+    private readonly logger: LoggerService,
   ) {}
 
   private file(): string {
@@ -55,7 +55,9 @@ export class SqliteDriver implements DbDriver {
     const command = `cp "${this.file()}" "${artifact}"`;
     const output = await exec(command);
     if (output.code !== 0) {
-      throw new Error(`Backup failed with status code ${output.code}: ${output.stderr}`);
+      throw new Error(
+        `Backup failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 
@@ -63,7 +65,9 @@ export class SqliteDriver implements DbDriver {
     const command = `cp "${artifact}" "${this.file()}"`;
     const output = await exec(command);
     if (output.code !== 0) {
-      throw new Error(`Restore failed with status code ${output.code}: ${output.stderr}`);
+      throw new Error(
+        `Restore failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 
@@ -72,10 +76,12 @@ export class SqliteDriver implements DbDriver {
   }
 
   public async listTables(exec: Exec): Promise<string[]> {
-    return (await this.executeSql(
-      exec,
-      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';`,
-    ))
+    return (
+      await this.executeSql(
+        exec,
+        `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%';`,
+      )
+    )
       .split('\n')
       .filter(Boolean);
   }

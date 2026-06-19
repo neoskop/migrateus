@@ -1,8 +1,8 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { Command, InquirerService, Option } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
@@ -25,7 +25,7 @@ import { RenameCollectionService } from './rename-collection.service.js';
 })
 export class RenameCollectionCommand extends MigrateusCommand {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) logger: LoggerService,
     config: ConfigService,
     private readonly inquirer: InquirerService,
     private readonly renameCollectionService: RenameCollectionService,
@@ -51,16 +51,23 @@ export class RenameCollectionCommand extends MigrateusCommand {
     let [environment, oldName, newName] = params;
 
     if (!environment || !oldName || !newName) {
-      const answers = await this.inquirer.ask<RenameCollectionAnswers>('rename-collection-questions', {
-        environment,
-        oldName,
-        newName,
-      });
+      const answers = await this.inquirer.ask<RenameCollectionAnswers>(
+        'rename-collection-questions',
+        {
+          environment,
+          oldName,
+          newName,
+        },
+      );
       environment = answers.environment;
       oldName = answers.oldName;
       newName = answers.newName;
     }
 
-    await this.renameCollectionService.renameCollection(environment, oldName, newName);
+    await this.renameCollectionService.renameCollection(
+      environment,
+      oldName,
+      newName,
+    );
   }
 }

@@ -1,9 +1,9 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import chalk from 'chalk';
 import portfinder from 'portfinder';
 import { ChildProcess } from 'child_process';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { K8sService } from '../k8s.service.js';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class PortForwardService {
   private forwards: ChildProcess[] = [];
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly k8sService: K8sService,
   ) {}
 

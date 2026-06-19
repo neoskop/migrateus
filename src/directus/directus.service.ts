@@ -1,13 +1,13 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { createDirectus, staticToken, rest } from '@directus/sdk';
 import { Inject, Injectable } from '@nestjs/common';
 import chalk from 'chalk';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 
 @Injectable()
 export class DirectusService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
   ) {}
 
   public getClient(port: number, token: string) {
@@ -21,10 +21,7 @@ export class DirectusService {
       .with(rest());
   }
 
-  private fetch(
-    url: string,
-    options: RequestInit = {},
-  ): Promise<Response> {
+  private fetch(url: string, options: RequestInit = {}): Promise<Response> {
     const { method = 'GET' } = options;
     const methodUpper = method.toUpperCase();
 

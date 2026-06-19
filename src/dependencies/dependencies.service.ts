@@ -1,13 +1,13 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import chalk from 'chalk';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import which from 'which';
-import { Logger } from 'winston';
 
 @Injectable()
 export class DependenciesService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
   ) {}
 
   public async check() {

@@ -1,7 +1,7 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { exec } from '../util/exec.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { RedactService } from '../redact/redact.service.js';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
@@ -14,7 +14,7 @@ export class OnepasswordService {
   private cachedAccounts: OnepasswordAccount[];
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly redactService: RedactService,
   ) {}
 

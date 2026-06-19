@@ -1,4 +1,4 @@
-import { Logger } from 'winston';
+import { LoggerService } from '../logger/logger.service.js';
 import shell from 'shelljs';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
@@ -15,17 +15,17 @@ import { DirectusVersionService } from '../directus/directus-version/directus-ve
 
 export abstract class BackupPerformer {
   constructor(
-    protected readonly logger: Logger,
+    protected readonly logger: LoggerService,
     private readonly directusAssetService: DirectusAssetService,
     protected readonly sqlService: SqlService,
     private readonly containerService: ContainerService,
     private readonly config: ConfigService,
     private readonly progressService: ProgressService,
     private readonly directusVersionService: DirectusVersionService,
-  ) { }
+  ) {}
 
   public async backup(backupFile: string) {
-    const backupDir = await this.createTemporaryDirectory();
+    const backupDir = this.createTemporaryDirectory();
 
     if (this.sqlService.usesSidecar) {
       await this.backupServerFlow(backupDir, backupFile);
@@ -144,7 +144,11 @@ export abstract class BackupPerformer {
     const client = this.sqlService.client;
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
-      JSON.stringify({ version, client, timestamp: new Date().toISOString() }, null, 2),
+      JSON.stringify(
+        { version, client, timestamp: new Date().toISOString() },
+        null,
+        2,
+      ),
     );
   }
 
@@ -154,7 +158,11 @@ export abstract class BackupPerformer {
     const version = this.getDirectusVersionHint();
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
-      JSON.stringify({ version, client, dbFilename, timestamp: new Date().toISOString() }, null, 2),
+      JSON.stringify(
+        { version, client, dbFilename, timestamp: new Date().toISOString() },
+        null,
+        2,
+      ),
     );
   }
 

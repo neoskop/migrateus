@@ -1,6 +1,6 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import ora, { Ora } from 'ora';
 import chalk from 'chalk';
 import { highlight } from 'cli-highlight';
@@ -13,7 +13,7 @@ export class ProgressService {
   public indent = 0;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
   ) {}
 
   public advance(message: string) {

@@ -1,11 +1,14 @@
-import { Logger } from 'winston';
+import { LoggerService } from '../../logger/logger.service.js';
 import { DatabaseConfig } from '../../backup-db/database-config.interface.js';
 import { DbDriver } from './db-driver.interface.js';
 import { MysqlDriver } from './mysql.driver.js';
 import { PostgresDriver } from './postgres.driver.js';
 import { SqliteDriver } from './sqlite.driver.js';
 
-export function createDbDriver(config: DatabaseConfig, logger: Logger): DbDriver {
+export function createDbDriver(
+  config: DatabaseConfig,
+  logger: LoggerService,
+): DbDriver {
   const client = config.client ?? 'mysql';
   switch (client) {
     case 'mysql':

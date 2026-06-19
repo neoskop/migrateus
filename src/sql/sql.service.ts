@@ -1,8 +1,8 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
 import { highlight } from 'cli-highlight';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { ContainerService } from '../container/container.service.js';
 import { Credential } from '../directus/directus-user/credential.type.js';
@@ -18,7 +18,7 @@ export class SqlService {
   private _config: DatabaseConfig;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly directusUserService: DirectusUserService,
     private readonly redactService: RedactService,
     private readonly transferPlanner: TransferPlanner,
@@ -36,15 +36,15 @@ export class SqlService {
   }
 
   public get client(): DbDriver['client'] {
-    return this.driver.client;
+    return this._driver.client;
   }
 
   public get clientImage(): string {
-    return this.driver.clientImage;
+    return this._driver.clientImage;
   }
 
   public get usesSidecar(): boolean {
-    return this.driver.usesSidecar;
+    return this._driver.usesSidecar;
   }
 
   public get databaseFilename(): string | undefined {
@@ -60,8 +60,8 @@ export class SqlService {
   }
 
   public async setupDirectusUser(containerService: ContainerService) {
-    await this.directusUserService.setupUser(this.driver, (sql) =>
-      this.driver.executeSql(this.execFor(containerService), sql),
+    await this.directusUserService.setupUser(this._driver, (sql) =>
+      this._driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
@@ -71,8 +71,8 @@ export class SqlService {
     if (!this._driver) {
       return;
     }
-    await this.directusUserService.removeUser(this.driver, (sql) =>
-      this.driver.executeSql(this.execFor(containerService), sql),
+    await this.directusUserService.removeUser(this._driver, (sql) =>
+      this._driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
@@ -80,43 +80,58 @@ export class SqlService {
     if (!this._driver) {
       return;
     }
-    await this.directusUserService.cleanUp(this.driver, (sql) =>
-      this.driver.executeSql(this.execFor(containerService), sql),
+    await this.directusUserService.cleanUp(this._driver, (sql) =>
+      this._driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
-  public async setCredentials(credentials: Credential[], containerService: ContainerService) {
+  public async setCredentials(
+    credentials: Credential[],
+    containerService: ContainerService,
+  ) {
     if (!credentials || credentials.length === 0) {
       return;
     }
-    await this.directusUserService.setCredentials(credentials, this.driver, (sql) =>
-      this.driver.executeSql(this.execFor(containerService), sql),
+    await this.directusUserService.setCredentials(
+      credentials,
+      this._driver,
+      (sql) => this._driver.executeSql(this.execFor(containerService), sql),
     );
   }
 
-  public async setAssetStorage(storage: string, containerService: ContainerService) {
+  public async setAssetStorage(
+    storage: string,
+    containerService: ContainerService,
+  ) {
     if (!storage) {
       return;
     }
-    const escaped = this.driver.escapeString(storage);
-    await this.driver.executeSql(
+    const escaped = this._driver.escapeString(storage);
+    await this._driver.executeSql(
       this.execFor(containerService),
       `UPDATE directus_files SET storage = ${escaped} WHERE storage <> ${escaped} OR storage IS NULL;`,
     );
   }
 
-  public async performMysqlDump(containerService: ContainerService, tableNames?: string[]) {
-    await this.driver.dump(this.execFor(containerService), '/tmp/backup.sql', tableNames);
+  public async performMysqlDump(
+    containerService: ContainerService,
+    tableNames?: string[],
+  ) {
+    await this._driver.dump(
+      this.execFor(containerService),
+      '/tmp/backup.sql',
+      tableNames,
+    );
   }
 
   public async restoreMysqlDump(containerService: ContainerService) {
     const exec = this.execFor(containerService);
-    await this.driver.restore(exec, '/tmp/backup.sql');
-    await this.driver.postRestoreFixups(exec);
+    await this._driver.restore(exec, '/tmp/backup.sql');
+    await this._driver.postRestoreFixups(exec);
   }
 
   public async dropAllTables(containerService: ContainerService) {
-    await this.driver.dropAllTables(this.execFor(containerService));
+    await this._driver.dropAllTables(this.execFor(containerService));
   }
 
   public async transferRestore(
@@ -124,11 +139,14 @@ export class SqlService {
     sourceClient: 'mysql' | 'pg' | 'sqlite3',
     sqliteArtifact: string,
   ) {
-    const { mode } = this.transferPlanner.plan(sourceClient, this.driver.client);
+    const { mode } = this.transferPlanner.plan(
+      sourceClient,
+      this._driver.client,
+    );
     if (mode === 'native') {
       const exec = this.execFor(containerService);
-      await this.driver.restore(exec, sqliteArtifact);
-      await this.driver.postRestoreFixups(exec);
+      await this._driver.restore(exec, sqliteArtifact);
+      await this._driver.postRestoreFixups(exec);
     } else {
       await this.pgloaderService.run({
         containerService,
@@ -145,26 +163,26 @@ export class SqlService {
   }
 
   public async listTables(containerService: ContainerService) {
-    return this.driver.listTables(this.execFor(containerService));
+    return this._driver.listTables(this.execFor(containerService));
   }
 
   public async executeSql(sql: string, containerService: ContainerService) {
-    return this.driver.executeSql(this.execFor(containerService), sql);
+    return this._driver.executeSql(this.execFor(containerService), sql);
   }
 
   public escapeIdentifier(id: string): string {
-    return this.driver.escapeIdentifier(id);
+    return this._driver.escapeIdentifier(id);
   }
 
   public escapeString(v: string): string {
-    return this.driver.escapeString(v);
+    return this._driver.escapeString(v);
   }
 
   public disableForeignKeys(): string {
-    return this.driver.disableFks();
+    return this._driver.disableFks();
   }
 
   public enableForeignKeys(): string {
-    return this.driver.enableFks();
+    return this._driver.enableFks();
   }
 }

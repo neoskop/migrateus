@@ -1,4 +1,4 @@
-import { Logger } from 'winston';
+import { LoggerService } from '../logger/logger.service.js';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
@@ -16,7 +16,7 @@ import { ConfigService } from '../config/config.service.js';
 
 export abstract class RestorePerformer {
   constructor(
-    protected readonly logger: Logger,
+    protected readonly logger: LoggerService,
     private readonly directusAssetService: DirectusAssetService,
     private readonly directusSettingService: DirectusSettingService,
     protected readonly sqlService: SqlService,
@@ -28,7 +28,7 @@ export abstract class RestorePerformer {
   ) {}
 
   public async restore(backupFile: string) {
-    const backupDir = await this.createTemporaryDirectory();
+    const backupDir = this.createTemporaryDirectory();
 
     if (this.sqlService.usesSidecar) {
       await this.restoreServerFlow(backupDir, backupFile);
@@ -64,8 +64,13 @@ export abstract class RestorePerformer {
       // Use the correct in-sidecar artifact path based on the source client:
       // sqlite3 sources use database.sqlite; all server sources use backup.sql.
       // TODO: infil database.sqlite for k8s/aca sqlite→pg (that cross-engine combo is an unverified edge).
-      const artifactName = manifest.client === 'sqlite3' ? 'database.sqlite' : 'backup.sql';
-      await this.sqlService.transferRestore(this.containerService, manifest.client, `/tmp/${artifactName}`);
+      const artifactName =
+        manifest.client === 'sqlite3' ? 'database.sqlite' : 'backup.sql';
+      await this.sqlService.transferRestore(
+        this.containerService,
+        manifest.client,
+        `/tmp/${artifactName}`,
+      );
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(this.containerService);
       await this.sqlService.setCredentials(
@@ -137,7 +142,9 @@ export abstract class RestorePerformer {
     }
   }
 
-  private async readManifest(backupDir: string): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3' }> {
+  private async readManifest(
+    backupDir: string,
+  ): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3' }> {
     const metaFilePath = join(backupDir, 'meta.json');
     if (!(await fileExists(metaFilePath))) {
       return { client: this.sqlService.client };

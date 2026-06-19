@@ -1,11 +1,11 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 // NOTE: az command shapes are UNVERIFIED against a live Azure subscription.
 
 import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { AcaEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { exec } from '../util/exec.js';
 import { ExecOptions, ExecOutputReturnValue } from 'shelljs';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
@@ -13,7 +13,7 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 @Injectable()
 export class AcaService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly environmentService: EnvironmentService,
     private readonly sqlService: SqlService,
   ) {}
@@ -22,7 +22,10 @@ export class AcaService {
     return (this.environmentService.environment as AcaEnvironment).aca;
   }
 
-  public async az(args: string, opts: ExecOptions = { silent: true }): Promise<ExecOutputReturnValue> {
+  public async az(
+    args: string,
+    opts: ExecOptions = { silent: true },
+  ): Promise<ExecOutputReturnValue> {
     const { subscription } = this.acaEnv;
     const command = `az ${args} --subscription ${subscription}`;
     return exec(command, opts);
@@ -35,12 +38,18 @@ export class AcaService {
       `containerapp show -n ${app} -g ${resourceGroup} --query "properties.template.containers[0].env" -o json`,
     );
 
-    const envArray: Array<{ name: string; value?: string; secretRef?: string }> = JSON.parse(result.stdout);
+    const envArray: Array<{
+      name: string;
+      value?: string;
+      secretRef?: string;
+    }> = JSON.parse(result.stdout);
 
     const envMap: Record<string, string> = {};
     for (const entry of envArray) {
       if (entry.secretRef !== undefined) {
-        this.logger.debug(`ACA env var ${entry.name} is a secretRef and cannot be read directly; using empty string`);
+        this.logger.debug(
+          `ACA env var ${entry.name} is a secretRef and cannot be read directly; using empty string`,
+        );
         envMap[entry.name] = '';
       } else {
         envMap[entry.name] = entry.value ?? '';
@@ -69,6 +78,8 @@ export class AcaService {
   public async restartDirectus(): Promise<void> {
     const { app, resourceGroup } = this.acaEnv;
     // TODO(verify): ACA revision restart command
-    await this.az(`containerapp revision restart -n ${app} -g ${resourceGroup}`);
+    await this.az(
+      `containerapp revision restart -n ${app} -g ${resourceGroup}`,
+    );
   }
 }

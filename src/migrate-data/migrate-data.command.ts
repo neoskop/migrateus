@@ -1,8 +1,8 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { Command, InquirerService } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
 import { RedactService } from '../redact/redact.service.js';
@@ -26,7 +26,7 @@ import { MigrateDataService } from './migrate-data.service.js';
 })
 export class MigrateDataCommand extends MigrateusCommand {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) logger: LoggerService,
     config: ConfigService,
     private readonly inquirer: InquirerService,
     protected readonly redactService: RedactService,

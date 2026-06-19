@@ -55,7 +55,6 @@
     "mime-types": "3.0.2",
     "nanoid": "5.1.15",
     "nest-commander": "3.20.1",
-    "nest-winston": "1.10.2",
     "ora": "9.4.0",
     "p-limit": "7.3.0",
     "portfinder": "1.0.38",
@@ -66,8 +65,7 @@
     "shelljs": "0.10.0",
     "tmp": "0.2.5",
     "uuid": "14.0.1",
-    "which": "7.0.0",
-    "winston": "3.19.0"
+    "which": "7.0.0"
   },
   "devDependencies": {
     "@jest/globals": "30.4.1",

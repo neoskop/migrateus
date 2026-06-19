@@ -1,4 +1,4 @@
-import { Logger } from 'winston';
+import { LoggerService } from '../../logger/logger.service.js';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
 import { DatabaseConfig } from '../../backup-db/database-config.interface.js';
@@ -18,7 +18,7 @@ export class MysqlDriver implements DbDriver {
 
   constructor(
     private readonly config: DatabaseConfig,
-    private readonly logger: Logger,
+    private readonly logger: LoggerService,
   ) {}
 
   public escapeString(value: string): string {
@@ -43,7 +43,11 @@ export class MysqlDriver implements DbDriver {
     return 'SET foreign_key_checks = 1';
   }
 
-  public async dump(exec: Exec, artifact: string, tableNames?: string[]): Promise<void> {
+  public async dump(
+    exec: Exec,
+    artifact: string,
+    tableNames?: string[],
+  ): Promise<void> {
     const { host, port, user, password, name } = this.config;
     const command = [
       'mysqldump',
@@ -66,7 +70,9 @@ export class MysqlDriver implements DbDriver {
 
     const output = await exec(command);
     if (output.code !== 0) {
-      throw new Error(`Backup failed with status code ${output.code}: ${output.stderr}`);
+      throw new Error(
+        `Backup failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 
@@ -85,7 +91,9 @@ export class MysqlDriver implements DbDriver {
 
     const output = await exec(command);
     if (output.code !== 0) {
-      throw new Error(`Restore failed with status code ${output.code}: ${output.stderr}`);
+      throw new Error(
+        `Restore failed with status code ${output.code}: ${output.stderr}`,
+      );
     }
   }
 
@@ -94,10 +102,12 @@ export class MysqlDriver implements DbDriver {
     const escapedName = escapeMysqlString(name);
 
     const defaultCollation = assertSafeCharsetOrCollation(
-      (await this.executeSql(
-        exec,
-        `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
-      ))
+      (
+        await this.executeSql(
+          exec,
+          `SELECT DEFAULT_COLLATION_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
+        )
+      )
         .split('\n')
         .join(' ')
         .trim(),
@@ -105,22 +115,28 @@ export class MysqlDriver implements DbDriver {
     );
 
     const defaultCharacterSetName = assertSafeCharsetOrCollation(
-      (await this.executeSql(
-        exec,
-        `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
-      ))
+      (
+        await this.executeSql(
+          exec,
+          `SELECT default_character_set_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME=${escapedName};`,
+        )
+      )
         .split('\n')
         .join(' ')
         .trim(),
       'default character set',
     );
 
-    this.logger.debug(`Setting default collation to ${chalk.bold(defaultCollation)}`);
+    this.logger.debug(
+      `Setting default collation to ${chalk.bold(defaultCollation)}`,
+    );
 
-    const tableNames = (await this.executeSql(
-      exec,
-      `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE'`,
-    ))
+    const tableNames = (
+      await this.executeSql(
+        exec,
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE'`,
+      )
+    )
       .split('\n')
       .filter(Boolean)
       .map((t) => assertSafeIdentifier(t, 'table_name'));
@@ -137,16 +153,22 @@ export class MysqlDriver implements DbDriver {
 
     await this.executeSql(
       exec,
-      this.disableFks() + '; ' + alterStatements.join(';') + '; ' + this.enableFks(),
+      this.disableFks() +
+        '; ' +
+        alterStatements.join(';') +
+        '; ' +
+        this.enableFks(),
     );
   }
 
   public async listTables(exec: Exec): Promise<string[]> {
     const escapedName = escapeMysqlString(this.config.name);
-    return (await this.executeSql(
-      exec,
-      `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE';`,
-    ))
+    return (
+      await this.executeSql(
+        exec,
+        `SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=${escapedName} AND TABLE_TYPE='BASE TABLE';`,
+      )
+    )
       .split('\n')
       .filter(Boolean);
   }

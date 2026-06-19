@@ -1,3 +1,5 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '../config/config.service.js';
 import { DirectusService } from '../directus/directus.service.js';
@@ -21,8 +23,6 @@ import { SqlService } from '../sql/sql.service.js';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import confirm from '@inquirer/confirm';
 import semver from 'semver';
 import fs from 'node:fs';
@@ -37,7 +37,7 @@ export class SchemaDiffService {
   private containerServices: { [name: string]: ContainerService } = {};
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly config: ConfigService,
     private readonly directus: DirectusService,
     private readonly dockerService: DockerService,
@@ -51,7 +51,7 @@ export class SchemaDiffService {
     private readonly schemaDiffPromptService: SchemaDiffPromptService,
     private readonly progressService: ProgressService,
     private readonly errorFormatter: ErrorFormatterService,
-  ) { }
+  ) {}
 
   public async diff(from: string, to: string) {
     try {
@@ -65,7 +65,9 @@ export class SchemaDiffService {
       const diffOutput = await toClient.request<
         SchemaDiffOutput & { status: number }
       >(schemaDiff(snapshot, true));
-      this.logger.debug(`Schema diff: ${highlight(JSON.stringify(diffOutput), { language: 'json' })}`);
+      this.logger.debug(
+        `Schema diff: ${highlight(JSON.stringify(diffOutput), { language: 'json' })}`,
+      );
 
       if (!diffOutput || diffOutput.status === 204) {
         this.progressService.succeed(

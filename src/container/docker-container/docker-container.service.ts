@@ -1,8 +1,8 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerService } from '../container.service.js';
-import { Logger } from 'winston';
 import { nanoid } from 'nanoid/non-secure';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import chalk from 'chalk';
 import { DockerService } from '../../docker/docker.service.js';
 import { highlight } from 'cli-highlight';
@@ -15,7 +15,7 @@ export class DockerContainerService extends ContainerService {
   public mount: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly dockerService: DockerService,
   ) {
     super();
@@ -44,9 +44,12 @@ export class DockerContainerService extends ContainerService {
       `Creating container with command: ${highlight(command.join(' '), { language: 'bash' })}`,
     );
 
-    const createOutput = await exec(this.dockerService.withHost(command.join(' ')), {
-      silent: true,
-    });
+    const createOutput = await exec(
+      this.dockerService.withHost(command.join(' ')),
+      {
+        silent: true,
+      },
+    );
 
     if (createOutput.code !== 0) {
       throw new Error(
@@ -56,9 +59,12 @@ export class DockerContainerService extends ContainerService {
 
     this.migrateusContainerId = createOutput.stdout.trim();
 
-    const output = await exec(this.dockerService.withHost(`docker start ${this.migrateusContainerId}`), {
-      silent: true,
-    });
+    const output = await exec(
+      this.dockerService.withHost(`docker start ${this.migrateusContainerId}`),
+      {
+        silent: true,
+      },
+    );
 
     if (output.code !== 0) {
       throw new Error(
@@ -73,9 +79,14 @@ export class DockerContainerService extends ContainerService {
 
   public async cleanUpAll() {
     const containers = (
-      await exec(this.dockerService.withHost(`docker ps -a -f name=migrateus --format '{{.Names}}'`), {
-        silent: true,
-      })
+      await exec(
+        this.dockerService.withHost(
+          `docker ps -a -f name=migrateus --format '{{.Names}}'`,
+        ),
+        {
+          silent: true,
+        },
+      )
     ).stdout
       .split('\n')
       .join(' ');
@@ -97,7 +108,9 @@ export class DockerContainerService extends ContainerService {
     this.logger.debug(
       `Executing ${highlight(fullCommand, { language: 'bash' })}`,
     );
-    return await exec(this.dockerService.withHost(fullCommand), { silent: true });
+    return await exec(this.dockerService.withHost(fullCommand), {
+      silent: true,
+    });
   }
 
   private async removeContainer(container: string) {
@@ -108,7 +121,9 @@ export class DockerContainerService extends ContainerService {
         .map((name) => chalk.bold(name))
         .join(', ')}`,
     );
-    await exec(this.dockerService.withHost(`docker rm -f ${container}`), { silent: true });
+    await exec(this.dockerService.withHost(`docker rm -f ${container}`), {
+      silent: true,
+    });
   }
 
   public async exfilFile(source: string, destination: string): Promise<void> {
@@ -119,7 +134,9 @@ export class DockerContainerService extends ContainerService {
       destination,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(this.dockerService.withHost(command), { silent: true });
+    const ouput = await exec(this.dockerService.withHost(command), {
+      silent: true,
+    });
 
     if (ouput.code !== 0) {
       throw new Error(
@@ -136,7 +153,9 @@ export class DockerContainerService extends ContainerService {
       `${this.migrateusContainerId}:${destination}`,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(this.dockerService.withHost(command), { silent: true });
+    const ouput = await exec(this.dockerService.withHost(command), {
+      silent: true,
+    });
 
     if (ouput.code !== 0) {
       throw new Error(
@@ -145,11 +164,21 @@ export class DockerContainerService extends ContainerService {
     }
   }
 
-  public async copyFromDirectus(remotePath: string, localPath: string): Promise<void> {
+  public async copyFromDirectus(
+    remotePath: string,
+    localPath: string,
+  ): Promise<void> {
     const directusId = this.dockerService.containerConfig.Id;
-    const command = ['docker', 'cp', `${directusId}:${remotePath}`, localPath].join(' ');
+    const command = [
+      'docker',
+      'cp',
+      `${directusId}:${remotePath}`,
+      localPath,
+    ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const output = await exec(this.dockerService.withHost(command), { silent: true });
+    const output = await exec(this.dockerService.withHost(command), {
+      silent: true,
+    });
 
     if (output.code !== 0) {
       throw new Error(
@@ -158,11 +187,21 @@ export class DockerContainerService extends ContainerService {
     }
   }
 
-  public async copyToDirectus(localPath: string, remotePath: string): Promise<void> {
+  public async copyToDirectus(
+    localPath: string,
+    remotePath: string,
+  ): Promise<void> {
     const directusId = this.dockerService.containerConfig.Id;
-    const command = ['docker', 'cp', localPath, `${directusId}:${remotePath}`].join(' ');
+    const command = [
+      'docker',
+      'cp',
+      localPath,
+      `${directusId}:${remotePath}`,
+    ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const output = await exec(this.dockerService.withHost(command), { silent: true });
+    const output = await exec(this.dockerService.withHost(command), {
+      silent: true,
+    });
 
     if (output.code !== 0) {
       throw new Error(

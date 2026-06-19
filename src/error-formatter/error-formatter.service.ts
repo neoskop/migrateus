@@ -1,14 +1,14 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 
 type ErrorLike = Record<string, any>;
 
 @Injectable()
 export class ErrorFormatterService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
-  ) { }
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
+  ) {}
 
   public format(error: unknown): Error {
     if (!error || typeof error !== 'object') {

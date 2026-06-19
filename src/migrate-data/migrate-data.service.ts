@@ -1,6 +1,6 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
@@ -22,7 +22,7 @@ export class MigrateDataService {
   private containerServices: { [name: string]: ContainerService } = {};
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly config: ConfigService,
     private readonly dockerService: DockerService,
     private readonly portForwardService: PortForwardService,

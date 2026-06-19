@@ -1,8 +1,8 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerService } from '../container.service.js';
-import { Logger } from 'winston';
 import chalk from 'chalk';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
 import { highlight } from 'cli-highlight';
 import { K8sService } from '../../k8s/k8s.service.js';
@@ -12,7 +12,7 @@ export class K8sContainerService extends ContainerService {
   public migrateusPodName: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly k8sService: K8sService,
   ) {
     super();
@@ -114,13 +114,19 @@ export class K8sContainerService extends ContainerService {
     }
   }
 
-  public async copyFromDirectus(_remotePath: string, _localPath: string): Promise<void> {
+  public async copyFromDirectus(
+    _remotePath: string,
+    _localPath: string,
+  ): Promise<void> {
     throw new Error(
       'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
     );
   }
 
-  public async copyToDirectus(_localPath: string, _remotePath: string): Promise<void> {
+  public async copyToDirectus(
+    _localPath: string,
+    _remotePath: string,
+  ): Promise<void> {
     throw new Error(
       'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
     );

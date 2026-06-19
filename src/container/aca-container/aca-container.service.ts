@@ -1,7 +1,7 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerService } from '../container.service.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { customAlphabet } from 'nanoid/non-secure';
 import { AcaService } from '../../aca/aca.service.js';
 import fs from 'node:fs';
@@ -12,7 +12,7 @@ export class AcaContainerService extends ContainerService {
   public migrateusAppName: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly acaService: AcaService,
   ) {
     super();
@@ -71,9 +71,7 @@ export class AcaContainerService extends ContainerService {
     const result = await this.execute(`base64 ${source}`);
 
     if (result.code !== 0) {
-      throw new Error(
-        `Failed to exfil file ${source}: ${result.stderr}`,
-      );
+      throw new Error(`Failed to exfil file ${source}: ${result.stderr}`);
     }
 
     const decoded = Buffer.from(result.stdout.trim(), 'base64');
@@ -84,7 +82,9 @@ export class AcaContainerService extends ContainerService {
     // source is always a controlled CLI-internal path, not user-supplied HTTP input — path traversal risk is acceptable here
     const fileContent = await fs.promises.readFile(source);
     const b64 = fileContent.toString('base64');
-    const result = await this.execute(`echo ${b64} | base64 -d > ${destination}`);
+    const result = await this.execute(
+      `echo ${b64} | base64 -d > ${destination}`,
+    );
 
     if (result.code !== 0) {
       throw new Error(
@@ -93,13 +93,19 @@ export class AcaContainerService extends ContainerService {
     }
   }
 
-  public async copyFromDirectus(_remotePath: string, _localPath: string): Promise<void> {
+  public async copyFromDirectus(
+    _remotePath: string,
+    _localPath: string,
+  ): Promise<void> {
     throw new Error(
       'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
     );
   }
 
-  public async copyToDirectus(_localPath: string, _remotePath: string): Promise<void> {
+  public async copyToDirectus(
+    _localPath: string,
+    _remotePath: string,
+  ): Promise<void> {
     throw new Error(
       'SQLite file access is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
     );

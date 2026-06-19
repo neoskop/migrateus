@@ -1,8 +1,8 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { Option, Command, InquirerService } from 'nest-commander';
 import { MigrateusCommand } from '../migrateus.command.js';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { ConfigService } from '../config/config.service.js';
 import chalk from 'chalk';
 import { BackupDbAnswers } from './backup-db-answers.interface.js';
@@ -25,7 +25,7 @@ import { UpdateService } from '../update/update.service.js';
 })
 export class BackupDbCommand extends MigrateusCommand {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) logger: LoggerService,
     config: ConfigService,
     private readonly inquirer: InquirerService,
     private readonly backupDbService: BackupDbService,

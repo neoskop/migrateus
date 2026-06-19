@@ -1,6 +1,6 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DirectusService } from '../directus.service.js';
 import { DirectusUserService } from '../directus-user/directus-user.service.js';
 import { highlight } from 'cli-highlight';
@@ -10,7 +10,7 @@ import semver from 'semver';
 @Injectable()
 export class DirectusVersionService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
     private readonly directusService: DirectusService,
     private readonly directusUserService: DirectusUserService,
   ) {}

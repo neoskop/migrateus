@@ -1,6 +1,6 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../../sql/sql.service.js';
 import { AcaContainerService } from '../../container/aca-container/aca-container.service.js';
@@ -17,7 +17,7 @@ export class AcaRestoreService extends RestorePerformer {
   private backupDir: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
     directusSettingService: DirectusSettingService,
@@ -63,6 +63,8 @@ export class AcaRestoreService extends RestorePerformer {
   }
 
   protected async copyDatabaseIn(_backupDir: string): Promise<void> {
-    throw new Error('SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA');
+    throw new Error(
+      'SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
+    );
   }
 }

@@ -1,6 +1,6 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import {
   DirectusFile,
   RestClient,
@@ -31,7 +31,7 @@ export class DirectusAssetService {
   public limit = pLimit(10);
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
     private readonly directusUserService: DirectusUserService,
     private readonly directusService: DirectusService,
     private readonly environmentService: EnvironmentService,
@@ -99,7 +99,10 @@ export class DirectusAssetService {
       chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk),
     );
     await new Promise<void>((resolve) => readStream.on('end', resolve));
-    const blob = new Blob(chunks.map(chunk => new Uint8Array(chunk)), { type: mime.lookup(assetPath) || undefined });
+    const blob = new Blob(
+      chunks.map((chunk) => new Uint8Array(chunk)),
+      { type: mime.lookup(assetPath) || undefined },
+    );
     formData.append('file', blob, parsedPath.base);
 
     const mimeType = await fileTypeFromFile(assetPath);
@@ -108,7 +111,10 @@ export class DirectusAssetService {
     }
 
     if (this.environmentService.environment?.assetStorage) {
-      formData.append('storage', this.environmentService.environment.assetStorage);
+      formData.append(
+        'storage',
+        this.environmentService.environment.assetStorage,
+      );
     }
 
     await directus.request(updateFile(parsedPath.name, formData));

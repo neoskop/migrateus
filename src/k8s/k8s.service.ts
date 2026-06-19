@@ -1,10 +1,10 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { exec } from '../util/exec.js';
 import { ExecOptions } from 'shelljs';
 import { spawn } from 'child_process';
@@ -24,8 +24,8 @@ export class K8sService {
     private readonly sqlService: SqlService,
     private readonly configService: ConfigService,
     private readonly redactService: RedactService,
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
-  ) { }
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
+  ) {}
 
   public async cleanUp() {
     if (this.kubeconfigPath) {
@@ -242,7 +242,10 @@ export class K8sService {
         value?: string;
         valueFrom?: { secretKeyRef: { key: string; name: string } };
       }[];
-      envFrom: { configMapRef?: { name: string }, secretRef?: { name: string } }[];
+      envFrom: {
+        configMapRef?: { name: string };
+        secretRef?: { name: string };
+      }[];
     };
 
     const envMap: Record<string, string> = {};
@@ -265,7 +268,7 @@ export class K8sService {
 
     if (directusContainer.envFrom?.length > 0) {
       const configMapNames = [];
-      const secretNames = []
+      const secretNames = [];
 
       for (const entry of directusContainer.envFrom) {
         if (entry.configMapRef) {
@@ -297,7 +300,11 @@ export class K8sService {
     }
 
     for (const [key, value] of Object.entries(envMap)) {
-      if (key.includes('PASSWORD') || key.includes('SECRET') || key.includes('KEY')) {
+      if (
+        key.includes('PASSWORD') ||
+        key.includes('SECRET') ||
+        key.includes('KEY')
+      ) {
         this.redactService.addRedaction(value);
       }
     }
@@ -319,7 +326,8 @@ export class K8sService {
       name: envMap['DB_DATABASE'],
     };
 
-    if (envMap['DB_CLIENT']) result.client = envMap['DB_CLIENT'] as DatabaseConfig['client'];
+    if (envMap['DB_CLIENT'])
+      result.client = envMap['DB_CLIENT'] as DatabaseConfig['client'];
     if (envMap['DB_FILENAME']) result.filename = envMap['DB_FILENAME'];
 
     return result;

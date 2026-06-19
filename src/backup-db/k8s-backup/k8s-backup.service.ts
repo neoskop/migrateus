@@ -1,6 +1,6 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
 import { BackupPerformer } from '../backup-performer.js';
 import chalk from 'chalk';
@@ -17,7 +17,7 @@ export class K8sBackupService extends BackupPerformer {
   private backupDir: string;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
     private readonly kubernetesContainerService: K8sContainerService,
@@ -61,7 +61,9 @@ export class K8sBackupService extends BackupPerformer {
 
   protected copyDatabaseOut(_backupDir: string): Promise<void> {
     return Promise.reject(
-      new Error('SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA'),
+      new Error(
+        'SQLite is only supported on docker/docker-compose platforms — use a server engine (PostgreSQL) on k8s/ACA',
+      ),
     );
   }
 }

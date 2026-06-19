@@ -1,6 +1,6 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
-import { Logger } from 'winston';
 import semver from 'semver';
 import chalk from 'chalk';
 import { version } from '../version.js';
@@ -10,7 +10,7 @@ import confirm from '@inquirer/confirm';
 @Injectable()
 export class UpdateService {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) private readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
   ) {}
 
   public async checkForUpdates() {

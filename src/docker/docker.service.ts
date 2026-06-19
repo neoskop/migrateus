@@ -1,3 +1,5 @@
+import { LoggerService } from '../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ContainerConfig } from './container-config.type.js';
 import { EnvironmentService } from '../environment/environment.service.js';
@@ -7,8 +9,6 @@ import {
 } from '../config/environment.interface.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
 import { exec } from '../util/exec.js';
@@ -19,7 +19,7 @@ export class DockerService {
   public containerConfig: ContainerConfig;
 
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly environmentService: EnvironmentService,
     private readonly sqlService: SqlService,
   ) {}
@@ -90,9 +90,12 @@ export class DockerService {
         );
     }
 
-    const inspectOutput = await exec(this.withHost(`docker inspect ${containerName}`), {
-      silent: true,
-    });
+    const inspectOutput = await exec(
+      this.withHost(`docker inspect ${containerName}`),
+      {
+        silent: true,
+      },
+    );
 
     if (inspectOutput.code !== 0) {
       throw new Error(
@@ -269,11 +272,19 @@ export class DockerService {
   public get directusStorageIsLocal(): boolean {
     const locations = this.getOptionalDockerEnvValue('STORAGE_LOCATIONS');
     // Directus defaults to 'local' when unset; treat unset OR a comma list containing 'local' as local.
-    return !locations || locations.split(',').map((s) => s.trim()).includes('local');
+    return (
+      !locations ||
+      locations
+        .split(',')
+        .map((s) => s.trim())
+        .includes('local')
+    );
   }
 
   public async restartDirectus() {
-    await exec(this.withHost(`docker restart ${this.containerConfig.Id}`), { silent: true });
+    await exec(this.withHost(`docker restart ${this.containerConfig.Id}`), {
+      silent: true,
+    });
   }
 
   public withHost(command: string): string {

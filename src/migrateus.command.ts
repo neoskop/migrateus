@@ -1,5 +1,5 @@
+import { LoggerService } from './logger/logger.service.js';
 import { CommandRunner, Option } from 'nest-commander';
-import { Logger } from 'winston';
 import { ConfigService } from './config/config.service.js';
 import { RedactService } from './redact/redact.service.js';
 import { DependenciesService } from './dependencies/dependencies.service.js';
@@ -13,7 +13,7 @@ export abstract class MigrateusCommand extends CommandRunner {
   protected verbose: boolean = false;
 
   constructor(
-    protected readonly logger: Logger,
+    protected readonly logger: LoggerService,
     protected readonly config: ConfigService,
     protected readonly redactService: RedactService,
     protected readonly dependenciesService: DependenciesService,

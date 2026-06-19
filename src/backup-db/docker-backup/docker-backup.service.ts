@@ -1,6 +1,6 @@
+import { LoggerService } from '../../logger/logger.service.js';
+import { LOGGER_MODULE_PROVIDER } from '../../logger/logger.constants.js';
 import { Inject, Injectable } from '@nestjs/common';
-import { Logger } from 'winston';
-import { WINSTON_MODULE_PROVIDER } from 'nest-winston';
 import { DirectusAssetService } from '../../directus/directus-asset/directus-asset.service.js';
 import { BackupPerformer } from '../backup-performer.js';
 import { SqlService } from '../../sql/sql.service.js';
@@ -13,7 +13,7 @@ import { DirectusVersionService } from '../../directus/directus-version/directus
 @Injectable()
 export class DockerBackupService extends BackupPerformer {
   constructor(
-    @Inject(WINSTON_MODULE_PROVIDER) protected readonly logger: Logger,
+    @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     sqlService: SqlService,
     directusAssetService: DirectusAssetService,
     private readonly dockerContainerService: DockerContainerService,
@@ -47,23 +47,39 @@ export class DockerBackupService extends BackupPerformer {
   protected async copyDatabaseOut(backupDir: string): Promise<void> {
     const file = this.sqlService.databaseFilename;
     if (!file) {
-      throw new Error('SQLite database path not found — set DB_FILENAME (or DB_DATABASE) on the Directus environment');
+      throw new Error(
+        'SQLite database path not found — set DB_FILENAME (or DB_DATABASE) on the Directus environment',
+      );
     }
-    await this.dockerContainerService.copyFromDirectus(file, `${backupDir}/database.sqlite`);
+    await this.dockerContainerService.copyFromDirectus(
+      file,
+      `${backupDir}/database.sqlite`,
+    );
 
     // Best-effort: copy WAL and SHM sidecars — they may not exist
     for (const suffix of ['-wal', '-shm']) {
       try {
-        await this.dockerContainerService.copyFromDirectus(`${file}${suffix}`, `${backupDir}/database.sqlite${suffix}`);
+        await this.dockerContainerService.copyFromDirectus(
+          `${file}${suffix}`,
+          `${backupDir}/database.sqlite${suffix}`,
+        );
       } catch {
         this.logger.debug(`SQLite sidecar ${suffix} not found, skipping`);
       }
     }
 
-    if (this.dockerService.directusStorageIsLocal && this.dockerService.directusStorageRoot) {
-      await this.dockerContainerService.copyFromDirectus(this.dockerService.directusStorageRoot, `${backupDir}/uploads`);
+    if (
+      this.dockerService.directusStorageIsLocal &&
+      this.dockerService.directusStorageRoot
+    ) {
+      await this.dockerContainerService.copyFromDirectus(
+        this.dockerService.directusStorageRoot,
+        `${backupDir}/uploads`,
+      );
     } else {
-      this.logger.debug('External storage detected — assets skipped for SQLite backup');
+      this.logger.debug(
+        'External storage detected — assets skipped for SQLite backup',
+      );
     }
   }
 
