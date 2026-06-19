@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import fs from 'node:fs';
 import chalk from 'chalk';
 import tmp from 'tmp';
-import shell from 'shelljs';
+import { resolveOutputPath } from '../util/resolve-output-path.js';
 import prettyBytes from 'pretty-bytes';
 import { LoggerService } from '../logger/logger.service.js';
 import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
@@ -199,7 +199,7 @@ export class LogicalBackupPerformer {
   }
 
   private async createBackupArchive(backupDir: string, backupFile: string) {
-    const targetPath = join(shell.pwd().stdout, backupFile);
+    const targetPath = resolveOutputPath(backupFile);
     const output = await exec(`tar -czf ${targetPath} *`, {
       silent: true,
       cwd: backupDir,

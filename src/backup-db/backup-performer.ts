@@ -1,5 +1,5 @@
 import { LoggerService } from '../logger/logger.service.js';
-import shell from 'shelljs';
+import { resolveOutputPath } from '../util/resolve-output-path.js';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
@@ -184,7 +184,7 @@ export abstract class BackupPerformer {
   }
 
   private async createBackupArchive(backupDir: string, backupFile: string) {
-    const targetPath = join(shell.pwd().stdout, backupFile);
+    const targetPath = resolveOutputPath(backupFile);
     const ouput = await exec(`tar -czf ${targetPath} *`, {
       silent: true,
       cwd: backupDir,
