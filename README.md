@@ -249,6 +249,35 @@ If you restore a backup created on an instance with a different Directus storage
 
 If you don't specify either of those options, Migrateus will ask you for them.
 
+### Logical vs physical backup
+
+Migrateus supports two backup formats, selected at backup time. `restore-db` auto-detects the format from the backup's metadata.
+
+#### Physical backup (default)
+
+`backup-db` without any extra flags produces a **physical** backup: a DB-native dump (`mysqldump`/`pg_dump`) or, for SQLite, a direct file copy. This is the fastest option and is suitable for **same-DBMS** restores.
+
+Attempting a cross-DBMS restore from a physical backup (e.g. restoring a `pg_dump` into MySQL) will fail with an error that tells you to use a logical backup instead.
+
+#### Logical backup (`-l` / `--logical`)
+
+```bash
+migrateus backup-db -l <from> <to>
+```
+
+`backup-db -l` produces a **logical** backup via the Directus API: a schema snapshot plus per-collection item exports plus assets. The resulting archive gets a `-logical` suffix by default (e.g. `migrateus-prod-2026-06-19-logical.tgz`).
+
+Logical backups are **engine-agnostic** and are required for **cross-DBMS** migrations (e.g. SQLite → PostgreSQL). They carry: the schema snapshot, all user-collection data, core system collections (`directus_users`, `directus_roles`, `directus_policies`, `directus_permissions`, `directus_access`, `directus_settings`), and all file assets.
+
+> [!WARNING]
+> **Limitations of logical backup/restore (v1):**
+>
+> - **User passwords are NOT migrated.** The Directus API masks password hashes — affected users must reset their password or authenticate via SSO after restore.
+> - **Restore into a freshly-bootstrapped Directus.** Existing system rows (roles, users, etc.) in the target are not pre-deleted before import, so restoring into a non-empty Directus may cause conflicts.
+> - **Scope is limited to v1 collections.** Flows, operations, dashboards, panels, presets, translations, and webhooks are not yet carried by the logical backup.
+
+`restore-db` emits a warning at the start of every logical restore to remind you of these constraints.
+
 ### Clean
 
 To clean up resources (Directus users and roles and containers/pods) created by Migrateus, run the following command:

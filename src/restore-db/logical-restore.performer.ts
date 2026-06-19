@@ -122,6 +122,11 @@ export class LogicalRestorePerformer {
         await fs.promises.readFile(join(backupDir, 'snapshot.json'), 'utf8'),
       );
 
+      const limitationsMsg =
+        'Logical restore imports users/roles/permissions with their IDs but does NOT migrate user passwords (the Directus API masks them) — affected users must reset their password or use SSO. The target should be a freshly-bootstrapped Directus; existing system rows are not pre-deleted, so a non-empty target may hit conflicts.';
+      this.progressService.warn(limitationsMsg);
+      this.logger.warn(limitationsMsg);
+
       this.progressService.advance('🚀 Set-up platform');
       const { port, containerService } = await this.setupPlatform(backupDir);
 

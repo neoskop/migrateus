@@ -45,7 +45,7 @@ export function planImportOrder(
   const inDegree: Map<string, number> = new Map(
     collections.map((c) => [c, 0]),
   );
-  // predecessors[c] = list of collections that must come before c
+  // successors[c] = list of collections that must come after c
   const successors: Map<string, string[]> = new Map(
     collections.map((c) => [c, []]),
   );
@@ -57,6 +57,7 @@ export function planImportOrder(
   }
 
   const order: string[] = [];
+  const placed = new Set<string>();
   const queue: string[] = [];
 
   // Seed queue with zero-in-degree nodes
@@ -71,40 +72,53 @@ export function planImportOrder(
       // Normal Kahn step
       queue.sort();
       const node = queue.shift()!;
-      order.push(node);
+      if (!placed.has(node)) {
+        order.push(node);
+        placed.add(node);
+      }
 
       for (const successor of successors.get(node) ?? []) {
         const newDeg = (inDegree.get(successor) ?? 1) - 1;
         inDegree.set(successor, newDeg);
-        if (newDeg === 0) queue.push(successor);
+        if (newDeg === 0 && !placed.has(successor) && !queue.includes(successor)) {
+          queue.push(successor);
+        }
       }
     } else {
       // A cycle remains — find it and break by deferring one back-edge.
-      // Pick any remaining node (still has in-degree > 0) as the cycle member.
-      // Use the first remaining relation in the cycle to decide which field to defer.
+      // Pick the first active relation whose both endpoints are not yet placed.
       const remaining = new Set<string>();
       for (const [node, deg] of inDegree) {
-        if (deg > 0 && !order.includes(node)) remaining.add(node);
+        if (deg > 0 && !placed.has(node)) remaining.add(node);
       }
 
       // Find one back-edge to defer: pick the first active relation whose both
-      // endpoints are still in `remaining`.
+      // endpoints are still unplaced.
       let broke = false;
-      for (const rel of activeRelations) {
+      for (let i = 0; i < activeRelations.length; i++) {
+        const rel = activeRelations[i];
         if (remaining.has(rel.collection) && remaining.has(rel.relatedCollection)) {
           // Defer this edge
           (deferredFields[rel.collection] ??= []).push(rel.field);
-          // Remove this edge from the graph
+          // Remove this edge from the working adjacency
           const sucList = successors.get(rel.relatedCollection);
           if (sucList) {
             const idx = sucList.indexOf(rel.collection);
             if (idx !== -1) sucList.splice(idx, 1);
           }
           inDegree.set(rel.collection, (inDegree.get(rel.collection) ?? 1) - 1);
+          // Remove this edge from activeRelations so it can't be reconsidered
+          activeRelations.splice(i, 1);
 
-          // Re-seed queue from remaining with in-degree 0
+          // Re-seed queue from remaining nodes whose in-degree is now 0
           for (const node of remaining) {
-            if ((inDegree.get(node) ?? 0) === 0) queue.push(node);
+            if (
+              (inDegree.get(node) ?? 0) === 0 &&
+              !placed.has(node) &&
+              !queue.includes(node)
+            ) {
+              queue.push(node);
+            }
           }
 
           broke = true;

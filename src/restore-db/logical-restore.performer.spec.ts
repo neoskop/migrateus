@@ -394,6 +394,22 @@ describe('LogicalRestorePerformer.restore (docker)', () => {
     expect(progressService.fail).toHaveBeenCalled();
     expect(sqlService.cleanUpDirectusUser).toHaveBeenCalledTimes(1);
   });
+
+  it('emits a warning about password migration and fresh-target requirement at the start of restore', async () => {
+    const { performer, progressService } = build();
+    await performer.restore('backup.tgz', 'docker-env');
+
+    const warnCalls: string[] = (progressService.warn as jest.Mock).mock.calls.map(
+      (c) => c[0] as string,
+    );
+    const limitationsWarning = warnCalls.find(
+      (w) =>
+        w.includes('passwords') &&
+        w.includes('SSO') &&
+        w.includes('freshly-bootstrapped'),
+    );
+    expect(limitationsWarning).toBeDefined();
+  });
 });
 
 describe('LogicalRestorePerformer.restore (k8s)', () => {

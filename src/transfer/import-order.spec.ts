@@ -76,4 +76,54 @@ describe('planImportOrder', () => {
     expect(result.order.indexOf('A')).toBeLessThan(result.order.indexOf('B'));
     expect(result.order.indexOf('B')).toBeLessThan(result.order.indexOf('C'));
   });
+
+  it('3-node cycle: each collection appears exactly once, exactly one field deferred', () => {
+    // A.b → B, B.c → C, C.a → A  (all three form a cycle)
+    const collections = ['A', 'B', 'C'];
+    const relations: Relation[] = [
+      { collection: 'A', field: 'b', relatedCollection: 'B' },
+      { collection: 'B', field: 'c', relatedCollection: 'C' },
+      { collection: 'C', field: 'a', relatedCollection: 'A' },
+    ];
+
+    const result = planImportOrder(collections, relations);
+
+    // Every collection appears exactly once (no duplicates)
+    expect(result.order).toHaveLength(3);
+    expect(new Set(result.order).size).toBe(3);
+    expect(result.order).toContain('A');
+    expect(result.order).toContain('B');
+    expect(result.order).toContain('C');
+
+    // Exactly one edge deferred (one field across all collections)
+    const totalDeferred = Object.values(result.deferredFields).flat().length;
+    expect(totalDeferred).toBe(1);
+  });
+
+  it('two independent cycles: each collection appears exactly once, two fields total deferred', () => {
+    // Cycle 1: A.b → B, B.a → A
+    // Cycle 2: C.d → D, D.c → C
+    // These are two disconnected 2-cycles; breaking each needs one deferral
+    const collections = ['A', 'B', 'C', 'D'];
+    const relations: Relation[] = [
+      { collection: 'A', field: 'b', relatedCollection: 'B' },
+      { collection: 'B', field: 'a', relatedCollection: 'A' },
+      { collection: 'C', field: 'd', relatedCollection: 'D' },
+      { collection: 'D', field: 'c', relatedCollection: 'C' },
+    ];
+
+    const result = planImportOrder(collections, relations);
+
+    // Every collection appears exactly once (the double-enqueue bug would produce duplicates)
+    expect(result.order).toHaveLength(4);
+    expect(new Set(result.order).size).toBe(4);
+    expect(result.order).toContain('A');
+    expect(result.order).toContain('B');
+    expect(result.order).toContain('C');
+    expect(result.order).toContain('D');
+
+    // Two edges deferred — one per cycle
+    const totalDeferred = Object.values(result.deferredFields).flat().length;
+    expect(totalDeferred).toBe(2);
+  });
 });
