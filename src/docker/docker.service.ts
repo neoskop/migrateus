@@ -288,7 +288,13 @@ export class DockerService {
     );
     const out = await exec(full, { silent: true });
     if (out.code !== 0) {
-      throw new Error(`Directus exec failed with code ${out.code}: ${out.stderr}`);
+      // Directus logs errors via pino to STDOUT, not stderr, so include both —
+      // otherwise real failures (e.g. a CLI NOT_NULL_VIOLATION) are masked.
+      const detail = [out.stdout, out.stderr]
+        .map((stream) => stream?.trim())
+        .filter(Boolean)
+        .join('\n');
+      throw new Error(`Directus exec failed with code ${out.code}: ${detail}`);
     }
     return out;
   }

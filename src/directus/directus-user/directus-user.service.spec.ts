@@ -29,6 +29,22 @@ function makeExec(stdouts: string[]) {
   return { fn, calls };
 }
 
+const ROLE_ID = '47060524-b176-45b0-ba97-802e7c7491a9';
+const USER_ID = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789';
+
+/**
+ * Wraps an id in the pino INFO lines the Directus CLI prints to stdout before
+ * the created id (the id is always the final line). Mirrors real CLI output.
+ */
+function withCliLogs(id: string): string {
+  return [
+    '[19:21:38.484] INFO: Extensions loaded',
+    '[19:21:38.489] INFO: Loaded extensions: @directus-labs/migration-bundle',
+    id,
+    '',
+  ].join('\n');
+}
+
 const originalFetch = globalThis.fetch;
 
 afterEach(() => {
@@ -44,9 +60,9 @@ describe('DirectusUserService constructor', () => {
 });
 
 describe('DirectusUserService.setupUser', () => {
-  it('creates an admin role then a user via the Directus CLI, in order, and logs in for a token', async () => {
+  it('creates an admin+app role then a user via the Directus CLI, parsing the id from log-prefixed stdout, and logs in for a token', async () => {
     const { service } = build();
-    const { fn, calls } = makeExec(['role-id-123\n', 'user-id-456\n']);
+    const { fn, calls } = makeExec([withCliLogs(ROLE_ID), withCliLogs(USER_ID)]);
     const getClient = jest.fn();
 
     const loginFetch = jest.fn(
@@ -60,20 +76,34 @@ describe('DirectusUserService.setupUser', () => {
 
     await service.setupUser(fn as never, getClient as never, 8055);
 
-    // Two CLI commands ran, in order: roles create --admin, then users create.
+    // Two CLI commands ran, in order: roles create --admin --app, then users create.
     expect(calls).toHaveLength(2);
     expect(calls[0]).toContain('roles create');
     expect(calls[0]).toContain('--admin');
+    // --app is required: directus_policies.app_access is NOT NULL, and the CLI
+    // inserts null (not false) when --app is omitted → NOT_NULL_VIOLATION.
+    expect(calls[0]).toContain('--app');
     expect(calls[1]).toContain('users create');
-    // The user-create command references the parsed role id (single-quoted) from the first call.
-    expect(calls[1]).toContain("'role-id-123'");
+    // The user-create command must reference ONLY the parsed UUID, not the pino
+    // INFO log lines the CLI prints to stdout before it.
+    expect(calls[1]).toContain(`'${ROLE_ID}'`);
     // The login response token is stored on the public `token` field.
     expect(service.token).toBe('tok-from-login');
   }, 20000);
 
+  it('throws a clear error when the CLI output has no UUID id line (e.g. only log lines)', async () => {
+    const { service } = build();
+    const onlyLogs = '[19:21:38.484] INFO: Extensions loaded\n';
+    const { fn } = makeExec([onlyLogs, onlyLogs]);
+
+    await expect(
+      service.setupUser(fn as never, jest.fn() as never, 8055),
+    ).rejects.toThrow(/Invalid UUID for temporary admin role id/);
+  }, 20000);
+
   it('logs in with the generated email/password against the given port', async () => {
     const { service } = build();
-    const { fn } = makeExec(['r1\n', 'u1\n']);
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
 
     let loginUrl = '';
     let loginBody: any;
@@ -97,7 +127,7 @@ describe('DirectusUserService.setupUser', () => {
 
   it('redacts the access token after login', async () => {
     const { service, redact } = build();
-    const { fn } = makeExec(['r1\n', 'u1\n']);
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
     globalThis.fetch = (async () =>
       ({
         ok: true,
@@ -111,7 +141,7 @@ describe('DirectusUserService.setupUser', () => {
 
   it('throws when the login response is not ok', async () => {
     const { service } = build();
-    const { fn } = makeExec(['r1\n', 'u1\n']);
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
     globalThis.fetch = (async () =>
       ({ ok: false, status: 401, json: async () => ({}) }) as never) as never;
 
@@ -122,7 +152,7 @@ describe('DirectusUserService.setupUser', () => {
 
   it('single-quotes CLI args — a role name with $ or " is safely quoted (regression)', async () => {
     const { service } = build();
-    const { fn, calls } = makeExec(['role-id-123\n', 'user-id-456\n']);
+    const { fn, calls } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
 
     globalThis.fetch = (async () =>
       ({
@@ -142,7 +172,7 @@ describe('DirectusUserService.setupUser', () => {
 describe('DirectusUserService.removeUser', () => {
   it('deletes the temp user via the SDK client obtained with the stored token', async () => {
     const { service } = build();
-    const { fn } = makeExec(['role-id-123\n', 'user-id-456\n']);
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
 
     globalThis.fetch = (async () =>
       ({
@@ -165,7 +195,7 @@ describe('DirectusUserService.removeUser', () => {
 
   it('does not throw when role deletion fails (best-effort cleanup) and still deletes the user', async () => {
     const { service } = build();
-    const { fn } = makeExec(['r1\n', 'u1\n']);
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
     globalThis.fetch = (async () =>
       ({
         ok: true,

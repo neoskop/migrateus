@@ -152,4 +152,25 @@ describe('DockerService.execInDirectus', () => {
       service.execInDirectus('node /directus/cli.js'),
     ).rejects.toThrow(/Directus exec failed with code 1/);
   });
+
+  it('includes STDOUT in the error (Directus logs errors to stdout, not stderr)', async () => {
+    // Real failure mode: the CLI prints its error via pino to stdout while
+    // stderr is empty. The thrown error must surface that stdout text.
+    execMock.mockResolvedValueOnce({
+      code: 1,
+      stdout: 'ERROR: Value for field "app_access" can\'t be null.',
+      stderr: '',
+    });
+
+    const service = build({
+      platform: 'docker',
+      name: 'dev',
+      containerName: 'dir1',
+    });
+    (service as any).containerConfig = { Id: 'dir1' };
+
+    await expect(
+      service.execInDirectus('node /directus/cli.js roles create --role r --admin'),
+    ).rejects.toThrow(/app_access/);
+  });
 });

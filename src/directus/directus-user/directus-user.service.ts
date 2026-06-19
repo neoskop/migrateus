@@ -53,18 +53,36 @@ export class DirectusUserService {
     this.getClient = getClient;
     this.port = port;
 
+    // `--app` is required: `roles create --admin` creates an admin policy and
+    // sets `app_access` straight from the flag, so omitting `--app` inserts
+    // null. `directus_policies.app_access` is NOT NULL, so the CLI aborts with
+    // a NOT_NULL_VIOLATION. An admin role having app access is correct anyway.
     const roleOutput = await execInDirectus(
-      `node /directus/cli.js roles create --role ${shquote(this.roleName)} --admin`,
+      `node /directus/cli.js roles create --role ${shquote(this.roleName)} --admin --app`,
     );
-    this.roleId = roleOutput.stdout.trim();
+    this.roleId = this.parseCliId(roleOutput.stdout, 'temporary admin role id');
 
     const userOutput = await execInDirectus(
       `node /directus/cli.js users create --email ${shquote(this.email)} --password ${shquote(this.password)} --role ${shquote(this.roleId)}`,
     );
-    this.userId = userOutput.stdout.trim();
+    this.userId = this.parseCliId(userOutput.stdout, 'temporary admin user id');
 
     this.token = await this.login(port);
     this.redactService.addRedaction(this.token);
+  }
+
+  /**
+   * Extracts the created entity id from Directus CLI stdout. The CLI prints
+   * pino INFO log lines (e.g. "Extensions loaded") to stdout before writing the
+   * id, so the id is the final non-empty line. Validated as a UUID to fail
+   * loudly if a log line is grabbed instead of the id.
+   */
+  private parseCliId(output: string, label: string): string {
+    const lines = output
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return assertUuid(lines[lines.length - 1] ?? '', label);
   }
 
   /**
