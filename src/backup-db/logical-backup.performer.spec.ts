@@ -45,10 +45,13 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
     directus: '11.0.0',
     vendor: 'postgres',
     collections: [
-      { collection: 'articles' },
-      { collection: 'authors' },
+      { collection: 'articles', schema: { name: 'articles' } },
+      { collection: 'authors', schema: { name: 'authors' } },
+      // Folder/presentation collection: no table (schema null) → not queryable
+      // via /items and must be skipped.
+      { collection: 'Theo', schema: null },
       // directus_* entries in the snapshot must be skipped (covered by SYSTEM_COLLECTIONS)
-      { collection: 'directus_files' },
+      { collection: 'directus_files', schema: { name: 'directus_files' } },
     ],
     fields: [],
     relations: [],
@@ -208,6 +211,8 @@ describe('LogicalBackupPerformer.backup (docker)', () => {
     expect(exported).toContain('authors');
     // directus_files came from the snapshot but must NOT be exported as a user collection
     expect(exported).not.toContain('directus_files');
+    // 'Theo' is a folder (schema null) — not a queryable collection
+    expect(exported).not.toContain('Theo');
   });
 
   it('writes data/<collection>.json for every exported collection', async () => {

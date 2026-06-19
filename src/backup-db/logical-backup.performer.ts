@@ -89,6 +89,9 @@ export class LogicalBackupPerformer {
       await fs.promises.mkdir(dataDir, { recursive: true });
 
       const userCollections = (snapshot.collections ?? [])
+        // Folder/presentation collections have no table (schema null) and are
+        // not queryable via /items — skip them; only real collections hold data.
+        .filter((c) => (c as { schema?: unknown }).schema != null)
         .map((c) => c.collection as string)
         .filter((c) => c && !c.startsWith('directus_'));
       const collections = [...SYSTEM_COLLECTIONS, ...userCollections];

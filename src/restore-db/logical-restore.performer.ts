@@ -203,12 +203,15 @@ export class LogicalRestorePerformer {
   private async importItems(
     client: { request: (cmd: unknown) => Promise<unknown> },
     snapshot: {
-      collections?: { collection: string }[];
+      collections?: { collection: string; schema?: unknown }[];
       relations?: { collection: string; field: string; related_collection: string }[];
     },
     backupDir: string,
   ): Promise<void> {
     const userCollections = (snapshot.collections ?? [])
+      // Folder/presentation collections have no table (schema null) — they hold
+      // no items, so skip them (their data file won't exist anyway).
+      .filter((c) => c.schema != null)
       .map((c) => c.collection)
       .filter((c) => c && !c.startsWith('directus_'));
     const collections = [...SYSTEM_COLLECTIONS, ...userCollections];

@@ -213,7 +213,35 @@ describe('DirectusUserService.removeUser', () => {
     expect(request).toHaveBeenCalled();
   }, 20000);
 
-  it('does not throw when role deletion fails (best-effort cleanup) and still deletes the user', async () => {
+  it('deletes the user FIRST, then the role (deleting the role first strips the admin access the user delete needs)', async () => {
+    const { service } = build();
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
+    globalThis.fetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      }) as never) as never;
+
+    let firstCallFailed = false;
+    let call = 0;
+    const request = jest.fn(async () => {
+      call += 1;
+      // The user delete (first) is critical: if IT fails, removeUser must throw.
+      if (call === 1) {
+        firstCallFailed = true;
+        throw new Error('user delete failed');
+      }
+      return undefined;
+    });
+    const getClient = jest.fn(() => ({ request }));
+
+    await service.setupUser(fn as never, getClient as never, 8055);
+
+    await expect(service.removeUser()).rejects.toThrow(/user delete failed/);
+    expect(firstCallFailed).toBe(true);
+  }, 20000);
+
+  it('does not throw when the role delete (the second, best-effort call) fails', async () => {
     const { service } = build();
     const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
     globalThis.fetch = (async () =>
@@ -225,8 +253,8 @@ describe('DirectusUserService.removeUser', () => {
     let call = 0;
     const request = jest.fn(async () => {
       call += 1;
-      // First request (role delete) rejects; user delete still must run.
-      if (call === 1) throw new Error('role delete failed');
+      // First call (user delete) succeeds; second call (role delete) fails.
+      if (call === 2) throw new Error('role delete failed');
       return undefined;
     });
     const getClient = jest.fn(() => ({ request }));
@@ -234,8 +262,8 @@ describe('DirectusUserService.removeUser', () => {
     await service.setupUser(fn as never, getClient as never, 8055);
 
     await expect(service.removeUser()).resolves.toBeUndefined();
-    // Both delete attempts were made despite the first failing.
-    expect(request.mock.calls.length).toBeGreaterThanOrEqual(2);
+    // Both deletes were attempted; the user delete ran before the role delete.
+    expect(request.mock.calls.length).toBe(2);
   }, 20000);
 
   it('is a no-op when setupUser was never called (no token/user)', async () => {

@@ -59,9 +59,11 @@ const SNAPSHOT = {
   directus: '11.0.0',
   vendor: 'postgres',
   collections: [
-    { collection: 'articles' },
-    { collection: 'authors' },
-    { collection: 'directus_files' },
+    { collection: 'articles', schema: { name: 'articles' } },
+    { collection: 'authors', schema: { name: 'authors' } },
+    // Folder/presentation collection (no table) must be skipped on import.
+    { collection: 'Theo', schema: null },
+    { collection: 'directus_files', schema: { name: 'directus_files' } },
   ],
   fields: [],
   relations: [
@@ -295,6 +297,8 @@ describe('LogicalRestorePerformer.restore (docker)', () => {
     expect(collections).toContain('authors');
     // directus_files came from the snapshot but is NOT a user collection
     expect(collections).not.toContain('directus_files');
+    // 'Theo' is a folder (schema null) — excluded from the import order
+    expect(collections).not.toContain('Theo');
 
     // snapshot relations are forwarded
     expect(relations).toContainEqual(

@@ -100,16 +100,22 @@ export class DirectusUserService {
     }
     const client = this.getClient(this.port, this.token);
 
+    // Delete the USER first, while the temp admin still has the admin access it
+    // derives from its role's policy. Deleting the role first strips that access
+    // and the user delete then fails with a permission error. User removal is
+    // the security-critical step, so a failure here surfaces.
+    await client.request(deleteUser(this.userId));
+
+    // The role (and its admin policy) is now orphaned but inert — no user holds
+    // it. Best-effort delete: the access token's user is gone, so this may fail;
+    // that is acceptable, leftover migrateus roles are swept by `clean`.
     if (this.roleId) {
       try {
         await client.request(deleteRole(this.roleId));
       } catch {
-        // Role may still be referenced (or already gone) — leave it; the
-        // sweep-all `clean` command removes orphaned migrateus roles later.
+        // token may be invalid post-user-deletion, or the role still referenced
       }
     }
-
-    await client.request(deleteUser(this.userId));
   }
 
   private async login(port: number): Promise<string> {
