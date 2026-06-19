@@ -413,21 +413,75 @@ describe('DirectusLogicalService.importCollection — directus_permissions (syst
   });
 });
 
-describe('DirectusLogicalService.importCollection — directus_access (system collection)', () => {
+describe('DirectusLogicalService.exportCollection — directus_access (raw /access endpoint)', () => {
   let service: DirectusLogicalService;
 
   beforeEach(() => {
     service = new DirectusLogicalService();
   });
 
-  it('routes to /items/directus_access POST for insert (verified via mock request)', async () => {
-    // createItems('directus_access') produces a command closure that throws when the
-    // real REST client calls it (SDK blocks core-collection paths).  Our mock never
-    // calls the closure — it just intercepts client.request — so the service call
-    // succeeds.  We verify the correct number of requests and that a function was
-    // passed (not null / a raw descriptor).  Routing correctness is covered by the
-    // directus_roles / directus_users positive tests and by the service's switch
-    // statement having explicit cases for every other system collection.
+  it('uses a raw GET /access command (not readItems) for the first page', async () => {
+    const client = makeClient(async (_cmd) => []);
+
+    await service.exportCollection(client as never, 'directus_access');
+
+    expect(client.request).toHaveBeenCalledTimes(1);
+    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
+    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    expect(desc.path).toBe('/access');
+    expect(desc.method).toBe('GET');
+  });
+
+  it('passes limit and offset params on the first page (page=1 → offset=0)', async () => {
+    const client = makeClient(async (_cmd) => []);
+
+    await service.exportCollection(client as never, 'directus_access');
+
+    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
+    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    const params = desc.params as Record<string, unknown>;
+    expect(params.limit).toBe(200);
+    expect(params.offset).toBe(0);
+  });
+
+  it('advances offset on the second page', async () => {
+    // First call returns a full page (200 rows), second returns partial (3 rows)
+    let call = 0;
+    const client = makeClient(async (_cmd) => {
+      call += 1;
+      if (call === 1) return Array.from({ length: 200 }, (_, i) => ({ id: `a${i}` }));
+      return Array.from({ length: 3 }, (_, i) => ({ id: `b${i}` }));
+    });
+
+    const result = await service.exportCollection(client as never, 'directus_access');
+
+    expect(result).toHaveLength(203);
+    expect(client.request).toHaveBeenCalledTimes(2);
+    const secondCallCmd = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[1][0];
+    const desc = descriptor(secondCallCmd) as Record<string, unknown>;
+    const params = desc.params as Record<string, unknown>;
+    expect(params.offset).toBe(200);
+  });
+
+  it('paginates directus_access and returns all rows (1 full page + trailing)', async () => {
+    const handler = paginatedHandler({ fullPages: 1, pageSize: 200, trailingCount: 7 });
+    const client = { request: handler };
+
+    const result = await service.exportCollection(client as never, 'directus_access');
+
+    expect(result).toHaveLength(207);
+    expect(handler).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('DirectusLogicalService.importCollection — directus_access (raw /access endpoint)', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('uses a raw POST /access command (not createItems) for insert', async () => {
     const client = { request: jest.fn(async () => []) };
     const rows = [{ id: 'acc-1', role: 'r1', policy: 'p1' }];
 
@@ -435,20 +489,31 @@ describe('DirectusLogicalService.importCollection — directus_access (system co
 
     expect(client.request).toHaveBeenCalledTimes(1);
     const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    expect(typeof actualCmd).toBe('function');
+    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    expect(desc.path).toBe('/access');
+    expect(desc.method).toBe('POST');
   });
 
-  it('issues a second request for the deferred-fields patch pass on directus_access', async () => {
+  it('sends the rows as a JSON body in the POST request', async () => {
     const client = { request: jest.fn(async () => []) };
-    const rows = [{ id: 'acc-1', role: null }, { id: 'acc-2', role: 'r1' }];
+    const rows = [
+      { id: 'acc-1', role: 'r1', user: null, policy: 'p1', sort: 1 },
+      { id: 'acc-2', role: null, user: 'u1', policy: 'p2', sort: 2 },
+    ];
 
-    await service.importCollection(client as never, 'directus_access', rows, ['role']);
+    await service.importCollection(client as never, 'directus_access', rows, []);
 
-    // Two calls: one insert batch, one update for the non-null deferred row (acc-1 stays null)
-    expect(client.request).toHaveBeenCalledTimes(2);
-    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
-    expect(typeof calls[0][0]).toBe('function');
-    expect(typeof calls[1][0]).toBe('function');
+    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
+    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    expect(desc.body).toBe(JSON.stringify(rows));
+  });
+
+  it('makes no requests when rows is empty (early return)', async () => {
+    const client = { request: jest.fn() };
+
+    await service.importCollection(client as never, 'directus_access', [], []);
+
+    expect(client.request).not.toHaveBeenCalled();
   });
 });
 

@@ -95,6 +95,12 @@ export class DirectusLogicalService {
         return createPermissions(rows);
       case 'directus_users':
         return createUsers(rows);
+      case 'directus_access':
+        return () => ({
+          path: '/access',
+          body: JSON.stringify(rows),
+          method: 'POST',
+        });
       default:
         return createItems(collection as never, rows as never[]);
     }
@@ -146,7 +152,11 @@ export class DirectusLogicalService {
           rows = (await client.request(readUsers(query))) as any[];
           break;
         case 'directus_access':
-          rows = (await client.request(readItems('directus_access' as never, query))) as any[];
+          rows = (await client.request(() => ({
+            path: '/access',
+            params: { limit: LIMIT, offset: (page - 1) * LIMIT },
+            method: 'GET',
+          }))) as any[];
           break;
         default:
           rows = (await client.request(readItems(collection as never, query))) as any[];
