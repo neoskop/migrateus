@@ -42,15 +42,16 @@ export class PgloaderService {
       throw new Error(`Failed to write pgloader load file with status code ${writeResult.code}: ${writeResult.stderr}`);
     }
 
-    // Run pgloader. Surface its report — pgloader prints a per-table summary
-    // (and any errors) to stdout/stderr and masks the password itself.
+    // Run pgloader. Surface its report unconditionally — pgloader prints a
+    // per-table summary (and any errors) and masks the password itself. Empty
+    // output is itself a useful signal, so always log the exit code.
+    this.logger.debug('Running pgloader (/tmp/migrateus.load)');
     const result = await containerService.execute('pgloader /tmp/migrateus.load');
-    if (result.stdout) {
-      this.logger.debug(`pgloader output:\n${result.stdout}`);
-    }
-    if (result.stderr) {
-      this.logger.debug(`pgloader stderr:\n${result.stderr}`);
-    }
+    this.logger.debug(
+      `pgloader exited with code ${result.code}\n` +
+        `--- pgloader stdout ---\n${result.stdout || '(empty)'}\n` +
+        `--- pgloader stderr ---\n${result.stderr || '(empty)'}`,
+    );
     if (result.code !== 0) {
       throw new Error(
         `pgloader failed with status code ${result.code}:\n${result.stdout}\n${result.stderr}`,
