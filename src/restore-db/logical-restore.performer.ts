@@ -32,6 +32,7 @@ import { ConfigService } from '../config/config.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { planImportOrder, Relation } from '../transfer/import-order.js';
+import { alignUuidForeignKeyTypes } from '../transfer/align-relation-field-types.js';
 import { fileExists } from '../util/file-exists.js';
 import { exec } from '../util/exec.js';
 
@@ -169,14 +170,16 @@ export class LogicalRestorePerformer {
         }
       }
 
-      this.progressService.advance('🔄 Restarting Directus');
-      await this.restartDirectus();
       this.progressService.succeed('Logical restore complete');
     } catch (error: any) {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');
+      // Delete the temp admin BEFORE restarting — the restart drops the HTTP
+      // API mid-request, which would otherwise fail the cleanup ('fetch failed').
       await this.sqlService.cleanUpDirectusUser();
+      this.progressService.advance('🔄 Restarting Directus');
+      await this.restartDirectus();
       await this.cleanUpPlatform();
       await this.deleteTemporaryDirectory(backupDir);
       this.progressService.finish();
@@ -188,6 +191,11 @@ export class LogicalRestorePerformer {
     client: { request: (cmd: unknown) => Promise<unknown> },
     snapshot: SchemaSnapshotOutput,
   ): Promise<void> {
+    // Cross-DBMS fidelity: a SQLite snapshot records uuid FK columns as
+    // varchar; coerce them back to uuid so foreign keys can be created on a
+    // database with a native uuid type (e.g. Postgres).
+    alignUuidForeignKeyTypes(snapshot as never);
+
     const diff = (await client.request(schemaDiff(snapshot, true))) as
       | (SchemaDiffOutput & { status?: number })
       | null;
@@ -203,11 +211,45 @@ export class LogicalRestorePerformer {
   private async importItems(
     client: { request: (cmd: unknown) => Promise<unknown> },
     snapshot: {
-      collections?: { collection: string; schema?: unknown }[];
+      collections?: {
+        collection: string;
+        schema?: unknown;
+        meta?: { singleton?: boolean } | null;
+      }[];
+      fields?: {
+        collection: string;
+        field: string;
+        type?: string;
+        schema?: unknown;
+      }[];
       relations?: { collection: string; field: string; related_collection: string }[];
     },
     backupDir: string,
   ): Promise<void> {
+    // Singleton collections have no /items POST route — import via updateSingleton.
+    const singletons = new Set(
+      (snapshot.collections ?? [])
+        .filter((c) => c.meta?.singleton)
+        .map((c) => c.collection),
+    );
+    // Alias fields (O2M/M2A/presentation) have a null schema in the snapshot
+    // and are stripped before import. json fields need string values encoded so
+    // Postgres accepts them.
+    const aliasByCollection = new Map<string, string[]>();
+    const jsonByCollection = new Map<string, string[]>();
+    for (const field of snapshot.fields ?? []) {
+      if (field.schema == null) {
+        const list = aliasByCollection.get(field.collection) ?? [];
+        list.push(field.field);
+        aliasByCollection.set(field.collection, list);
+      }
+      if (field.type === 'json') {
+        const list = jsonByCollection.get(field.collection) ?? [];
+        list.push(field.field);
+        jsonByCollection.set(field.collection, list);
+      }
+    }
+
     const userCollections = (snapshot.collections ?? [])
       // Folder/presentation collections have no table (schema null) — they hold
       // no items, so skip them (their data file won't exist anyway).
@@ -244,6 +286,9 @@ export class LogicalRestorePerformer {
         collection,
         rows,
         deferredFields[collection] ?? [],
+        aliasByCollection.get(collection) ?? [],
+        singletons.has(collection),
+        jsonByCollection.get(collection) ?? [],
       );
     }
   }

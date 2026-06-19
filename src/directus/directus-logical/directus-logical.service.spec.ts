@@ -274,6 +274,155 @@ describe('DirectusLogicalService.importCollection — user collection, no deferr
   });
 });
 
+describe('DirectusLogicalService.importCollection — json field encoding', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('JSON-encodes string values of json fields (regression: invalid input syntax for type json)', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return [];
+      }),
+    };
+    const rows = [
+      { id: 1, result: 'plain: not-json\n  text', args: { a: 1 } },
+    ];
+
+    await service.importCollection(
+      client as never,
+      'theo_chat_log_tool_usage',
+      rows,
+      [],
+      [],
+      false,
+      ['result', 'args'],
+    );
+
+    const sent = JSON.parse(captured.body)[0];
+    // The free-text string is wrapped into a JSON string literal...
+    expect(sent.result).toBe(JSON.stringify('plain: not-json\n  text'));
+    // ...while a non-string (object) json value is left for Directus to encode.
+    expect(sent.args).toEqual({ a: 1 });
+  });
+});
+
+describe('DirectusLogicalService.importCollection — batching', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('splits a large insert into batches of 100 (regression: request entity too large)', async () => {
+    const client = { request: jest.fn(async () => []) };
+    const rows = Array.from({ length: 250 }, (_, i) => ({ id: i + 1, n: i }));
+
+    await service.importCollection(client as never, 'articles', rows, []);
+
+    // 250 rows → ceil(250/100) = 3 create requests.
+    expect(client.request).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('DirectusLogicalService.importCollection — user singleton', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('upserts via updateSingleton (no /items POST route) when isSingleton is true', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return {};
+      }),
+    };
+    const rows = [{ id: 1, text: 'only-row' }];
+
+    await service.importCollection(
+      client as never,
+      'theo_chat_response_description',
+      rows,
+      [],
+      [],
+      true,
+    );
+
+    // Exactly one request, to the singleton item route via PATCH (no POST list route).
+    expect(client.request).toHaveBeenCalledTimes(1);
+    expect(captured.path).toBe('/items/theo_chat_response_description');
+    expect(captured.method).toBe('PATCH');
+  });
+});
+
+describe('DirectusLogicalService.importCollection — strips relational alias fields', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('removes caller-supplied alias fields (user O2M/M2A) before insert', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return [];
+      }),
+    };
+    const rows = [{ id: 1, title: 'A', turns: [10, 11], tool_usages: [5] }];
+
+    await service.importCollection(
+      client as never,
+      'theo_chat_log',
+      rows,
+      [],
+      ['turns', 'tool_usages'],
+    );
+
+    const sent = JSON.parse(captured.body);
+    expect(sent[0]).toEqual({ id: 1, title: 'A' });
+  });
+
+  it('strips known system alias fields on directus_policies automatically (regression: POST /policies 403)', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return [];
+      }),
+    };
+    const rows = [
+      {
+        id: 'p1',
+        name: 'Chatbot',
+        admin_access: false,
+        app_access: false,
+        permissions: [89, 90],
+        users: ['u1'],
+        roles: ['r1'],
+      },
+    ];
+
+    await service.importCollection(client as never, 'directus_policies', rows, []);
+
+    const sent = JSON.parse(captured.body);
+    expect(sent[0]).toEqual({
+      id: 'p1',
+      name: 'Chatbot',
+      admin_access: false,
+      app_access: false,
+    });
+  });
+});
+
 describe('DirectusLogicalService.importCollection — user collection, with deferred fields', () => {
   let service: DirectusLogicalService;
 
@@ -334,9 +483,9 @@ describe('DirectusLogicalService.importCollection — directus_roles (system col
 
     await service.importCollection(client as never, 'directus_roles', rows, []);
 
-    expect(client.request).toHaveBeenCalledTimes(1);
-    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    expect(descriptor(actualCmd)).toEqual(descriptor(createRoles(rows)));
+    // skip-existing reads existing ids first (returns none here), then creates.
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    expect(descriptor(calls[1][0])).toEqual(descriptor(createRoles(rows)));
   });
 
   it('uses updateRole for the deferred-fields patch pass on directus_roles', async () => {
@@ -345,9 +494,9 @@ describe('DirectusLogicalService.importCollection — directus_roles (system col
 
     await service.importCollection(client as never, 'directus_roles', rows, ['parent']);
 
-    expect(client.request).toHaveBeenCalledTimes(2);
+    // calls: [0] read existing ids, [1] createRoles, [2] updateRole patch.
     const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
-    expect(descriptor(calls[1][0])).toEqual(descriptor(updateRole('role-2' as never, { parent: 'role-1' })));
+    expect(descriptor(calls[2][0])).toEqual(descriptor(updateRole('role-2' as never, { parent: 'role-1' })));
   });
 });
 
@@ -364,8 +513,29 @@ describe('DirectusLogicalService.importCollection — directus_users (system col
 
     await service.importCollection(client as never, 'directus_users', rows, []);
 
-    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    expect(descriptor(actualCmd)).toEqual(descriptor(createUsers(rows)));
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    expect(descriptor(calls[1][0])).toEqual(descriptor(createUsers(rows)));
+  });
+
+  it('strips masked password/token/tfa_secret fields on import (regression: token unique collision)', async () => {
+    const client = { request: jest.fn(async () => []) };
+    const rows = [
+      {
+        id: 'user-1',
+        email: 'a@b.com',
+        password: '**********',
+        token: '**********',
+        tfa_secret: '**********',
+      },
+    ];
+
+    await service.importCollection(client as never, 'directus_users', rows, []);
+
+    // calls[0] reads existing ids; calls[1] is the create with masked fields gone.
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    expect(descriptor(calls[1][0])).toEqual(
+      descriptor(createUsers([{ id: 'user-1', email: 'a@b.com' }] as never)),
+    );
   });
 
   it('uses updateUser for the deferred-fields patch pass on directus_users', async () => {
@@ -374,8 +544,9 @@ describe('DirectusLogicalService.importCollection — directus_users (system col
 
     await service.importCollection(client as never, 'directus_users', rows, ['role']);
 
+    // calls: [0] read existing ids, [1] createUsers, [2] updateUser patch.
     const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
-    expect(descriptor(calls[1][0])).toEqual(descriptor(updateUser('u2' as never, { role: 'r1' })));
+    expect(descriptor(calls[2][0])).toEqual(descriptor(updateUser('u2' as never, { role: 'r1' })));
   });
 });
 
@@ -392,8 +563,8 @@ describe('DirectusLogicalService.importCollection — directus_policies (system 
 
     await service.importCollection(client as never, 'directus_policies', rows, []);
 
-    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    expect(descriptor(actualCmd)).toEqual(descriptor(createPolicies(rows)));
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    expect(descriptor(calls[1][0])).toEqual(descriptor(createPolicies(rows)));
   });
 
   it('uses updatePolicy for the deferred-fields patch pass on directus_policies', async () => {
@@ -402,8 +573,9 @@ describe('DirectusLogicalService.importCollection — directus_policies (system 
 
     await service.importCollection(client as never, 'directus_policies', rows, ['parent']);
 
+    // calls: [0] read existing ids, [1] createPolicies, [2] updatePolicy patch.
     const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
-    expect(descriptor(calls[1][0])).toEqual(descriptor(updatePolicy('p2' as never, { parent: 'p1' })));
+    expect(descriptor(calls[2][0])).toEqual(descriptor(updatePolicy('p2' as never, { parent: 'p1' })));
   });
 });
 
@@ -414,24 +586,57 @@ describe('DirectusLogicalService.importCollection — directus_permissions (syst
     service = new DirectusLogicalService();
   });
 
-  it('routes through createPermissions for insert', async () => {
+  it('drops the auto-increment id and routes through createPermissions for insert', async () => {
     const client = { request: jest.fn(async () => []) };
-    const rows = [{ id: 1, collection: 'articles', action: 'read' }];
+    const rows = [{ id: 1, collection: 'articles', action: 'read', policy: 'pol-1' }];
+
+    await service.importCollection(client as never, 'directus_permissions', rows, []);
+
+    // auto-id: id is dropped so the target assigns a fresh one; the policy FK
+    // (not the integer id) preserves the link. No existing-id read, no patch.
+    expect(client.request).toHaveBeenCalledTimes(1);
+    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
+    expect(descriptor(actualCmd)).toEqual(
+      descriptor(
+        createPermissions([
+          { collection: 'articles', action: 'read', policy: 'pol-1' },
+        ] as never),
+      ),
+    );
+  });
+
+  it('skips global baseline permissions with a null policy (Directus seeds them itself)', async () => {
+    const client = { request: jest.fn(async () => []) };
+    const rows = [
+      { id: 1, collection: 'directus_users', action: 'read', policy: null },
+      { id: 2, collection: 'articles', action: 'read', policy: 'pol-1' },
+    ];
 
     await service.importCollection(client as never, 'directus_permissions', rows, []);
 
     const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    expect(descriptor(actualCmd)).toEqual(descriptor(createPermissions(rows)));
+    // Only the policy-attached permission is created; the null-policy one is dropped.
+    expect(descriptor(actualCmd)).toEqual(
+      descriptor(
+        createPermissions([
+          { collection: 'articles', action: 'read', policy: 'pol-1' },
+        ] as never),
+      ),
+    );
   });
 
-  it('uses updatePermission for the deferred-fields patch pass on directus_permissions', async () => {
+  it('imports permissions in a single request: no existing-id read, no patch pass', async () => {
     const client = { request: jest.fn(async () => []) };
-    const rows = [{ id: 1, policy: null }, { id: 2, policy: 'pol-1' }];
+    const rows = [
+      { id: 1, collection: 'a', action: 'read', policy: 'pol-1' },
+      { id: 2, collection: 'b', action: 'read', policy: 'pol-2' },
+    ];
 
-    await service.importCollection(client as never, 'directus_permissions', rows, ['policy']);
+    await service.importCollection(client as never, 'directus_permissions', rows, []);
 
-    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
-    expect(descriptor(calls[1][0])).toEqual(descriptor(updatePermission(2 as never, { policy: 'pol-1' })));
+    // auto-id: just the create (policies are imported before permissions, so the
+    // policy FK is satisfied at insert and never deferred).
+    expect(client.request).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -509,9 +714,9 @@ describe('DirectusLogicalService.importCollection — directus_access (raw /acce
 
     await service.importCollection(client as never, 'directus_access', rows, []);
 
-    expect(client.request).toHaveBeenCalledTimes(1);
-    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    // skip-existing: calls[0] reads existing ids (GET /access), calls[1] inserts.
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    const desc = descriptor(calls[1][0]) as Record<string, unknown>;
     expect(desc.path).toBe('/access');
     expect(desc.method).toBe('POST');
   });
@@ -525,8 +730,9 @@ describe('DirectusLogicalService.importCollection — directus_access (raw /acce
 
     await service.importCollection(client as never, 'directus_access', rows, []);
 
-    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
-    const desc = descriptor(actualCmd) as Record<string, unknown>;
+    // calls[1] is the POST insert (calls[0] read existing ids).
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    const desc = descriptor(calls[1][0]) as Record<string, unknown>;
     expect(desc.body).toBe(JSON.stringify(rows));
   });
 
