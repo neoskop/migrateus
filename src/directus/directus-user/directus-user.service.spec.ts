@@ -120,9 +120,29 @@ describe('DirectusUserService.setupUser', () => {
     await service.setupUser(fn as never, jest.fn() as never, 9000);
 
     expect(loginUrl).toBe('http://localhost:9000/auth/login');
-    expect(loginBody.email).toMatch(/^migrateus\+.+@neoskop\.local$/);
+    expect(loginBody.email).toMatch(/^migrateus\+.+@example\.com$/);
     expect(typeof loginBody.password).toBe('string');
     expect(loginBody.password.length).toBeGreaterThan(0);
+  }, 20000);
+
+  it('uses a real public TLD for the temp-admin email (regression: Directus Joi email validation rejects .local)', async () => {
+    const { service } = build();
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
+
+    let email = '';
+    globalThis.fetch = (async (_url: string, init: any) => {
+      email = JSON.parse(init.body).email;
+      return {
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      } as never;
+    }) as never;
+
+    await service.setupUser(fn as never, jest.fn() as never, 8055);
+
+    // `.local` is not an IANA TLD and is rejected by Joi.string().email().
+    expect(email.endsWith('.local')).toBe(false);
+    expect(email).toMatch(/@example\.com$/);
   }, 20000);
 
   it('redacts the access token after login', async () => {

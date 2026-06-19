@@ -25,7 +25,10 @@ export type GetDirectusClient = (
 export class DirectusUserService {
   private readonly password: string = nanoid(48);
   private readonly roleName: string = `migrateus+${nanoid(6)}`;
-  private readonly email: string = `${this.roleName}@neoskop.local`;
+  // `example.com` is an RFC 2606 reserved domain with a valid IANA TLD: it
+  // passes Directus' `Joi.string().email()` check (which rejects `.local`) and
+  // can never collide with a real user.
+  private readonly email: string = `${this.roleName}@example.com`;
 
   // The token is only known after logging in as the freshly created temp admin.
   public token: string;
