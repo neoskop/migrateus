@@ -11,13 +11,14 @@ describe('BackupDbService', () => {
 describe('BackupDbService.backup dispatch', () => {
   type AnyMock = jest.Mock<any>;
 
-  function build(platform: string) {
+  function build(platform: string, logical = false) {
     const dockerBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
     const k8sBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
     const acaBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
+    const logicalBackupPerformer = { backup: jest.fn(async () => undefined) as AnyMock };
 
     const environment = { platform };
-    const config = { getEnvironment: jest.fn(() => environment) as AnyMock };
+    const config = { getEnvironment: jest.fn(() => environment) as AnyMock, logical };
     const environmentService = { environment: undefined as unknown };
 
     const service = new BackupDbService(
@@ -26,9 +27,16 @@ describe('BackupDbService.backup dispatch', () => {
       k8sBackupService as never,
       acaBackupService as never,
       environmentService as never,
+      logicalBackupPerformer as never,
     );
 
-    return { service, dockerBackupService, k8sBackupService, acaBackupService };
+    return {
+      service,
+      dockerBackupService,
+      k8sBackupService,
+      acaBackupService,
+      logicalBackupPerformer,
+    };
   }
 
   it('routes docker platform to DockerBackupService', async () => {
@@ -59,5 +67,21 @@ describe('BackupDbService.backup dispatch', () => {
     const { service, acaBackupService } = build('aca');
     await service.backup('aca-env', 'my-backup.tgz');
     expect(acaBackupService.backup).toHaveBeenCalledWith('my-backup.tgz');
+  });
+
+  it('routes to LogicalBackupPerformer when config.logical is set, bypassing platform performers', async () => {
+    const {
+      service,
+      logicalBackupPerformer,
+      dockerBackupService,
+      k8sBackupService,
+      acaBackupService,
+    } = build('docker-compose', true);
+    await service.backup('dev', 'logical.tgz');
+    expect(logicalBackupPerformer.backup).toHaveBeenCalledTimes(1);
+    expect(logicalBackupPerformer.backup).toHaveBeenCalledWith('dev', 'logical.tgz');
+    expect(dockerBackupService.backup).not.toHaveBeenCalled();
+    expect(k8sBackupService.backup).not.toHaveBeenCalled();
+    expect(acaBackupService.backup).not.toHaveBeenCalled();
   });
 });

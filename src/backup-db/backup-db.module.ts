@@ -6,6 +6,7 @@ import { BackupDbService } from './backup-db.service.js';
 import { DockerBackupService } from './docker-backup/docker-backup.service.js';
 import { K8sBackupService } from './k8s-backup/k8s-backup.service.js';
 import { AcaBackupService } from './aca-backup/aca-backup.service.js';
+import { LogicalBackupPerformer } from './logical-backup.performer.js';
 import { DirectusModule } from '../directus/directus.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { ContainerModule } from '../container/container.module.js';
@@ -25,6 +26,7 @@ import { UpdateModule } from '../update/update.module.js';
     DockerBackupService,
     K8sBackupService,
     AcaBackupService,
+    LogicalBackupPerformer,
   ],
   imports: [
     ConfigModule,
