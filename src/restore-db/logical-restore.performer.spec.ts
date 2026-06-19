@@ -124,6 +124,8 @@ function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } 
   const dockerService = {
     setup: jest.fn(async () => undefined) as AnyMock,
     restartDirectus: jest.fn(async () => undefined) as AnyMock,
+    forwardDirectus: jest.fn(async () => 8055) as AnyMock,
+    stopForwardDirectus: jest.fn() as AnyMock,
   };
   const k8sService = {
     setup: jest.fn(async () => undefined) as AnyMock,

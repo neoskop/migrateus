@@ -250,7 +250,10 @@ export class LogicalRestorePerformer {
 
     if (platform.startsWith('docker')) {
       await this.dockerService.setup();
-      return { port: 8055, containerService: this.dockerContainerService };
+      // Remote docker (DOCKER_HOST=ssh://…) needs an SSH tunnel so the Directus
+      // HTTP API is reachable on localhost; local docker returns 8055.
+      const port = await this.dockerService.forwardDirectus();
+      return { port, containerService: this.dockerContainerService };
     }
 
     if (platform === 'aca') {
@@ -278,7 +281,9 @@ export class LogicalRestorePerformer {
   private async cleanUpPlatform(): Promise<void> {
     const platform = this.environmentService.environment.platform;
 
-    if (platform === 'k8s') {
+    if (platform.startsWith('docker')) {
+      this.dockerService.stopForwardDirectus();
+    } else if (platform === 'k8s') {
       this.portForwardService.stop();
       await this.k8sService.cleanUp();
     }

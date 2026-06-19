@@ -13,11 +13,44 @@ import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
 import { exec } from '../util/exec.js';
 import { shquote } from '../util/sh-quote.js';
+import { spawn, ChildProcess } from 'node:child_process';
+import portfinder from 'portfinder';
+
+/**
+ * Builds `ssh` args for a local port-forward from a DOCKER_HOST ssh URL.
+ * `ssh://user@host:2222` → `-p 2222 user@host` plus the `-L` mapping. The
+ * `target` is the `host:port` the Dokploy host should connect the forward to.
+ */
+export function buildSshForwardArgs(
+  dockerHost: string,
+  localPort: number,
+  target: string,
+): string[] {
+  const url = new URL(dockerHost);
+  const userHost = url.username
+    ? `${url.username}@${url.hostname}`
+    : url.hostname;
+  const args = [
+    '-N',
+    '-L',
+    `127.0.0.1:${localPort}:${target}`,
+    '-o',
+    'ExitOnForwardFailure=yes',
+    '-o',
+    'StrictHostKeyChecking=accept-new',
+  ];
+  if (url.port) {
+    args.push('-p', url.port);
+  }
+  args.push(userHost);
+  return args;
+}
 
 @Injectable()
 export class DockerService {
   public networks: string[];
   public containerConfig: ContainerConfig;
+  private directusTunnel?: ChildProcess;
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
@@ -306,10 +339,105 @@ export class DockerService {
   }
 
   public withHost(command: string): string {
+    const host = this.dockerHost;
+    return host ? `DOCKER_HOST=${host} ${command}` : command;
+  }
+
+  private get dockerHost(): string | undefined {
     const env = this.environmentService.environment as
       | DockerEnvironment
       | DockerComposeEnvironment;
-    const host = env?.host;
-    return host ? `DOCKER_HOST=${host} ${command}` : command;
+    return env?.host;
+  }
+
+  /**
+   * Resolves the Directus HTTP port to a locally-reachable one.
+   *
+   * Local docker (no DOCKER_HOST, or a `tcp://` host): Directus' 8055 is
+   * already reachable on localhost → return 8055. Remote docker over SSH
+   * (`DOCKER_HOST=ssh://…`, e.g. Dokploy): open an SSH local-forward to the
+   * Directus container and return the chosen local port, so the rest of the
+   * code keeps talking to `localhost:<port>` unchanged.
+   */
+  public async forwardDirectus(): Promise<number> {
+    const host = this.dockerHost;
+    if (!host || !host.startsWith('ssh://')) {
+      return 8055;
+    }
+
+    const localPort = await portfinder.getPortPromise();
+    const target = this.resolveTunnelTarget();
+    this.logger.debug(
+      `Opening SSH tunnel 127.0.0.1:${chalk.bold(localPort)} → ${chalk.bold(target)} on ${chalk.bold(host)}`,
+    );
+
+    this.directusTunnel = spawn('ssh', buildSshForwardArgs(host, localPort, target), {
+      stdio: ['ignore', 'ignore', 'inherit'],
+      detached: true,
+    });
+    this.directusTunnel.unref();
+
+    await this.waitForDirectus(localPort, target);
+    return localPort;
+  }
+
+  public stopForwardDirectus(): void {
+    if (!this.directusTunnel) {
+      return;
+    }
+    try {
+      this.directusTunnel.kill('SIGKILL');
+    } catch (e: any) {
+      this.logger.warn(`Failed to stop Directus SSH tunnel: ${e?.message ?? e}`);
+    }
+    this.directusTunnel = undefined;
+  }
+
+  /**
+   * Where the Dokploy host should connect the forward to. Prefer a
+   * host-published 8055 (always routable from the host); otherwise the
+   * container's IP on its first network (works when the host routes to the
+   * docker/overlay network).
+   */
+  private resolveTunnelTarget(): string {
+    const ports = this.containerConfig.NetworkSettings.Ports ?? {};
+    const published = ports['8055/tcp']?.[0]?.HostPort;
+    if (published) {
+      return `localhost:${published}`;
+    }
+
+    const networks = this.containerConfig.NetworkSettings.Networks ?? {};
+    const ip = Object.values(networks)
+      .map((network) => network?.IPAddress)
+      .find((address): address is string => Boolean(address));
+    if (!ip) {
+      throw new Error(
+        'Could not determine the Directus container address for the SSH tunnel: ' +
+          'no host-published 8055 and no container IP found.',
+      );
+    }
+    return `${ip}:8055`;
+  }
+
+  /** Polls the forwarded port until Directus answers, or fails with guidance. */
+  private async waitForDirectus(port: number, target: string): Promise<void> {
+    const deadline = Date.now() + 20000;
+    let lastError = '';
+    while (Date.now() < deadline) {
+      try {
+        // Any HTTP response means the tunnel carries traffic to Directus.
+        await fetch(`http://127.0.0.1:${port}/server/ping`);
+        return;
+      } catch (e: any) {
+        lastError = e?.message ?? String(e);
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+    throw new Error(
+      `SSH tunnel is up but Directus is unreachable at http://127.0.0.1:${port} ` +
+        `(forwarding to ${target}). The Dokploy host likely cannot route to the ` +
+        `container — publish Directus' port 8055 on the host, or expose Directus ` +
+        `at a public URL. Last error: ${lastError}`,
+    );
   }
 }
