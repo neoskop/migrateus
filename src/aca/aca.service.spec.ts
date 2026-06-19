@@ -259,4 +259,36 @@ describe('AcaService', () => {
       expect(cmd).toMatch(/restart/);
     });
   });
+
+  describe('execInDirectus()', () => {
+    let service: InstanceType<typeof AcaService>;
+
+    beforeEach(() => {
+      mockExecFn.mockReset();
+      service = makeService();
+    });
+
+    it('runs the command in the Directus ACA app via az containerapp exec', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
+
+      const result = await service.execInDirectus(
+        'node /directus/cli.js roles create --role r --admin',
+      );
+
+      const cmd = mockExecFn.mock.calls[0][0] as string;
+      expect(cmd).toMatch(/az containerapp exec/);
+      expect(cmd).toMatch(/-n my-app/);
+      expect(cmd).toMatch(/-g my-rg/);
+      expect(cmd).toContain('node /directus/cli.js roles create --role r --admin');
+      expect(result).toEqual({ code: 0, stdout: 'done', stderr: '' });
+    });
+
+    it('returns the az result (does not throw on non-zero, mirrors AcaContainerService.execute)', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'err' });
+
+      const result = await service.execInDirectus('node /directus/cli.js');
+
+      expect(result.code).toBe(1);
+    });
+  });
 });

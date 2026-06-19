@@ -75,6 +75,15 @@ export class AcaService {
     this.sqlService.databaseConfig = config;
   }
 
+  public async execInDirectus(command: string): Promise<ExecOutputReturnValue> {
+    const { app, resourceGroup } = this.acaEnv;
+    const safeCommand = command.replaceAll('"', '\\"');
+    // TODO(verify): az containerapp exec headless stdout
+    return this.az(
+      `containerapp exec -n ${app} -g ${resourceGroup} --command "/bin/sh -c \\"${safeCommand}\\""`,
+    );
+  }
+
   public async restartDirectus(): Promise<void> {
     const { app, resourceGroup } = this.acaEnv;
     // TODO(verify): ACA revision restart command

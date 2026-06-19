@@ -93,3 +93,45 @@ describe('DockerService.ensureDatabaseContainerIsRunning', () => {
     expect(execMock).not.toHaveBeenCalled();
   });
 });
+
+describe('DockerService.execInDirectus', () => {
+  beforeEach(() => execMock.mockReset());
+
+  it('runs the command inside the Directus container via docker exec with DOCKER_HOST prefix', async () => {
+    execMock.mockResolvedValueOnce({ code: 0, stdout: 'ok', stderr: '' });
+
+    const service = build({
+      platform: 'docker',
+      name: 'dev',
+      host: 'ssh://h',
+      containerName: 'dir1',
+    });
+    (service as any).containerConfig = { Id: 'dir1' };
+
+    const result = await service.execInDirectus(
+      'node /directus/cli.js roles create --role r --admin',
+    );
+
+    expect(execMock).toHaveBeenCalledTimes(1);
+    const cmd = execMock.mock.calls[0][0] as string;
+    expect(cmd).toBe(
+      'DOCKER_HOST=ssh://h docker exec dir1 /bin/sh -c "node /directus/cli.js roles create --role r --admin"',
+    );
+    expect(result).toEqual({ code: 0, stdout: 'ok', stderr: '' });
+  });
+
+  it('throws when the exec exits with a non-zero code', async () => {
+    execMock.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'oops' });
+
+    const service = build({
+      platform: 'docker',
+      name: 'dev',
+      containerName: 'dir1',
+    });
+    (service as any).containerConfig = { Id: 'dir1' };
+
+    await expect(
+      service.execInDirectus('node /directus/cli.js'),
+    ).rejects.toThrow(/Directus exec failed with code 1/);
+  });
+});

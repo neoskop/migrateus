@@ -281,6 +281,17 @@ export class DockerService {
     );
   }
 
+  public async execInDirectus(command: string) {
+    const full = this.withHost(
+      `docker exec ${this.containerConfig.Id} /bin/sh -c "${command.replaceAll('"', '\\"')}"`,
+    );
+    const out = await exec(full, { silent: true });
+    if (out.code !== 0) {
+      throw new Error(`Directus exec failed with code ${out.code}: ${out.stderr}`);
+    }
+    return out;
+  }
+
   public async restartDirectus() {
     await exec(this.withHost(`docker restart ${this.containerConfig.Id}`), {
       silent: true,

@@ -62,6 +62,35 @@ describe('K8sService', () => {
     expect(typeof K8sService).toBe('function');
   });
 
+  describe('execInDirectus()', () => {
+    beforeEach(() => {
+      mockExecFn.mockReset();
+    });
+
+    it('runs the command in the Directus deployment via kubectl exec deploy/directus', async () => {
+      const { service } = makeService();
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
+
+      const result = await service.execInDirectus(
+        'node /directus/cli.js roles create --role r --admin',
+      );
+
+      const cmd = mockExecFn.mock.calls[0][0] as string;
+      expect(cmd).toContain('kubectl exec deploy/directus -- /bin/sh -c');
+      expect(cmd).toContain('node /directus/cli.js roles create --role r --admin');
+      expect(result).toEqual({ code: 0, stdout: 'done', stderr: '' });
+    });
+
+    it('throws when kubectl exec exits with a non-zero code', async () => {
+      const { service } = makeService();
+      mockExecFn.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'error' });
+
+      await expect(
+        service.execInDirectus('node /directus/cli.js'),
+      ).rejects.toThrow('error');
+    });
+  });
+
   describe('retrieveDatabaseConfig()', () => {
     beforeEach(() => {
       mockExecFn.mockReset();

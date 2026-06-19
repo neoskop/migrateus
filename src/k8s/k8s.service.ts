@@ -127,6 +127,13 @@ export class K8sService {
     });
   }
 
+  public async execInDirectus(command: string) {
+    return this.kubectl(
+      `exec deploy/directus -- /bin/sh -c "${command.replaceAll('"', '\\"')}"`,
+      { silent: true },
+    );
+  }
+
   public async restartDirectus() {
     await this.kubectl('rollout restart deploy directus', { silent: true });
   }
