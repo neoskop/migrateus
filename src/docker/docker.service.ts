@@ -13,44 +13,27 @@ import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
 import { exec } from '../util/exec.js';
 import { shquote } from '../util/sh-quote.js';
-import { spawn, ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
+import net from 'node:net';
 import portfinder from 'portfinder';
 
 /**
- * Builds `ssh` args for a local port-forward from a DOCKER_HOST ssh URL.
- * `ssh://user@host:2222` → `-p 2222 user@host` plus the `-L` mapping. The
- * `target` is the `host:port` the Dokploy host should connect the forward to.
+ * A tiny TCP→stdio relay run via `node -e` INSIDE the Directus container: it
+ * connects to Directus on 127.0.0.1:8055 (reachable from inside the container)
+ * and bridges that socket to the process's stdin/stdout, so a `docker exec -i`
+ * attach becomes a transparent byte pipe to Directus. Double-quoted internals
+ * keep it safe inside the single-quoted shell argument.
  */
-export function buildSshForwardArgs(
-  dockerHost: string,
-  localPort: number,
-  target: string,
-): string[] {
-  const url = new URL(dockerHost);
-  const userHost = url.username
-    ? `${url.username}@${url.hostname}`
-    : url.hostname;
-  const args = [
-    '-N',
-    '-L',
-    `127.0.0.1:${localPort}:${target}`,
-    '-o',
-    'ExitOnForwardFailure=yes',
-    '-o',
-    'StrictHostKeyChecking=accept-new',
-  ];
-  if (url.port) {
-    args.push('-p', url.port);
-  }
-  args.push(userHost);
-  return args;
-}
+export const DIRECTUS_TCP_RELAY =
+  'const n=require("net");const c=n.connect(8055,"127.0.0.1");' +
+  'process.stdin.pipe(c);c.pipe(process.stdout);' +
+  'c.on("error",()=>process.exit(1));c.on("close",()=>process.exit(0));';
 
 @Injectable()
 export class DockerService {
   public networks: string[];
   public containerConfig: ContainerConfig;
-  private directusTunnel?: ChildProcess;
+  private directusTunnelServer?: net.Server;
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
@@ -355,9 +338,12 @@ export class DockerService {
    *
    * Local docker (no DOCKER_HOST, or a `tcp://` host): Directus' 8055 is
    * already reachable on localhost → return 8055. Remote docker over SSH
-   * (`DOCKER_HOST=ssh://…`, e.g. Dokploy): open an SSH local-forward to the
-   * Directus container and return the chosen local port, so the rest of the
-   * code keeps talking to `localhost:<port>` unchanged.
+   * (`DOCKER_HOST=ssh://…`, e.g. Dokploy): a raw `ssh -L` can't reach the
+   * container on a Swarm overlay network (the host doesn't route to overlay
+   * IPs). Instead start a local TCP listener that pipes each connection through
+   * `docker exec -i … node -e <relay>` to Directus on 127.0.0.1:8055 *inside*
+   * the container — reusing the SSH/docker channel that already works — and
+   * return the local port so the rest of the code keeps talking to localhost.
    */
   public async forwardDirectus(): Promise<number> {
     const host = this.dockerHost;
@@ -366,67 +352,69 @@ export class DockerService {
     }
 
     const localPort = await portfinder.getPortPromise();
-    const target = this.resolveTunnelTarget();
     this.logger.debug(
-      `Opening SSH tunnel 127.0.0.1:${chalk.bold(localPort)} → ${chalk.bold(target)} on ${chalk.bold(host)}`,
+      `Forwarding 127.0.0.1:${chalk.bold(localPort)} → Directus via docker exec on ${chalk.bold(host)}`,
     );
-
-    this.directusTunnel = spawn('ssh', buildSshForwardArgs(host, localPort, target), {
-      stdio: ['ignore', 'ignore', 'inherit'],
-      detached: true,
-    });
-    this.directusTunnel.unref();
-
-    await this.waitForDirectus(localPort, target);
+    this.directusTunnelServer = this.createDockerExecTunnel(localPort);
+    await this.waitForDirectus(localPort);
     return localPort;
   }
 
   public stopForwardDirectus(): void {
-    if (!this.directusTunnel) {
+    if (!this.directusTunnelServer) {
       return;
     }
-    try {
-      this.directusTunnel.kill('SIGKILL');
-    } catch (e: any) {
-      this.logger.warn(`Failed to stop Directus SSH tunnel: ${e?.message ?? e}`);
-    }
-    this.directusTunnel = undefined;
+    this.directusTunnelServer.close();
+    this.directusTunnelServer = undefined;
+  }
+
+  /** The `docker exec -i … node -e <relay>` command, host-prefixed and quoted. */
+  private relayCommand(): string {
+    return this.withHost(
+      `docker exec -i ${this.containerConfig.Id} node -e ${shquote(DIRECTUS_TCP_RELAY)}`,
+    );
   }
 
   /**
-   * Where the Dokploy host should connect the forward to. Prefer a
-   * host-published 8055 (always routable from the host); otherwise the
-   * container's IP on its first network (works when the host routes to the
-   * docker/overlay network).
+   * A local TCP server whose every connection is bridged, via a fresh
+   * `docker exec` attach, to Directus inside the container. HTTP keep-alive
+   * (undici's default) reuses a connection, so one exec serves many requests.
    */
-  private resolveTunnelTarget(): string {
-    const ports = this.containerConfig.NetworkSettings.Ports ?? {};
-    const published = ports['8055/tcp']?.[0]?.HostPort;
-    if (published) {
-      return `localhost:${published}`;
-    }
-
-    const networks = this.containerConfig.NetworkSettings.Networks ?? {};
-    const ip = Object.values(networks)
-      .map((network) => network?.IPAddress)
-      .find((address): address is string => Boolean(address));
-    if (!ip) {
-      throw new Error(
-        'Could not determine the Directus container address for the SSH tunnel: ' +
-          'no host-published 8055 and no container IP found.',
-      );
-    }
-    return `${ip}:8055`;
+  private createDockerExecTunnel(localPort: number): net.Server {
+    const command = this.relayCommand();
+    const server = net.createServer((socket) => {
+      const child = spawn('sh', ['-c', command], {
+        stdio: ['pipe', 'pipe', 'ignore'],
+      });
+      socket.pipe(child.stdin);
+      child.stdout.pipe(socket);
+      const killChild = () => {
+        try {
+          child.kill();
+        } catch {
+          // already exited
+        }
+      };
+      socket.on('error', killChild);
+      socket.on('close', killChild);
+      child.on('error', () => socket.destroy());
+      child.on('exit', () => socket.destroy());
+    });
+    server.listen(localPort, '127.0.0.1');
+    return server;
   }
 
   /** Polls the forwarded port until Directus answers, or fails with guidance. */
-  private async waitForDirectus(port: number, target: string): Promise<void> {
+  private async waitForDirectus(port: number): Promise<void> {
     const deadline = Date.now() + 20000;
     let lastError = '';
     while (Date.now() < deadline) {
       try {
-        // Any HTTP response means the tunnel carries traffic to Directus.
-        await fetch(`http://127.0.0.1:${port}/server/ping`);
+        // Per-attempt timeout: without it a stalled connection hangs forever
+        // (Node's fetch has no default timeout).
+        await fetch(`http://127.0.0.1:${port}/server/ping`, {
+          signal: AbortSignal.timeout(3000),
+        });
         return;
       } catch (e: any) {
         lastError = e?.message ?? String(e);
@@ -434,10 +422,9 @@ export class DockerService {
       }
     }
     throw new Error(
-      `SSH tunnel is up but Directus is unreachable at http://127.0.0.1:${port} ` +
-        `(forwarding to ${target}). The Dokploy host likely cannot route to the ` +
-        `container — publish Directus' port 8055 on the host, or expose Directus ` +
-        `at a public URL. Last error: ${lastError}`,
+      `Directus is unreachable through the docker-exec tunnel at ` +
+        `http://127.0.0.1:${port} after 20s. Verify Directus listens on ` +
+        `127.0.0.1:8055 inside the container. Last error: ${lastError}`,
     );
   }
 }
