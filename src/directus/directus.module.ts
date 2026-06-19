@@ -4,6 +4,7 @@ import { DirectusService } from './directus.service.js';
 import { DirectusAssetService } from './directus-asset/directus-asset.service.js';
 import { DirectusVersionService } from './directus-version/directus-version.service.js';
 import { DirectusSettingService } from './directus-setting/directus-setting.service.js';
+import { DirectusLogicalService } from './directus-logical/directus-logical.service.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
 
 @Module({
@@ -13,6 +14,7 @@ import { EnvironmentModule } from '../environment/environment.module.js';
     DirectusAssetService,
     DirectusSettingService,
     DirectusVersionService,
+    DirectusLogicalService,
   ],
   exports: [
     DirectusService,
@@ -20,6 +22,7 @@ import { EnvironmentModule } from '../environment/environment.module.js';
     DirectusAssetService,
     DirectusSettingService,
     DirectusVersionService,
+    DirectusLogicalService,
   ],
   imports: [
     EnvironmentModule
