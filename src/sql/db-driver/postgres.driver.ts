@@ -2,6 +2,7 @@ import { LoggerService } from '../../logger/logger.service.js';
 import { highlight } from 'cli-highlight';
 import { DatabaseConfig } from '../../backup-db/database-config.interface.js';
 import { DbDriver, Exec } from './db-driver.interface.js';
+import { throwIfFailed } from '../../util/exec.js';
 import {
   assertSafeIdentifier,
   escapeAnsiIdentifier,
@@ -63,12 +64,10 @@ export class PostgresDriver implements DbDriver {
       .filter(Boolean)
       .join(' ');
 
-    const output = await exec(command);
-    if (output.code !== 0) {
-      throw new Error(
-        `Backup failed with status code ${output.code}: ${output.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(command),
+      (o) => `Backup failed with status code ${o.code}: ${o.stderr}`,
+    );
   }
 
   public async restore(exec: Exec, artifact: string): Promise<void> {
@@ -83,12 +82,10 @@ export class PostgresDriver implements DbDriver {
       `<${artifact}`,
     ].join(' ');
 
-    const output = await exec(command);
-    if (output.code !== 0) {
-      throw new Error(
-        `Restore failed with status code ${output.code}: ${output.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(command),
+      (o) => `Restore failed with status code ${o.code}: ${o.stderr}`,
+    );
   }
 
   // TODO(plan-3): verify sequence reset against a live Directus PG
@@ -132,12 +129,10 @@ export class PostgresDriver implements DbDriver {
     this.logger.debug(
       `Executing SQL: ${highlight(sql, { language: 'sql', ignoreIllegals: true })}`,
     );
-    const output = await exec(command.join(' '));
-    if (output.code !== 0) {
-      throw new Error(
-        `Execution of SQL failed with status code ${output.code}: ${output.stderr}`,
-      );
-    }
+    const output = throwIfFailed(
+      await exec(command.join(' ')),
+      (o) => `Execution of SQL failed with status code ${o.code}: ${o.stderr}`,
+    );
     return output.stdout;
   }
 }

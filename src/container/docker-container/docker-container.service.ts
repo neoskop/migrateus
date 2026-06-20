@@ -7,7 +7,7 @@ import chalk from 'chalk';
 import { DockerService } from '../../docker/docker.service.js';
 import { highlight } from 'cli-highlight';
 import os from 'node:os';
-import { exec } from '../../util/exec.js';
+import { exec, throwIfFailed } from '../../util/exec.js';
 
 @Injectable()
 export class DockerContainerService extends ContainerService {
@@ -44,33 +44,24 @@ export class DockerContainerService extends ContainerService {
       `Creating container with command: ${highlight(command.join(' '), { language: 'bash' })}`,
     );
 
-    const createOutput = await exec(
-      this.dockerService.withHost(command.join(' ')),
-      {
+    const createOutput = throwIfFailed(
+      await exec(this.dockerService.withHost(command.join(' ')), {
         silent: true,
-      },
+      }),
+      (o) => `Failed to create container with code ${o.code}: ${o.stderr}`,
     );
-
-    if (createOutput.code !== 0) {
-      throw new Error(
-        `Failed to create container with code ${createOutput.code}: ${createOutput.stderr}`,
-      );
-    }
 
     this.migrateusContainerId = createOutput.stdout.trim();
 
-    const output = await exec(
-      this.dockerService.withHost(`docker start ${this.migrateusContainerId}`),
-      {
-        silent: true,
-      },
+    throwIfFailed(
+      await exec(
+        this.dockerService.withHost(
+          `docker start ${this.migrateusContainerId}`,
+        ),
+        { silent: true },
+      ),
+      (o) => `Failed to start container with code ${o.code}: ${o.stderr}`,
     );
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to start container with code ${output.code}: ${output.stderr}`,
-      );
-    }
   }
 
   public async cleanUp() {
@@ -138,15 +129,11 @@ export class DockerContainerService extends ContainerService {
       destination,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(this.dockerService.withHost(command), {
-      silent: true,
-    });
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to copy ${this.migrateusContainerId}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${ouput.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(this.dockerService.withHost(command), { silent: true }),
+      (o) =>
+        `Failed to copy ${this.migrateusContainerId}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${o.stderr}`,
+    );
   }
 
   public async infilFile(source: string, destination: string): Promise<void> {
@@ -157,15 +144,11 @@ export class DockerContainerService extends ContainerService {
       `${this.migrateusContainerId}:${destination}`,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const ouput = await exec(this.dockerService.withHost(command), {
-      silent: true,
-    });
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to copy ${chalk.bold(source)} to ${this.migrateusContainerId}:${chalk.bold(destination)}: ${ouput.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(this.dockerService.withHost(command), { silent: true }),
+      (o) =>
+        `Failed to copy ${chalk.bold(source)} to ${this.migrateusContainerId}:${chalk.bold(destination)}: ${o.stderr}`,
+    );
   }
 
   public async copyFromDirectus(
@@ -180,15 +163,11 @@ export class DockerContainerService extends ContainerService {
       localPath,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const output = await exec(this.dockerService.withHost(command), {
-      silent: true,
-    });
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to copy ${directusId}:${chalk.bold(remotePath)} to ${chalk.bold(localPath)}: ${output.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(this.dockerService.withHost(command), { silent: true }),
+      (o) =>
+        `Failed to copy ${directusId}:${chalk.bold(remotePath)} to ${chalk.bold(localPath)}: ${o.stderr}`,
+    );
   }
 
   public async copyToDirectus(
@@ -203,14 +182,10 @@ export class DockerContainerService extends ContainerService {
       `${directusId}:${remotePath}`,
     ].join(' ');
     this.logger.debug(`Executing ${highlight(command, { language: 'bash' })}`);
-    const output = await exec(this.dockerService.withHost(command), {
-      silent: true,
-    });
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to copy ${chalk.bold(localPath)} to ${directusId}:${chalk.bold(remotePath)}: ${output.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await exec(this.dockerService.withHost(command), { silent: true }),
+      (o) =>
+        `Failed to copy ${chalk.bold(localPath)} to ${directusId}:${chalk.bold(remotePath)}: ${o.stderr}`,
+    );
   }
 }

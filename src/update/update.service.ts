@@ -4,7 +4,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import semver from 'semver';
 import chalk from 'chalk';
 import { version } from '../version.js';
-import { exec } from '../util/exec.js';
+import { exec, throwIfFailed } from '../util/exec.js';
 import confirm from '@inquirer/confirm';
 
 @Injectable()
@@ -42,14 +42,12 @@ export class UpdateService {
   }
 
   private async getLatestVersion() {
-    const { code, stdout, stderr } = await exec(
-      'npm view @neoskop/migrateus versions --json',
-      { silent: true },
+    const { stdout } = throwIfFailed(
+      await exec('npm view @neoskop/migrateus versions --json', {
+        silent: true,
+      }),
+      (o) => o.stderr,
     );
-
-    if (code !== 0) {
-      throw new Error(stderr);
-    }
 
     const versions = JSON.parse(stdout);
     return semver.sort(versions)[versions.length - 1];

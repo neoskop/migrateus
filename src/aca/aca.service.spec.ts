@@ -6,6 +6,14 @@ const mockExecFn = jest.fn<
 
 jest.unstable_mockModule('../util/exec.js', () => ({
   exec: mockExecFn,
+  throwIfFailed: (output: any, message: any) => {
+    if (output.code !== 0) {
+      throw new Error(
+        typeof message === 'function' ? message(output) : message,
+      );
+    }
+    return output;
+  },
 }));
 
 const { AcaService } = await import('./aca.service.js');

@@ -5,7 +5,7 @@ import tmp from 'tmp';
 import prettyBytes from 'pretty-bytes';
 import { resolveOutputPath } from './resolve-output-path.js';
 import { fileExists } from './file-exists.js';
-import { exec } from './exec.js';
+import { exec, throwIfFailed } from './exec.js';
 
 /**
  * Shared staging-directory and tar archive helpers used by every backup/restore
@@ -46,16 +46,11 @@ export async function createArchive(
   outFile: string,
 ): Promise<string> {
   const targetPath = resolveOutputPath(outFile);
-  const output = await exec(`tar -czf ${targetPath} *`, {
-    silent: true,
-    cwd: dir,
-  });
-
-  if (output.code !== 0) {
-    throw new Error(
-      `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(output.stderr)}`,
-    );
-  }
+  throwIfFailed(
+    await exec(`tar -czf ${targetPath} *`, { silent: true, cwd: dir }),
+    (o) =>
+      `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(o.stderr)}`,
+  );
 
   const { size } = await fs.promises.stat(targetPath);
   return prettyBytes(size);
@@ -72,15 +67,11 @@ export async function extractArchive(
   members: string[] = [],
 ): Promise<void> {
   const memberArgs = members.length ? ` ${members.join(' ')}` : '';
-  const output = await exec(`tar -xf ${file} -C ${dir}${memberArgs}`, {
-    silent: true,
-  });
-
-  if (output.code !== 0) {
-    throw new Error(
-      `Failed to extract backup archive ${chalk.bold(file)}: ${chalk.red(output.stderr)}`,
-    );
-  }
+  throwIfFailed(
+    await exec(`tar -xf ${file} -C ${dir}${memberArgs}`, { silent: true }),
+    (o) =>
+      `Failed to extract backup archive ${chalk.bold(file)}: ${chalk.red(o.stderr)}`,
+  );
 }
 
 /**

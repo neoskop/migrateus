@@ -6,6 +6,7 @@ import { customAlphabet } from 'nanoid/non-secure';
 import { AcaService } from '../../aca/aca.service.js';
 import fs from 'node:fs';
 import { ExecOutputReturnValue } from 'shelljs';
+import { throwIfFailed } from '../../util/exec.js';
 
 @Injectable()
 export class AcaContainerService extends ContainerService {
@@ -21,15 +22,12 @@ export class AcaContainerService extends ContainerService {
 
   public async setup(): Promise<void> {
     const { resourceGroup, environment } = this.acaService.acaEnv;
-    const result = await this.acaService.az(
-      `containerapp create -n ${this.migrateusAppName} -g ${resourceGroup} --environment ${environment} --image ${this.image} --command "/bin/sh" --args "-c,sleep infinity" --min-replicas 1`,
+    throwIfFailed(
+      await this.acaService.az(
+        `containerapp create -n ${this.migrateusAppName} -g ${resourceGroup} --environment ${environment} --image ${this.image} --command "/bin/sh" --args "-c,sleep infinity" --min-replicas 1`,
+      ),
+      (o) => `Failed to create ACA container app with code ${o.code}: ${o.stderr}`,
     );
-
-    if (result.code !== 0) {
-      throw new Error(
-        `Failed to create ACA container app with code ${result.code}: ${result.stderr}`,
-      );
-    }
   }
 
   public async execute(command: string): Promise<ExecOutputReturnValue> {
@@ -72,11 +70,10 @@ export class AcaContainerService extends ContainerService {
 
   public async exfilFile(source: string, destination: string): Promise<void> {
     // TODO(verify): large .sqlite via Azure Files share; base64-through-exec is for small payloads only
-    const result = await this.execute(`base64 ${source}`);
-
-    if (result.code !== 0) {
-      throw new Error(`Failed to exfil file ${source}: ${result.stderr}`);
-    }
+    const result = throwIfFailed(
+      await this.execute(`base64 ${source}`),
+      (o) => `Failed to exfil file ${source}: ${o.stderr}`,
+    );
 
     const decoded = Buffer.from(result.stdout.trim(), 'base64');
     await fs.promises.writeFile(destination, decoded);
@@ -86,15 +83,10 @@ export class AcaContainerService extends ContainerService {
     // source is always a controlled CLI-internal path, not user-supplied HTTP input — path traversal risk is acceptable here
     const fileContent = await fs.promises.readFile(source);
     const b64 = fileContent.toString('base64');
-    const result = await this.execute(
-      `echo ${b64} | base64 -d > ${destination}`,
+    throwIfFailed(
+      await this.execute(`echo ${b64} | base64 -d > ${destination}`),
+      (o) => `Failed to infil file to ${destination}: ${o.stderr}`,
     );
-
-    if (result.code !== 0) {
-      throw new Error(
-        `Failed to infil file to ${destination}: ${result.stderr}`,
-      );
-    }
   }
 
   public async copyFromDirectus(

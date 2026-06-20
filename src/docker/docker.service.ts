@@ -11,7 +11,7 @@ import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { highlight } from 'cli-highlight';
 import chalk from 'chalk';
-import { exec } from '../util/exec.js';
+import { exec, throwIfFailed } from '../util/exec.js';
 import { shquote } from '../util/sh-quote.js';
 import { spawn } from 'node:child_process';
 import net from 'node:net';
@@ -107,18 +107,12 @@ export class DockerService {
         );
     }
 
-    const inspectOutput = await exec(
-      this.withHost(`docker inspect ${containerName}`),
-      {
+    const inspectOutput = throwIfFailed(
+      await exec(this.withHost(`docker inspect ${containerName}`), {
         silent: true,
-      },
+      }),
+      (o) => `Failed to get container config with code ${o.code}: ${o.stderr}`,
     );
-
-    if (inspectOutput.code !== 0) {
-      throw new Error(
-        `Failed to get container config with code ${inspectOutput.code}: ${inspectOutput.stderr}`,
-      );
-    }
 
     return JSON.parse(inspectOutput.stdout)[0] as ContainerConfig;
   }
@@ -126,18 +120,16 @@ export class DockerService {
   private async getSwarmServiceContainerId(service: string): Promise<string> {
     // Dokploy (and any Docker Swarm) runs a service as task containers labelled
     // `com.docker.swarm.service.name`. Resolve the running task container's id.
-    const psOutput = await exec(
-      this.withHost(
-        `docker ps --filter "label=com.docker.swarm.service.name=${service}" --format "{{.ID}}"`,
+    const psOutput = throwIfFailed(
+      await exec(
+        this.withHost(
+          `docker ps --filter "label=com.docker.swarm.service.name=${service}" --format "{{.ID}}"`,
+        ),
+        { silent: true },
       ),
-      { silent: true },
+      (o) =>
+        `Failed to resolve service ${chalk.bold(service)} with code ${o.code}: ${o.stderr}`,
     );
-
-    if (psOutput.code !== 0) {
-      throw new Error(
-        `Failed to resolve service ${chalk.bold(service)} with code ${psOutput.code}: ${psOutput.stderr}`,
-      );
-    }
 
     const containerId = psOutput.stdout.split('\n').filter(Boolean)[0];
 
@@ -152,20 +144,16 @@ export class DockerService {
 
   private async getComposeContainerName(): Promise<string> {
     const env = this.environmentService.environment as DockerComposeEnvironment;
-    const psOutput = await exec(
-      this.withHost(
-        `docker compose -f ${env.composeFile || 'docker-compose.yml'} ps -a --format '{{.Name}}' ${env.serviceName || 'directus'}`,
+    const psOutput = throwIfFailed(
+      await exec(
+        this.withHost(
+          `docker compose -f ${env.composeFile || 'docker-compose.yml'} ps -a --format '{{.Name}}' ${env.serviceName || 'directus'}`,
+        ),
+        { silent: true },
       ),
-      {
-        silent: true,
-      },
+      (o) =>
+        `Failed to get container name from docker compose with code ${o.code}: ${o.stderr}`,
     );
-
-    if (psOutput.code !== 0) {
-      throw new Error(
-        `Failed to get container name from docker compose with code ${psOutput.code}: ${psOutput.stderr}`,
-      );
-    }
 
     return psOutput.stdout.trim();
   }

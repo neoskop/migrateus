@@ -1,7 +1,17 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 
 const execMock = jest.fn<any>();
-jest.unstable_mockModule('../util/exec.js', () => ({ exec: execMock }));
+jest.unstable_mockModule('../util/exec.js', () => ({
+  exec: execMock,
+  throwIfFailed: (output: any, message: any) => {
+    if (output.code !== 0) {
+      throw new Error(
+        typeof message === 'function' ? message(output) : message,
+      );
+    }
+    return output;
+  },
+}));
 
 const { DockerService } = await import('./docker.service.js');
 

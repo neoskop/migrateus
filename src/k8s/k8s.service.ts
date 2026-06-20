@@ -5,7 +5,7 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { K8sEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
-import { exec } from '../util/exec.js';
+import { exec, throwIfFailed } from '../util/exec.js';
 import { shquote } from '../util/sh-quote.js';
 import { ExecOptions } from 'shelljs';
 import { spawn } from 'child_process';
@@ -80,15 +80,10 @@ export class K8sService {
       return;
     }
 
-    const { code } = await exec('kubectl oidc-login version', {
-      silent: true,
-    });
-
-    if (code !== 0) {
-      throw new Error(
-        `Kubelogin is not installed. See: ${chalk.bold('https://github.com/int128/kubelogin/tree/master?tab=readme-ov-file#setup')}`,
-      );
-    }
+    throwIfFailed(
+      await exec('kubectl oidc-login version', { silent: true }),
+      `Kubelogin is not installed. See: ${chalk.bold('https://github.com/int128/kubelogin/tree/master?tab=readme-ov-file#setup')}`,
+    );
 
     const env = this.kubeconfigPath
       ? { ...process.env, KUBECONFIG: this.kubeconfigPath }
@@ -158,13 +153,7 @@ export class K8sService {
       `Running ${highlight(fullCommand, { language: 'bash' })}`,
     );
 
-    const result = await exec(fullCommand, options);
-
-    if (result.code !== 0) {
-      throw new Error(result.stderr);
-    }
-
-    return result;
+    return throwIfFailed(await exec(fullCommand, options), (o) => o.stderr);
   }
 
   public kubectlApply(spec: object) {
@@ -222,16 +211,10 @@ export class K8sService {
       .context;
 
     if (context) {
-      const useContextOutput = await this.kubectl(
-        `config use-context ${context}`,
-        { silent: true },
+      throwIfFailed(
+        await this.kubectl(`config use-context ${context}`, { silent: true }),
+        (o) => `Failed to set default context with code ${o.code}: ${o.stderr}`,
       );
-
-      if (useContextOutput.code !== 0) {
-        throw new Error(
-          `Failed to set default context with code ${useContextOutput.code}: ${useContextOutput.stderr}`,
-        );
-      }
     }
   }
 

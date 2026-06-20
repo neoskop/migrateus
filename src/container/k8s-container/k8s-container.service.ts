@@ -6,6 +6,7 @@ import chalk from 'chalk';
 import { customAlphabet } from 'nanoid/non-secure';
 import { highlight } from 'cli-highlight';
 import { K8sService } from '../../k8s/k8s.service.js';
+import { throwIfFailed } from '../../util/exec.js';
 
 @Injectable()
 export class K8sContainerService extends ContainerService {
@@ -37,13 +38,10 @@ export class K8sContainerService extends ContainerService {
       },
     };
 
-    const output = await this.k8sService.kubectlApply(podSpec);
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to start pod with code ${output.code}: ${output.stderr}`,
-      );
-    }
+    throwIfFailed(
+      await this.k8sService.kubectlApply(podSpec),
+      (o) => `Failed to start pod with code ${o.code}: ${o.stderr}`,
+    );
 
     await this.k8sService.kubectl(
       `wait --for=condition=ready --timeout=60s pod ${this.migrateusPodName}`,
@@ -93,29 +91,25 @@ export class K8sContainerService extends ContainerService {
   }
 
   public async exfilFile(source: string, destination: string): Promise<void> {
-    const ouput = await this.k8sService.kubectl(
-      `cp ${this.migrateusPodName}:${source} ${destination}`,
-      { silent: true },
+    throwIfFailed(
+      await this.k8sService.kubectl(
+        `cp ${this.migrateusPodName}:${source} ${destination}`,
+        { silent: true },
+      ),
+      (o) =>
+        `Failed to copy ${this.migrateusPodName}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${o.stderr}`,
     );
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to copy ${this.migrateusPodName}:${chalk.bold(source)} to ${chalk.bold(destination)}: ${ouput.stderr}`,
-      );
-    }
   }
 
   public async infilFile(source: string, destination: string): Promise<void> {
-    const ouput = await this.k8sService.kubectl(
-      `cp ${source} ${this.migrateusPodName}:${destination}`,
-      { silent: true },
+    throwIfFailed(
+      await this.k8sService.kubectl(
+        `cp ${source} ${this.migrateusPodName}:${destination}`,
+        { silent: true },
+      ),
+      (o) =>
+        `Failed to copy ${chalk.bold(source)} to ${this.migrateusPodName}:${chalk.bold(destination)}: ${o.stderr}`,
     );
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to copy ${chalk.bold(source)} to ${this.migrateusPodName}:${chalk.bold(destination)}: ${ouput.stderr}`,
-      );
-    }
   }
 
   public async copyFromDirectus(

@@ -9,6 +9,14 @@ const mockExec = jest.fn<
 
 jest.unstable_mockModule('../util/exec.js', () => ({
   exec: mockExec,
+  throwIfFailed: (output: any, message: any) => {
+    if (output.code !== 0) {
+      throw new Error(
+        typeof message === 'function' ? message(output) : message,
+      );
+    }
+    return output;
+  },
 }));
 
 const mockDirSync = jest.fn<() => { name: string }>();
