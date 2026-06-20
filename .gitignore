@@ -6,3 +6,5 @@ scripts/*
 .env
 *.tsbuildinfo
 coverage/
+# Test artifact: backup-performer specs write a real archive to cwd
+output.tar.gz
