@@ -9,14 +9,7 @@ import {
 } from '../util/backup-archive.js';
 import { LoggerService } from '../logger/logger.service.js';
 import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
-import { DockerService } from '../docker/docker.service.js';
-import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
-import { K8sService } from '../k8s/k8s.service.js';
-import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
-import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
-import { AcaService } from '../aca/aca.service.js';
-import { AcaContainerService } from '../container/aca-container/aca-container.service.js';
-import { ContainerService } from '../container/container.service.js';
+import { PlatformResolver } from '../platform/platform-resolver.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import {
   DirectusLogicalService,
@@ -30,23 +23,11 @@ import { ConfigService } from '../config/config.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 
-/** Resolves the platform-specific Directus HTTP port and container handle. */
-interface PlatformTarget {
-  port: number;
-  containerService: ContainerService;
-}
-
 @Injectable()
 export class LogicalBackupPerformer {
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) private readonly logger: LoggerService,
-    private readonly dockerService: DockerService,
-    private readonly dockerContainerService: DockerContainerService,
-    private readonly k8sService: K8sService,
-    private readonly k8sContainerService: K8sContainerService,
-    private readonly portForwardService: PortForwardService,
-    private readonly acaService: AcaService,
-    private readonly acaContainerService: AcaContainerService,
+    private readonly platformResolver: PlatformResolver,
     private readonly sqlService: SqlService,
     private readonly directusLogicalService: DirectusLogicalService,
     private readonly directusAssetService: DirectusAssetService,
@@ -63,10 +44,13 @@ export class LogicalBackupPerformer {
     backupFile: string,
   ): Promise<void> {
     const backupDir = createWorkDir(0o700);
+    const platform = this.platformResolver.resolve(
+      this.environmentService.environment.platform,
+    );
 
     try {
       this.progressService.advance('🚀 Set-up platform');
-      const { port, containerService } = await this.setupPlatform(backupDir);
+      const { port, containerService } = await platform.connect();
 
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(containerService, port);
@@ -130,41 +114,9 @@ export class LogicalBackupPerformer {
     } finally {
       this.progressService.advance('🛁 Clean-up');
       await this.sqlService.cleanUpDirectusUser();
-      await this.cleanUpPlatform();
+      await platform.teardown();
       await removeWorkDir(backupDir);
       this.progressService.finish();
-    }
-  }
-
-  private async setupPlatform(backupDir: string): Promise<PlatformTarget> {
-    const platform = this.environmentService.environment.platform;
-
-    if (platform.startsWith('docker')) {
-      await this.dockerService.setup();
-      // Remote docker (DOCKER_HOST=ssh://…) needs an SSH tunnel so the Directus
-      // HTTP API is reachable on localhost; local docker returns 8055.
-      const port = await this.dockerService.forwardDirectus();
-      return { port, containerService: this.dockerContainerService };
-    }
-
-    if (platform === 'aca') {
-      await this.acaService.setup();
-      return { port: 8055, containerService: this.acaContainerService };
-    }
-
-    await this.k8sService.setup();
-    const port = await this.portForwardService.forward();
-    return { port, containerService: this.k8sContainerService };
-  }
-
-  private async cleanUpPlatform(): Promise<void> {
-    const platform = this.environmentService.environment.platform;
-
-    if (platform.startsWith('docker')) {
-      this.dockerService.stopForwardDirectus();
-    } else if (platform === 'k8s') {
-      this.portForwardService.stop();
-      await this.k8sService.cleanUp();
     }
   }
 

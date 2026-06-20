@@ -5,6 +5,8 @@ import { K8sBackupService } from './k8s-backup/k8s-backup.service.js';
 import { AcaBackupService } from './aca-backup/aca-backup.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import { LogicalBackupPerformer } from './logical-backup.performer.js';
+import { BackupPerformer } from './backup-performer.js';
+import { selectByPlatform } from '../platform/platform-key.js';
 
 @Injectable()
 export class BackupDbService {
@@ -26,12 +28,10 @@ export class BackupDbService {
       return;
     }
 
-    if (environment.platform.startsWith('docker')) {
-      await this.dockerBackupService.backup(backupFile);
-    } else if (environment.platform === 'aca') {
-      await this.acaBackupService.backup(backupFile);
-    } else {
-      await this.k8sBackupService.backup(backupFile);
-    }
+    await selectByPlatform<BackupPerformer>(environment.platform, {
+      docker: this.dockerBackupService,
+      aca: this.acaBackupService,
+      k8s: this.k8sBackupService,
+    }).backup(backupFile);
   }
 }

@@ -93,23 +93,19 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
   };
 
   const dockerContainerService = { execInDirectus: jest.fn() };
-  const k8sContainerService = { execInDirectus: jest.fn() };
-  const acaContainerService = { execInDirectus: jest.fn() };
 
-  const dockerService = {
-    setup: jest.fn(async () => undefined) as AnyMock,
-    forwardDirectus: jest.fn(async () => 8055) as AnyMock,
-    stopForwardDirectus: jest.fn() as AnyMock,
+  // The PlatformResolver hands the performer a Platform; connect() yields the
+  // HTTP port + container handle, teardown() releases it.
+  const fakePlatform = {
+    containerService: dockerContainerService,
+    connect: jest.fn(async () => ({
+      port: 8055,
+      containerService: dockerContainerService,
+    })) as AnyMock,
+    teardown: jest.fn(async () => undefined) as AnyMock,
+    restartDirectus: jest.fn(async () => undefined) as AnyMock,
   };
-  const k8sService = {
-    setup: jest.fn(async () => undefined) as AnyMock,
-    cleanUp: jest.fn(async () => undefined) as AnyMock,
-  };
-  const acaService = { setup: jest.fn(async () => undefined) as AnyMock };
-  const portForwardService = {
-    forward: jest.fn(async () => 12345) as AnyMock,
-    stop: jest.fn(),
-  };
+  const platformResolver = { resolve: jest.fn(() => fakePlatform) as AnyMock };
 
   const config = { noAssets, logical: true };
   const progressService = {
@@ -124,13 +120,7 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
 
   const performer = new LogicalBackupPerformer(
     logger as never,
-    dockerService as never,
-    dockerContainerService as never,
-    k8sService as never,
-    k8sContainerService as never,
-    portForwardService as never,
-    acaService as never,
-    acaContainerService as never,
+    platformResolver as never,
     sqlService as never,
     directusLogicalService as never,
     directusAssetService as never,
@@ -152,7 +142,8 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
     directusService,
     directusUserService,
     sqlService,
-    dockerService,
+    platform: fakePlatform,
+    platformResolver,
     dockerContainerService,
     progressService,
     config,
@@ -276,16 +267,17 @@ describe('LogicalBackupPerformer.backup (docker)', () => {
     expect(tarCall![1]).toMatchObject({ cwd: '/tmp/migrateus-logical' });
   });
 
-  it('performs platform setup before creating the temp admin', async () => {
-    const { performer, dockerService, sqlService } = build();
+  it('connects to the platform before creating the temp admin', async () => {
+    const { performer, platform, sqlService } = build();
     const order: string[] = [];
-    dockerService.setup.mockImplementation(async () => {
-      order.push('setup');
+    platform.connect.mockImplementation(async () => {
+      order.push('connect');
+      return { port: 8055, containerService: platform.containerService };
     });
     sqlService.setupDirectusUser.mockImplementation(async () => {
       order.push('user');
     });
     await performer.backup('docker-env', 'out.tgz');
-    expect(order).toEqual(['setup', 'user']);
+    expect(order).toEqual(['connect', 'user']);
   });
 });

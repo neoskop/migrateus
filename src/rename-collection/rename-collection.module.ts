@@ -3,10 +3,8 @@ import { RenameCollectionCommand } from './rename-collection.command.js';
 import { ConfigModule } from '../config/config.module.js';
 import { ContainerModule } from '../container/container.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
-import { DockerModule } from '../docker/docker.module.js';
 import { EnvironmentModule } from '../environment/environment.module.js';
-import { K8sModule } from '../k8s/k8s.module.js';
-import { AcaModule } from '../aca/aca.module.js';
+import { PlatformModule } from '../platform/platform.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { SqlModule } from '../sql/sql.module.js';
 import { UpdateModule } from '../update/update.module.js';
@@ -20,9 +18,7 @@ import { RenameCollectionService } from './rename-collection.service.js';
     SqlModule,
     ContainerModule,
     EnvironmentModule,
-    K8sModule,
-    AcaModule,
-    DockerModule,
+    PlatformModule,
     DependenciesModule,
     ProgressModule,
     UpdateModule,

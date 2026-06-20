@@ -9,6 +9,7 @@ import { Platform } from './platform.js';
 import { DockerPlatform } from './docker.platform.js';
 import { K8sPlatform } from './k8s.platform.js';
 import { AcaPlatform } from './aca.platform.js';
+import { platformKey } from './platform-key.js';
 
 /**
  * The single place in the codebase that branches on `environment.platform`.
@@ -27,16 +28,17 @@ export class PlatformResolver {
   ) {}
 
   resolve(platform: string): Platform {
-    if (platform.startsWith('docker')) {
-      return new DockerPlatform(this.logger, this.dockerService);
+    switch (platformKey(platform)) {
+      case 'docker':
+        return new DockerPlatform(this.logger, this.dockerService);
+      case 'aca':
+        return new AcaPlatform(this.logger, this.acaService);
+      case 'k8s':
+        return new K8sPlatform(
+          this.logger,
+          this.k8sService,
+          this.portForwardService,
+        );
     }
-    if (platform === 'aca') {
-      return new AcaPlatform(this.logger, this.acaService);
-    }
-    return new K8sPlatform(
-      this.logger,
-      this.k8sService,
-      this.portForwardService,
-    );
   }
 }

@@ -13,6 +13,7 @@ import { EnvironmentModule } from '../environment/environment.module.js';
 import { K8sModule } from '../k8s/k8s.module.js';
 import { AcaModule } from '../aca/aca.module.js';
 import { SqlModule } from '../sql/sql.module.js';
+import { PlatformModule } from '../platform/platform.module.js';
 import { DependenciesModule } from '../dependencies/dependencies.module.js';
 import { ProgressModule } from '../progress/progress.module.js';
 import { UpdateModule } from '../update/update.module.js';
@@ -35,6 +36,7 @@ import { UpdateModule } from '../update/update.module.js';
     K8sModule,
     AcaModule,
     EnvironmentModule,
+    PlatformModule,
     DependenciesModule,
     ProgressModule,
     UpdateModule,

@@ -17,7 +17,9 @@ import confirm from '@inquirer/confirm';
 import { ContainerService } from '../container/container.service.js';
 import { UpdateService } from '../update/update.service.js';
 import { LogicalRestorePerformer } from './logical-restore.performer.js';
+import { RestorePerformer } from './restore-performer.js';
 import { peekArchiveFormat } from '../util/backup-archive.js';
+import { selectByPlatform } from '../platform/platform-key.js';
 
 @Injectable()
 @Command({
@@ -114,12 +116,10 @@ export class RestoreDbCommand extends MigrateusCommand {
       return;
     }
 
-    if (environment.platform.startsWith('docker')) {
-      await this.dockerRestoreService.restore(from);
-    } else if (environment.platform === 'aca') {
-      await this.acaRestoreService.restore(from);
-    } else {
-      await this.k8sRestoreService.restore(from);
-    }
+    await selectByPlatform<RestorePerformer>(environment.platform, {
+      docker: this.dockerRestoreService,
+      aca: this.acaRestoreService,
+      k8s: this.k8sRestoreService,
+    }).restore(from);
   }
 }

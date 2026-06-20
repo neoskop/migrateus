@@ -48,6 +48,9 @@ jest.unstable_mockModule('../transfer/import-order.js', () => ({
 }));
 
 const { LogicalRestorePerformer } = await import('./logical-restore.performer.js');
+const { PlatformResolver } = await import(
+  '../platform/platform-resolver.service.js'
+);
 
 const mockWriteFile = jest.spyOn(fs.promises, 'writeFile');
 const mockReadFile = jest.spyOn(fs.promises, 'readFile');
@@ -162,15 +165,22 @@ function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } 
   };
   const environmentService = { environment: { platform } };
 
-  const performer = new LogicalRestorePerformer(
+  // Use the real resolver over mocked platform services so the docker/k8s
+  // lifecycle (setup → forward → teardown → restart) is exercised end-to-end.
+  void dockerContainerService;
+  void k8sContainerService;
+  void acaContainerService;
+  const platformResolver = new PlatformResolver(
     logger as never,
     dockerService as never,
-    dockerContainerService as never,
     k8sService as never,
-    k8sContainerService as never,
-    portForwardService as never,
     acaService as never,
-    acaContainerService as never,
+    portForwardService as never,
+  );
+
+  const performer = new LogicalRestorePerformer(
+    logger as never,
+    platformResolver as never,
     sqlService as never,
     directusLogicalService as never,
     directusAssetService as never,
@@ -253,10 +263,13 @@ describe('LogicalRestorePerformer.restore (docker)', () => {
   });
 
   it('creates and cleans up the temporary Directus admin', async () => {
-    const { performer, sqlService, dockerContainerService } = build();
+    const { performer, sqlService } = build();
     await performer.restore('backup.tgz', 'docker-env');
     expect(sqlService.setupDirectusUser).toHaveBeenCalledTimes(1);
-    expect(sqlService.setupDirectusUser).toHaveBeenCalledWith(dockerContainerService, 8055);
+    expect(sqlService.setupDirectusUser).toHaveBeenCalledWith(
+      expect.anything(),
+      8055,
+    );
     expect(sqlService.cleanUpDirectusUser).toHaveBeenCalledTimes(1);
   });
 
