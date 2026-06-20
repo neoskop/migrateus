@@ -2,9 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { join } from 'node:path';
 import fs from 'node:fs';
 import chalk from 'chalk';
-import tmp from 'tmp';
-import { resolveOutputPath } from '../util/resolve-output-path.js';
-import prettyBytes from 'pretty-bytes';
+import {
+  createWorkDir,
+  removeWorkDir,
+  createArchive,
+} from '../util/backup-archive.js';
 import { LoggerService } from '../logger/logger.service.js';
 import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { DockerService } from '../docker/docker.service.js';
@@ -27,7 +29,6 @@ import { DirectusUserService } from '../directus/directus-user/directus-user.ser
 import { ConfigService } from '../config/config.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
-import { exec } from '../util/exec.js';
 
 /** Resolves the platform-specific Directus HTTP port and container handle. */
 interface PlatformTarget {
@@ -61,7 +62,7 @@ export class LogicalBackupPerformer {
     _environmentName: string,
     backupFile: string,
   ): Promise<void> {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = createWorkDir(0o700);
 
     try {
       this.progressService.advance('🚀 Set-up platform');
@@ -122,7 +123,7 @@ export class LogicalBackupPerformer {
       await this.storeMetadata(port, backupDir);
 
       this.progressService.advance('📦 Create backup archive');
-      const size = await this.createBackupArchive(backupDir, backupFile);
+      const size = await createArchive(backupDir, backupFile);
       this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
     } catch (error: any) {
       this.progressService.fail(error);
@@ -130,7 +131,7 @@ export class LogicalBackupPerformer {
       this.progressService.advance('🛁 Clean-up');
       await this.sqlService.cleanUpDirectusUser();
       await this.cleanUpPlatform();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -184,39 +185,4 @@ export class LogicalBackupPerformer {
     );
   }
 
-  private createTemporaryDirectory() {
-    // Owner-only (0o700): the logical staging dir holds dumped directus_users
-    // (password hashes) + settings. Unlike the physical path it is written by
-    // this process directly (no uid-1000 sidecar bind-mount), so it needs no
-    // world access.
-    const tempDir = tmp.dirSync({
-      mode: 0o700,
-      prefix: 'migrateus-',
-      unsafeCleanup: true,
-    }).name;
-    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
-    return tempDir;
-  }
-
-  private async createBackupArchive(backupDir: string, backupFile: string) {
-    const targetPath = resolveOutputPath(backupFile);
-    const output = await exec(`tar -czf ${targetPath} *`, {
-      silent: true,
-      cwd: backupDir,
-    });
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(output.stderr)}`,
-      );
-    }
-
-    const { size } = await fs.promises.stat(targetPath);
-    return prettyBytes(size);
-  }
-
-  private async deleteTemporaryDirectory(backupDir: string) {
-    this.logger.debug(`Removing temporary directory ${chalk.bold(backupDir)}`);
-    await exec(`rm -rf ${backupDir}`, { silent: true });
-  }
 }

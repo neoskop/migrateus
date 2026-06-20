@@ -2,7 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { join } from 'node:path';
 import fs from 'node:fs';
 import chalk from 'chalk';
-import tmp from 'tmp';
+import {
+  createWorkDir,
+  removeWorkDir,
+  extractArchive,
+} from '../util/backup-archive.js';
 import {
   schemaApply,
   schemaDiff,
@@ -34,7 +38,6 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { planImportOrder, Relation } from '../transfer/import-order.js';
 import { alignUuidForeignKeyTypes } from '../transfer/align-relation-field-types.js';
 import { fileExists } from '../util/file-exists.js';
-import { exec } from '../util/exec.js';
 
 /** Resolves the platform-specific Directus HTTP port and container handle. */
 interface PlatformTarget {
@@ -113,11 +116,11 @@ export class LogicalRestorePerformer {
     backupFile: string,
     _environmentName: string,
   ): Promise<void> {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = createWorkDir(0o700);
 
     try {
       this.progressService.advance('📦 Extract backup archive');
-      await this.extractBackupArchive(backupDir, backupFile);
+      await extractArchive(backupFile, backupDir);
 
       const snapshot = JSON.parse(
         await fs.promises.readFile(join(backupDir, 'snapshot.json'), 'utf8'),
@@ -181,7 +184,7 @@ export class LogicalRestorePerformer {
       this.progressService.advance('🔄 Restarting Directus');
       await this.restartDirectus();
       await this.cleanUpPlatform();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -337,30 +340,4 @@ export class LogicalRestorePerformer {
     }
   }
 
-  private createTemporaryDirectory() {
-    const tempDir = tmp.dirSync({
-      mode: 0o700,
-      prefix: 'migrateus-',
-      unsafeCleanup: true,
-    }).name;
-    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
-    return tempDir;
-  }
-
-  private async extractBackupArchive(backupDir: string, backupFile: string) {
-    const output = await exec(`tar -xf ${backupFile} -C ${backupDir}`, {
-      silent: true,
-    });
-
-    if (output.code !== 0) {
-      throw new Error(
-        `Failed to extract backup archive ${chalk.bold(backupFile)}: ${chalk.red(output.stderr)}`,
-      );
-    }
-  }
-
-  private async deleteTemporaryDirectory(backupDir: string) {
-    this.logger.debug(`Removing temporary directory ${chalk.bold(backupDir)}`);
-    await exec(`rm -rf ${backupDir}`, { silent: true });
-  }
 }

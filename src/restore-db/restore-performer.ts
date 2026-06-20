@@ -5,9 +5,12 @@ import { ContainerService } from '../container/container.service.js';
 import chalk from 'chalk';
 import { join } from 'node:path';
 import fs from 'node:fs';
-import tmp from 'tmp';
+import {
+  createWorkDir,
+  removeWorkDir,
+  extractArchive,
+} from '../util/backup-archive.js';
 import { EnvironmentService } from '../environment/environment.service.js';
-import { exec } from '../util/exec.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { DirectusSettingService } from '../directus/directus-setting/directus-setting.service.js';
 import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
@@ -28,17 +31,17 @@ export abstract class RestorePerformer {
   ) {}
 
   public async restore(backupFile: string) {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = createWorkDir(0o777);
 
     // Extract + platform setup populate the database config (and thus the
     // driver) — they MUST run before branching on `usesSidecar`.
     try {
       this.progressService.advance('📦 Extract backup archive');
-      await this.extractBackupArchive(backupDir, backupFile);
+      await extractArchive(backupFile, backupDir);
       await this.setup(backupDir);
     } catch (error: any) {
       this.progressService.fail(error);
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
       return;
     }
@@ -132,7 +135,7 @@ export abstract class RestorePerformer {
       await this.sqlService.cleanUpDirectusUser();
       await this.cleanUp();
       await this.containerService.cleanUp();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -149,7 +152,7 @@ export abstract class RestorePerformer {
     } finally {
       this.progressService.advance('🛁 Clean-up');
       await this.cleanUp();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -211,20 +214,4 @@ export abstract class RestorePerformer {
     throw new Error('copyDatabaseIn is not implemented for this platform');
   }
 
-  private createTemporaryDirectory() {
-    const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
-    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
-    return tempDir;
-  }
-
-  private async extractBackupArchive(backupDir: string, backupFile: string) {
-    await exec(`tar -xf ${backupFile} -C ${backupDir}`, {
-      silent: true,
-    });
-  }
-
-  private async deleteTemporaryDirectory(backupDir: string) {
-    this.logger.debug(`Deleting temporary directory ${chalk.bold(backupDir)}`);
-    await exec('rm -rf ' + backupDir);
-  }
 }

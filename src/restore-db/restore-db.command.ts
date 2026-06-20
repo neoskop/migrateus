@@ -17,11 +17,7 @@ import confirm from '@inquirer/confirm';
 import { ContainerService } from '../container/container.service.js';
 import { UpdateService } from '../update/update.service.js';
 import { LogicalRestorePerformer } from './logical-restore.performer.js';
-import { join } from 'node:path';
-import fs from 'node:fs';
-import tmp from 'tmp';
-import { fileExists } from '../util/file-exists.js';
-import { exec } from '../util/exec.js';
+import { peekArchiveFormat } from '../util/backup-archive.js';
 
 @Injectable()
 @Command({
@@ -113,7 +109,7 @@ export class RestoreDbCommand extends MigrateusCommand {
     // Logical backups carry `meta.format === 'logical'`; they restore via the
     // SDK (schema apply + ordered item import) regardless of platform. Peek the
     // archive's meta.json before dispatching to the physical platform branch.
-    if ((await this.peekBackupFormat(from)) === 'logical') {
+    if ((await peekArchiveFormat(from)) === 'logical') {
       await this.logicalRestorePerformer.restore(from, to);
       return;
     }
@@ -124,29 +120,6 @@ export class RestoreDbCommand extends MigrateusCommand {
       await this.acaRestoreService.restore(from);
     } else {
       await this.k8sRestoreService.restore(from);
-    }
-  }
-
-  /** Extract just `meta.json` from the archive and return its `format` (or undefined). */
-  private async peekBackupFormat(
-    backupFile: string,
-  ): Promise<string | undefined> {
-    const tempDir = tmp.dirSync({ mode: 0o700, prefix: 'migrateus-' }).name;
-    try {
-      await exec(`tar -xf ${backupFile} -C ${tempDir} meta.json`, {
-        silent: true,
-      });
-      const metaPath = join(tempDir, 'meta.json');
-      if (!(await fileExists(metaPath))) {
-        return undefined;
-      }
-      const meta = JSON.parse(await fs.promises.readFile(metaPath, 'utf8'));
-      return meta.format;
-    } catch {
-      // A physical archive may not contain meta.json — treat as non-logical.
-      return undefined;
-    } finally {
-      await exec(`rm -rf ${tempDir}`, { silent: true });
     }
   }
 }

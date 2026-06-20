@@ -1,16 +1,17 @@
 import { LoggerService } from '../logger/logger.service.js';
-import { resolveOutputPath } from '../util/resolve-output-path.js';
+import {
+  createWorkDir,
+  removeWorkDir,
+  createArchive,
+} from '../util/backup-archive.js';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { ContainerService } from '../container/container.service.js';
 import { join } from 'node:path';
 import chalk from 'chalk';
 import { ConfigService } from '../config/config.service.js';
-import tmp from 'tmp';
-import { exec } from '../util/exec.js';
 import { ProgressService } from '../progress/progress.service.js';
 import fs from 'node:fs';
-import prettyBytes from 'pretty-bytes';
 import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
 
 export abstract class BackupPerformer {
@@ -25,7 +26,7 @@ export abstract class BackupPerformer {
   ) {}
 
   public async backup(backupFile: string) {
-    const backupDir = this.createTemporaryDirectory();
+    const backupDir = createWorkDir(0o777);
 
     // Platform setup populates the database config (and thus the driver) — it
     // MUST run before branching on `usesSidecar`, which reads the driver.
@@ -33,7 +34,7 @@ export abstract class BackupPerformer {
       await this.setup(backupDir);
     } catch (error: any) {
       this.progressService.fail(error);
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
       return;
     }
@@ -88,7 +89,7 @@ export abstract class BackupPerformer {
       this.progressService.advance('🏷️ Save backup metadata');
       await this.storeMetadata(directusPort, backupDir);
       this.progressService.advance('📦 Create backup archive');
-      const size = await this.createBackupArchive(backupDir, backupFile);
+      const size = await createArchive(backupDir, backupFile);
       this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
     } catch (error: any) {
       this.progressService.fail(error);
@@ -99,7 +100,7 @@ export abstract class BackupPerformer {
       }
       await this.containerService.cleanUp();
       await this.cleanUp();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -112,14 +113,14 @@ export abstract class BackupPerformer {
       this.progressService.advance('🏷️ Save backup metadata');
       await this.storeFileMetadata(backupDir);
       this.progressService.advance('📦 Create backup archive');
-      const size = await this.createBackupArchive(backupDir, backupFile);
+      const size = await createArchive(backupDir, backupFile);
       this.progressService.succeed(`Archive is ${chalk.bold(size)} in size`);
     } catch (error: any) {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');
       await this.cleanUp();
-      await this.deleteTemporaryDirectory(backupDir);
+      await removeWorkDir(backupDir);
       this.progressService.finish();
     }
   }
@@ -177,32 +178,4 @@ export abstract class BackupPerformer {
     );
   }
 
-  private createTemporaryDirectory() {
-    const tempDir = tmp.dirSync({ mode: 0o777, prefix: 'migrateus-' }).name;
-    this.logger.debug(`Created temporary directory: ${chalk.bold(tempDir)}`);
-    return tempDir;
-  }
-
-  private async createBackupArchive(backupDir: string, backupFile: string) {
-    const targetPath = resolveOutputPath(backupFile);
-    const ouput = await exec(`tar -czf ${targetPath} *`, {
-      silent: true,
-      cwd: backupDir,
-    });
-
-    if (ouput.code !== 0) {
-      throw new Error(
-        `Failed to create backup archive ${chalk.bold(targetPath)}: ${chalk.red(ouput.stderr)}`,
-      );
-    }
-
-    const { size } = await fs.promises.stat(targetPath);
-    const prettySize = prettyBytes(size);
-    return prettySize;
-  }
-
-  private async deleteTemporaryDirectory(backupDir: string) {
-    this.logger.debug(`Removing temporary directory ${chalk.bold(backupDir)}`);
-    await exec(`rm -rf ${backupDir}`, { silent: true });
-  }
 }
