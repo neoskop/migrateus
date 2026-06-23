@@ -181,8 +181,8 @@ importers:
         specifier: 30.4.2
         version: 30.4.2(@types/node@24.13.2)(supports-color@5.5.0)(ts-node@10.9.2(@types/node@24.13.2)(typescript@6.0.3))
       jscpd:
-        specifier: 5.0.10
-        version: 5.0.10
+        specifier: 5.0.11
+        version: 5.0.11
       nest-commander-schematics:
         specifier: 3.2.0
         version: 3.2.0(chokidar@4.0.3)
@@ -1780,36 +1780,36 @@ packages:
       typescript:
         optional: true
 
-  cpd-darwin-arm64@5.0.10:
-    resolution: {integrity: sha512-5udYnaOTVLwZGPIvvxMPsGtW+6t0OOzoJEG566ct1VV83i2KhMtxHoo+3xtMQwzwqW+wmSPCRAac+khRd4qVyA==}
+  cpd-darwin-arm64@5.0.11:
+    resolution: {integrity: sha512-3QvH+4Dv7A7esVFM2tsRVWN3kn9EDu8dMYog6gYAVsCtxEf4xyxAwS/ef6LjC7/dh4+ATADFbg3H09A2fD//Qw==}
     cpu: [arm64]
     os: [darwin]
 
-  cpd-darwin-x64@5.0.10:
-    resolution: {integrity: sha512-0gbyaY0uAVVzzA+iEub45fCWnJvplfQW5NdLXndZ+fM+mkvvhvjdfLvU6P54oc3X/Cw0W+SgkjHYlUG3VWgGZg==}
+  cpd-darwin-x64@5.0.11:
+    resolution: {integrity: sha512-OvgM2ps0OFR5jUzx7+FK9URdJGxUzzM5KKk2F1V3vf1LooGDKwkivfIDyKsqEwp37zcbyUo7COvBpJXOT0dZmQ==}
     cpu: [x64]
     os: [darwin]
 
-  cpd-linux-arm64-gnu@5.0.10:
-    resolution: {integrity: sha512-x9IfdmUn/5CRfqjTpSlEK+pCpmkWt+IzkCCaWvnZyDe6G+gI6/8bT9MKbDMzU9FvYy2QA62j68TmHcahHXxRtQ==}
+  cpd-linux-arm64-gnu@5.0.11:
+    resolution: {integrity: sha512-pXMINibAeruglni8ZajlXEefZHDs7QFSG+vPtkBDu7uiIMpNU8aoktgO2vP+PbIRFD0vHkqTMb64kDtIOqQcwQ==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  cpd-linux-x64-gnu@5.0.10:
-    resolution: {integrity: sha512-d+JCgfelOY+Pnd2NRnysS1TARd0toh+12rCAOiG5jqN/9ZCB9bdpsbY0YphLMmBX28CPlo4vWXxcfN391vVIyQ==}
+  cpd-linux-x64-gnu@5.0.11:
+    resolution: {integrity: sha512-rQ7DuF0lH1HLzjGxlE0aEP2ycfhXgZH/CLSeS7FXNJ38lRVp+iXkrlcrrY6mC4WW/NgbL+DkF7/0lv3tFvGmvg==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  cpd-linux-x64-musl@5.0.10:
-    resolution: {integrity: sha512-kiDIAT3kjGa6OjmQMEJwqea0Zxyj1szYZDFDa8fp9tpT8R7kebvdoH6t3R5mjDKG4DWU0XQb1kxDLOX5MY/sGg==}
+  cpd-linux-x64-musl@5.0.11:
+    resolution: {integrity: sha512-Yh+7Go5+fA++I5ssAZg7gUkDCT5CxnzCPvrspbwDrfnwaY6nNM5g1C6Vs0+GJhsspuAKwydJl4nf7jkxzMwRQw==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  cpd-windows-x64-msvc@5.0.10:
-    resolution: {integrity: sha512-eXnyqEBpnKcTOMTh58VxqGjLrlSglJwI5dVaCbk7aaE4yKbBjL6vgXFk5kaMnjZfgg4/kEFxI+8UjMoD8xONcw==}
+  cpd-windows-x64-msvc@5.0.11:
+    resolution: {integrity: sha512-uV6w85qdfE0WJsrLcGw9A4Kv9ovSnlXZCybMK0esvuiJ7clgaZmDiDPozt5PvrOOShkK/NxzTZSORBSdVnquHA==}
     cpu: [x64]
     os: [win32]
 
@@ -2643,8 +2643,8 @@ packages:
     resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
     hasBin: true
 
-  jscpd@5.0.10:
-    resolution: {integrity: sha512-ieidqRmKGasve4k9YUftQRJZ2jxm6EbK6mvHSNL1sFDAnrukX7Qs4Ce+i3tUUqu3Vgd9WOhvanKpdoPG/IuZ+g==}
+  jscpd@5.0.11:
+    resolution: {integrity: sha512-NfLrFJHRM6rIf3oVcdZ4sfhMVop1qxi5r8aC99lpj55YC8hiWaN4VmzU2wcXTwoAo+NS4npXPs9EVEQJ6jyRlg==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -3244,11 +3244,6 @@ packages:
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
-    hasBin: true
-
-  semver@7.8.4:
-    resolution: {integrity: sha512-rUCObTnP32Q08R2uuIrt7r9PlEonuTmtuXYcW6s5kjdlj3xbnwe+21yXptAUYcMAABLkYYTtnmzb3w3EDZfueA==}
-    engines: {node: '>=10'}
     hasBin: true
 
   semver@7.8.5:
@@ -5618,22 +5613,22 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.3
 
-  cpd-darwin-arm64@5.0.10:
+  cpd-darwin-arm64@5.0.11:
     optional: true
 
-  cpd-darwin-x64@5.0.10:
+  cpd-darwin-x64@5.0.11:
     optional: true
 
-  cpd-linux-arm64-gnu@5.0.10:
+  cpd-linux-arm64-gnu@5.0.11:
     optional: true
 
-  cpd-linux-x64-gnu@5.0.10:
+  cpd-linux-x64-gnu@5.0.11:
     optional: true
 
-  cpd-linux-x64-musl@5.0.10:
+  cpd-linux-x64-musl@5.0.11:
     optional: true
 
-  cpd-windows-x64-msvc@5.0.10:
+  cpd-windows-x64-msvc@5.0.11:
     optional: true
 
   create-require@1.1.1: {}
@@ -6323,7 +6318,7 @@ snapshots:
       '@babel/parser': 7.29.7
       '@istanbuljs/schema': 0.1.6
       istanbul-lib-coverage: 3.2.2
-      semver: 7.8.4
+      semver: 7.8.5
     transitivePeerDependencies:
       - supports-color
 
@@ -6689,14 +6684,14 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jscpd@5.0.10:
+  jscpd@5.0.11:
     optionalDependencies:
-      cpd-darwin-arm64: 5.0.10
-      cpd-darwin-x64: 5.0.10
-      cpd-linux-arm64-gnu: 5.0.10
-      cpd-linux-x64-gnu: 5.0.10
-      cpd-linux-x64-musl: 5.0.10
-      cpd-windows-x64-msvc: 5.0.10
+      cpd-darwin-arm64: 5.0.11
+      cpd-darwin-x64: 5.0.11
+      cpd-linux-arm64-gnu: 5.0.11
+      cpd-linux-x64-gnu: 5.0.11
+      cpd-linux-x64-musl: 5.0.11
+      cpd-windows-x64-msvc: 5.0.11
 
   jsesc@3.1.0: {}
 
@@ -7245,8 +7240,6 @@ snapshots:
       ajv-keywords: 5.1.0(ajv@8.20.0)
 
   semver@6.3.1: {}
-
-  semver@7.8.4: {}
 
   semver@7.8.5: {}
 
