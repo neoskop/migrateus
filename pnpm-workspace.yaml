@@ -8,3 +8,5 @@ minimumReleaseAgeExclude:
   - "@nestjs/core@11.1.18"
   # Renovate security update: uuid@14.0.0
   - uuid@14.0.0
+  # Renovate security update: tmp@0.2.6
+  - tmp@0.2.6
