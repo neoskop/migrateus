@@ -59,7 +59,7 @@ export function assertSafeIdentifier(
   return identifier;
 }
 
-const UUID_REGEX =
+export const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function assertUuid(value: string, context: string): string {

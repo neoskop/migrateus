@@ -74,11 +74,27 @@ describe('Platform.connect', () => {
     expect(containerService).toBe(platform.containerService);
   });
 
-  it('aca: connects on the fixed Directus port without forwarding', async () => {
+  it('aca: setup then forward via a local proxy to the ingress URL', async () => {
     const { resolver, acaService } = makeResolver();
-    const { port } = await resolver.resolve('aca').connect();
-    expect(acaService.setup).toHaveBeenCalledTimes(1);
-    expect(port).toBe(8055);
+    acaService.getDirectusBaseUrl = jest
+      .fn<() => Promise<string>>()
+      .mockResolvedValue('https://directus-stage.example.azurecontainerapps.io');
+    const originalFetch = globalThis.fetch;
+    // waitForDirectus polls localhost/server/ping; pretend it is up immediately.
+    globalThis.fetch = (async () => ({ ok: true }) as never) as never;
+
+    try {
+      const platform = resolver.resolve('aca');
+      const { port } = await platform.connect();
+      expect(acaService.setup).toHaveBeenCalledTimes(1);
+      expect(acaService.getDirectusBaseUrl).toHaveBeenCalledTimes(1);
+      // A local proxy listens on a free port (not the remote's fixed 8055).
+      expect(typeof port).toBe('number');
+      expect(port).toBeGreaterThan(0);
+      await platform.teardown(); // closes the proxy server
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it('k8s: setup then port-forward', async () => {

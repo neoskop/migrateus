@@ -19,6 +19,7 @@ import { PlatformResolver } from '../platform/platform-resolver.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import {
   DirectusLogicalService,
+  LicenseSkippedRow,
   SYSTEM_COLLECTIONS,
 } from '../directus/directus-logical/directus-logical.service.js';
 import { DirectusAssetService } from '../directus/directus-asset/directus-asset.service.js';
@@ -164,9 +165,25 @@ export class LogicalRestorePerformer {
       this.progressService.advance('🛁 Clean-up');
       // Delete the temp admin BEFORE restarting — the restart drops the HTTP
       // API mid-request, which would otherwise fail the cleanup ('fetch failed').
-      await this.sqlService.cleanUpDirectusUser();
+      // A cleanup/restart failure must NOT skip teardown: teardown closes the
+      // ACA ingress proxy, and an unclosed server keeps the process alive
+      // forever. So each step is best-effort and teardown always runs. A
+      // leftover temp admin is swept by the `clean` command.
+      try {
+        await this.sqlService.cleanUpDirectusUser();
+      } catch (cleanupError: any) {
+        this.logger.warn(
+          `Failed to remove the temporary Directus admin: ${cleanupError?.message ?? cleanupError}`,
+        );
+      }
       this.progressService.advance('🔄 Restarting Directus');
-      await platform.restartDirectus();
+      try {
+        await platform.restartDirectus();
+      } catch (restartError: any) {
+        this.logger.warn(
+          `Failed to restart Directus: ${restartError?.message ?? restartError}`,
+        );
+      }
       await platform.teardown();
       await removeWorkDir(backupDir);
       this.progressService.finish();
@@ -261,6 +278,7 @@ export class LogicalRestorePerformer {
     const { order, deferredFields } = planImportOrder(collections, relations);
 
     const dataDir = join(backupDir, 'data');
+    const licenseSkips: LicenseSkippedRow[] = [];
     for (const collection of order) {
       const file = join(dataDir, `${collection}.json`);
       if (!(await fileExists(file))) {
@@ -268,7 +286,7 @@ export class LogicalRestorePerformer {
         continue;
       }
       const rows = JSON.parse(await fs.promises.readFile(file, 'utf8'));
-      await this.directusLogicalService.importCollection(
+      const skipped = await this.directusLogicalService.importCollection(
         client,
         collection,
         rows,
@@ -277,6 +295,27 @@ export class LogicalRestorePerformer {
         singletons.has(collection),
         jsonByCollection.get(collection) ?? [],
       );
+      licenseSkips.push(...skipped);
+    }
+
+    if (licenseSkips.length > 0) {
+      const byCollection = new Map<string, string[]>();
+      for (const skip of licenseSkips) {
+        const list = byCollection.get(skip.collection) ?? [];
+        list.push(skip.detail);
+        byCollection.set(skip.collection, list);
+      }
+      const detail = [...byCollection.entries()]
+        .map(([collection, rows]) => `${collection} → ${rows.join('; ')}`)
+        .join(' | ');
+      const msg =
+        `Skipped ${licenseSkips.length} row(s) the target Directus license ` +
+        `forbids (e.g. custom permission rules, or admin/app "seats" beyond the ` +
+        `target's cap): ${detail}. The corresponding access/permission rules were ` +
+        `NOT applied; raise the target's Directus license and re-run for a ` +
+        `faithful restore.`;
+      this.progressService.warn(msg);
+      this.logger.warn(msg);
     }
   }
 

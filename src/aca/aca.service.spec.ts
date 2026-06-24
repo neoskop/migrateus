@@ -91,6 +91,27 @@ describe('AcaService', () => {
     });
   });
 
+  describe('azExec()', () => {
+    let service: InstanceType<typeof AcaService>;
+
+    beforeEach(() => {
+      mockExecFn.mockReset();
+      service = makeService();
+    });
+
+    it('runs the az command under a PTY via `script` (az exec aborts on a non-TTY stdin)', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await service.azExec('containerapp exec -n my-app');
+
+      const cmd = mockExecFn.mock.calls[0][0] as string;
+      expect(cmd).toMatch(/^script -qec /);
+      expect(cmd).toMatch(/\/dev\/null$/);
+      expect(cmd).toContain('az containerapp exec -n my-app');
+      expect(cmd).toContain('--subscription sub-123');
+    });
+  });
+
   describe('setup()', () => {
     let service: InstanceType<typeof AcaService>;
     let sqlService: { databaseConfig: any };
@@ -136,6 +157,17 @@ describe('AcaService', () => {
       expect(cmd).toMatch(/az containerapp show/);
       expect(cmd).toMatch(/-n my-app/);
       expect(cmd).toMatch(/-g my-rg/);
+    });
+
+    it('throws with az stderr when containerapp show fails (not a JSON parse error)', async () => {
+      mockExecFn.mockResolvedValue({
+        code: 1,
+        stdout: '',
+        stderr: 'ERROR: AADSTS70043: The refresh token has expired',
+      });
+
+      await expect(service.setup()).rejects.toThrow(/AADSTS70043/);
+      await expect(service.setup()).rejects.not.toThrow(/JSON/);
     });
 
     it('parses DB env vars into a DatabaseConfig and assigns to sqlService', async () => {
@@ -257,14 +289,34 @@ describe('AcaService', () => {
       service = makeService();
     });
 
-    it('calls az containerapp revision restart', async () => {
-      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+    it('looks up the active revision, then restarts it (revision restart requires --revision)', async () => {
+      mockExecFn
+        // containerapp show → latestRevisionName
+        .mockResolvedValueOnce({
+          code: 0,
+          stdout: 'directus-stage--abc123\n',
+          stderr: '',
+        })
+        // containerapp revision restart
+        .mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
 
       await service.restartDirectus();
 
-      const cmd = mockExecFn.mock.calls[0][0] as string;
-      expect(cmd).toMatch(/az containerapp/);
-      expect(cmd).toMatch(/restart/);
+      const showCmd = mockExecFn.mock.calls[0][0] as string;
+      expect(showCmd).toContain('containerapp show');
+      expect(showCmd).toContain('latestRevisionName');
+
+      const restartCmd = mockExecFn.mock.calls[1][0] as string;
+      expect(restartCmd).toContain('containerapp revision restart');
+      expect(restartCmd).toContain('--revision directus-stage--abc123');
+    });
+
+    it('does not throw when the revision cannot be determined (best effort)', async () => {
+      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+
+      await expect(service.restartDirectus()).resolves.toBeUndefined();
+      // Only the show call ran; no restart attempted on an empty revision.
+      expect(mockExecFn).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -284,13 +336,21 @@ describe('AcaService', () => {
       );
 
       const cmd = mockExecFn.mock.calls[0][0] as string;
-      expect(cmd).toMatch(/az containerapp exec/);
-      expect(cmd).toMatch(/-n my-app/);
-      expect(cmd).toMatch(/-g my-rg/);
-      expect(cmd).toContain('node /directus/cli.js roles create --role r --admin');
-      // The --command value must be a single-quoted string containing /bin/sh -c '<innerquoted>'
-      expect(cmd).toContain("--command '/bin/sh -c ");
-      expect(cmd).toContain("'node /directus/cli.js roles create --role r --admin'");
+      // az containerapp exec is interactive (SSH-style); it is run under a PTY
+      // via `script` so it does not abort on a non-TTY stdin.
+      expect(cmd).toMatch(/^script -qec /);
+      expect(cmd).toMatch(/\/dev\/null$/);
+      expect(cmd).toContain('containerapp exec');
+      expect(cmd).toContain('-n my-app');
+      expect(cmd).toContain('-g my-rg');
+      // The command runs through a real shell (`/bin/sh -c`) but its spaces are
+      // hidden as `${IFS}`: az word-splits `--command` on whitespace and execs
+      // argv directly, so the script must arrive as ONE word and let the
+      // in-container sh re-split it. A raw space in the command would shatter it.
+      expect(cmd).toContain('/bin/sh -c ');
+      expect(cmd).toContain(
+        'node${IFS}/directus/cli.js${IFS}roles${IFS}create${IFS}--role${IFS}r${IFS}--admin',
+      );
       expect(result).toEqual({ code: 0, stdout: 'done', stderr: '' });
     });
 

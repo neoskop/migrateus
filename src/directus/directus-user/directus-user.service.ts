@@ -4,7 +4,7 @@ import { ExecOutputReturnValue } from 'shelljs';
 import { deleteRole, deleteUser, RestClient } from '@directus/sdk';
 import { Credential } from './credential.type.js';
 import { RedactService } from '../../redact/redact.service.js';
-import { assertUuid } from '../../sql/sql-escape.js';
+import { assertUuid, UUID_REGEX } from '../../sql/sql-escape.js';
 import { DbDriver } from '../../sql/db-driver/db-driver.interface.js';
 import { MysqlExecutor } from '../../sql/mysql-executor.type.js';
 import { shquote } from '../../util/sh-quote.js';
@@ -63,29 +63,51 @@ export class DirectusUserService {
     const roleOutput = await execInDirectus(
       `node /directus/cli.js roles create --role ${shquote(this.roleName)} --admin --app`,
     );
-    this.roleId = this.parseCliId(roleOutput.stdout, 'temporary admin role id');
+    this.roleId = this.parseCliId(roleOutput, 'temporary admin role id');
 
     const userOutput = await execInDirectus(
       `node /directus/cli.js users create --email ${shquote(this.email)} --password ${shquote(this.password)} --role ${shquote(this.roleId)}`,
     );
-    this.userId = this.parseCliId(userOutput.stdout, 'temporary admin user id');
+    this.userId = this.parseCliId(userOutput, 'temporary admin user id');
 
     this.token = await this.login(port);
     this.redactService.addRedaction(this.token);
   }
 
   /**
-   * Extracts the created entity id from Directus CLI stdout. The CLI prints
-   * pino INFO log lines (e.g. "Extensions loaded") to stdout before writing the
-   * id, so the id is the final non-empty line. Validated as a UUID to fail
-   * loudly if a log line is grabbed instead of the id.
+   * Extracts the created entity id (a UUID) from Directus CLI output: the last
+   * line that is exactly a UUID.
+   *
+   * Both streams are searched and the id is located by shape rather than by
+   * position, because the CLI output is wrapped in noise on every side:
+   *  - the CLI itself prints pino INFO log lines (e.g. "Extensions loaded")
+   *    BEFORE the id;
+   *  - `az containerapp exec` (ACA) runs under a `script` PTY that muxes both
+   *    streams together and brackets the command with its own banner — `Use
+   *    ctrl + D to exit.`, `INFO: Connecting…`, `INFO: Successfully connected…`
+   *    BEFORE and `Disconnecting…` AFTER. Taking the final line would grab
+   *    `Disconnecting…`; matching the UUID shape skips all of it.
+   *
+   * If no UUID is found, the full raw output (stdout, stderr, exit code) is
+   * surfaced in the error — the cryptic CLI/exec failure is otherwise lost.
    */
-  private parseCliId(output: string, label: string): string {
-    const lines = output
+  private parseCliId(output: ExecOutputReturnValue, label: string): string {
+    const uuids = `${output.stdout}\n${output.stderr}`
       .split('\n')
       .map((line) => line.trim())
-      .filter(Boolean);
-    return assertUuid(lines[lines.length - 1] ?? '', label);
+      .filter((line) => UUID_REGEX.test(line));
+
+    const candidate = uuids[uuids.length - 1];
+    if (!candidate) {
+      throw new Error(
+        `Could not parse ${label} from Directus CLI output ` +
+          `(expected a UUID line, found none).\n` +
+          `--- exit code: ${output.code}\n` +
+          `--- stdout:\n${output.stdout || '(empty)'}\n` +
+          `--- stderr:\n${output.stderr || '(empty)'}`,
+      );
+    }
+    return candidate;
   }
 
   /**

@@ -29,6 +29,26 @@ function makeExec(stdouts: string[]) {
   return { fn, calls };
 }
 
+/**
+ * Like {@link makeExec} but lets each call return a full exec result (stdout,
+ * stderr, code) — needed to exercise the ACA path, where `az containerapp exec`
+ * writes its connection banner to stdout and muxes the actual command output to
+ * stderr.
+ */
+function makeExecFull(outputs: ExecOutput[]) {
+  const calls: string[] = [];
+  let i = 0;
+  const fn = jest.fn(async (command: string) => {
+    calls.push(command);
+    const out = outputs[i] ?? { code: 0, stdout: '', stderr: '' };
+    i += 1;
+    return out satisfies ExecOutput;
+  });
+  return { fn, calls };
+}
+
+const ACA_BANNER = "INFO: Connecting to the container 'directus'...";
+
 const ROLE_ID = '47060524-b176-45b0-ba97-802e7c7491a9';
 const USER_ID = 'a1b2c3d4-e5f6-4789-abcd-ef0123456789';
 
@@ -98,7 +118,41 @@ describe('DirectusUserService.setupUser', () => {
 
     await expect(
       service.setupUser(fn as never, jest.fn() as never, 8055),
-    ).rejects.toThrow(/Invalid UUID for temporary admin role id/);
+    ).rejects.toThrow(/Could not parse temporary admin role id/);
+  }, 20000);
+
+  it('parses the id from stderr when az puts only its connection banner on stdout (ACA)', async () => {
+    const { service } = build();
+    const { fn, calls } = makeExecFull([
+      { code: 0, stdout: ACA_BANNER, stderr: withCliLogs(ROLE_ID) },
+      { code: 0, stdout: ACA_BANNER, stderr: withCliLogs(USER_ID) },
+    ]);
+    globalThis.fetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      }) as never) as never;
+
+    await service.setupUser(fn as never, jest.fn() as never, 8055);
+
+    // The role id parsed from stderr must feed the users-create command.
+    expect(calls[1]).toContain(`'${ROLE_ID}'`);
+    expect(service.token).toBe('tok');
+  }, 20000);
+
+  it('dumps full stdout, stderr, and exit code when no id can be parsed', async () => {
+    const { service } = build();
+    const { fn } = makeExecFull([
+      { code: 1, stdout: ACA_BANNER, stderr: 'NOT_NULL_VIOLATION: app_access' },
+    ]);
+
+    const err = await service
+      .setupUser(fn as never, jest.fn() as never, 8055)
+      .catch((e: Error) => e);
+
+    expect(String((err as Error).message)).toContain('NOT_NULL_VIOLATION');
+    expect(String((err as Error).message)).toContain('exit code: 1');
+    expect(String((err as Error).message)).toContain('Connecting to the container');
   }, 20000);
 
   it('logs in with the generated email/password against the given port', async () => {

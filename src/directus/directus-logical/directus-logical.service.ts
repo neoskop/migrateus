@@ -33,6 +33,31 @@ export const SYSTEM_COLLECTIONS = [
 
 type SystemCollection = (typeof SYSTEM_COLLECTIONS)[number];
 
+/**
+ * A system-collection row dropped on import because the target Directus license
+ * forbids it. Surfaced so the caller can warn instead of failing the restore.
+ */
+export interface LicenseSkippedRow {
+  collection: string;
+  /** Human identifier of the dropped row, for the warning. */
+  detail: string;
+}
+
+/**
+ * License errors that are safe to tolerate per system collection by skipping the
+ * offending row rather than failing the whole restore. A batch insert is
+ * rejected wholesale, so the import retries row by row and drops only the rows
+ * that trip the gate:
+ *  - directus_permissions: field/row/validation/preset rules need the
+ *    `custom_permission_rules_enabled` entitlement.
+ *  - directus_access: admin/app grants consume licensed "seats"; a target with a
+ *    lower seat cap than the source rejects the overflow.
+ */
+const TOLERABLE_LICENSE_ERROR: Partial<Record<string, RegExp>> = {
+  directus_permissions: /restricted resource|custom_permission_rules/i,
+  directus_access: /seats? limit/i,
+};
+
 const LIMIT = 200;
 
 // Insert rows in batches so a large collection doesn't exceed the target's
@@ -98,9 +123,9 @@ export class DirectusLogicalService {
     aliasFields: string[] = [],
     isSingleton = false,
     jsonFields: string[] = [],
-  ): Promise<void> {
+  ): Promise<LicenseSkippedRow[]> {
     if (rows.length === 0) {
-      return;
+      return [];
     }
 
     // Relational alias fields (O2M/M2A/presentation) are not real columns and
@@ -136,13 +161,13 @@ export class DirectusLogicalService {
     if (collection === 'directus_settings') {
       // Settings is a singleton — always update
       await client.request(updateSettings(pass1Rows[0]));
-      return;
+      return [];
     }
 
     if (isSingleton) {
       // User singleton collections have no /items POST route; upsert the row.
       await client.request(updateSingleton(collection as never, pass1Rows[0]));
-      return;
+      return [];
     }
 
     // Directus seeds global baseline permissions (policy === null) on every
@@ -171,13 +196,14 @@ export class DirectusLogicalService {
       createdIds = new Set(rowsToCreate.map((row) => row.id));
     }
 
+    const skipped: any[] = [];
     let batch: any[] = [];
     let batchBytes = 0;
     const flush = async () => {
       if (batch.length === 0) {
         return;
       }
-      await client.request(this.buildCreateCommand(collection, batch));
+      await this.createBatch(client, collection, batch, skipped);
       batch = [];
       batchBytes = 0;
     };
@@ -213,6 +239,79 @@ export class DirectusLogicalService {
         }
       }
     }
+
+    return skipped;
+  }
+
+  /**
+   * Insert a batch, with a per-row fallback for license errors the target deems
+   * tolerable for this collection (see {@link TOLERABLE_LICENSE_ERROR}). Directus
+   * rejects a batch wholesale if any row trips the gate, so on a tolerable error
+   * the rows are re-inserted one at a time: the license-allowed ones still land
+   * and only the rejected ones are dropped and recorded. Any other error — or a
+   * license error on a collection with no matcher — is a real failure, re-thrown.
+   */
+  private async createBatch(
+    client: { request: (cmd: unknown) => Promise<unknown> },
+    collection: string,
+    rows: any[],
+    skipped: LicenseSkippedRow[],
+  ): Promise<void> {
+    const tolerable = TOLERABLE_LICENSE_ERROR[collection];
+    try {
+      await client.request(this.buildCreateCommand(collection, rows));
+    } catch (err) {
+      if (!tolerable || !this.errorMatches(err, tolerable)) {
+        throw err;
+      }
+      for (const row of rows) {
+        try {
+          await client.request(this.buildCreateCommand(collection, [row]));
+        } catch (rowErr) {
+          if (!this.errorMatches(rowErr, tolerable)) {
+            throw rowErr;
+          }
+          skipped.push({
+            collection,
+            detail: this.describeSkippedRow(collection, row),
+          });
+        }
+      }
+    }
+  }
+
+  /** A human identifier for a dropped system-collection row, for the warning. */
+  private describeSkippedRow(collection: string, row: any): string {
+    if (collection === 'directus_permissions') {
+      return `${row.collection}.${row.action} (policy ${row.policy})`;
+    }
+    if (collection === 'directus_access') {
+      const subject = row.role ? `role ${row.role}` : `user ${row.user}`;
+      return `policy ${row.policy} → ${subject}`;
+    }
+    return JSON.stringify(row);
+  }
+
+  /** True when a Directus error's message(s) match the given license-gate pattern. */
+  private errorMatches(err: unknown, pattern: RegExp): boolean {
+    const messages: string[] = [];
+    if (typeof err === 'string') {
+      messages.push(err);
+    } else if (err && typeof err === 'object') {
+      const e = err as any;
+      if (typeof e.message === 'string') {
+        messages.push(e.message);
+      }
+      const errors = e.errors ?? e.response?.errors ?? e.data?.errors;
+      if (Array.isArray(errors)) {
+        for (const inner of errors) {
+          if (inner && typeof inner.message === 'string') {
+            messages.push(inner.message);
+          }
+        }
+      }
+    }
+    return messages.some((m) => pattern.test(m));
   }
 
   private buildCreateCommand(collection: string, rows: any[]): unknown {

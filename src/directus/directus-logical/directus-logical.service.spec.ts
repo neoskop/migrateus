@@ -311,6 +311,115 @@ describe('DirectusLogicalService.importCollection — json field encoding', () =
   });
 });
 
+describe('DirectusLogicalService.importCollection — directus_permissions license gate', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  const RESTRICTED = 'custom_permission_rules_enabled is a restricted resource.';
+
+  it('retries per-row when a batch is rejected, skipping only the restricted rows', async () => {
+    const rows = [
+      { id: 1, collection: 'a', action: 'read', policy: 'p1', fields: ['*'] },
+      { id: 2, collection: 'theo_setting', action: 'update', policy: 'p2', fields: ['x'] },
+      { id: 3, collection: 'b', action: 'read', policy: 'p3', fields: ['*'] },
+    ];
+
+    const client = makeClient(async (cmd) => {
+      const { body } = descriptor(cmd) as { body: string };
+      const payload = JSON.parse(body) as any[];
+      // Directus rejects the whole batch for containing a restricted row...
+      if (payload.length > 1) {
+        throw new Error(RESTRICTED);
+      }
+      // ...and on per-row retry rejects only the field-restricted row.
+      if (payload[0].fields && payload[0].fields[0] !== '*') {
+        throw new Error(`Field validation: ${RESTRICTED}`);
+      }
+      return [payload[0]];
+    });
+
+    const skipped = await service.importCollection(
+      client as never,
+      'directus_permissions',
+      rows,
+      [],
+    );
+
+    // The one field-restricted permission is reported, keyed by collection with
+    // a human detail string (the auto-id strategy drops its numeric id).
+    expect(skipped).toEqual([
+      {
+        collection: 'directus_permissions',
+        detail: 'theo_setting.update (policy p2)',
+      },
+    ]);
+    // 1 failed batch + 3 per-row retries.
+    expect(client.request).toHaveBeenCalledTimes(4);
+  });
+
+  it('re-throws a non-license error instead of skipping', async () => {
+    const rows = [{ id: 1, collection: 'a', action: 'read', policy: 'p1' }];
+    const client = makeClient(async () => {
+      throw new Error('Bad Request: something else');
+    });
+
+    await expect(
+      service.importCollection(client as never, 'directus_permissions', rows, []),
+    ).rejects.toThrow(/something else/);
+  });
+});
+
+describe('DirectusLogicalService.importCollection — directus_access seat limit', () => {
+  let service: DirectusLogicalService;
+
+  beforeEach(() => {
+    service = new DirectusLogicalService();
+  });
+
+  it('skips access grants that exceed the target seat cap, importing the rest', async () => {
+    // directus_access uses skip-existing: the first request is the read of
+    // existing rows (none here), then the create batch, then per-row retries.
+    const rows = [
+      { id: 'a1', role: 'r1', user: null, policy: 'p1' },
+      { id: 'a2', role: 'r2', user: null, policy: 'p2' },
+    ];
+
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        const desc = cmd();
+        // First call: read existing access rows (GET) — return none.
+        if (desc.method === 'GET') {
+          return [];
+        }
+        const payload = JSON.parse(desc.body);
+        // The create batch (2 rows) is rejected for exceeding the seat cap.
+        if (payload.length > 1) {
+          throw new Error('seats limit exceeded.');
+        }
+        // On retry, only the second grant pushes past the cap.
+        if (payload[0].policy === 'p2') {
+          throw new Error('seats limit exceeded.');
+        }
+        return [payload[0]];
+      }),
+    };
+
+    const skipped = await service.importCollection(
+      client as never,
+      'directus_access',
+      rows,
+      [],
+    );
+
+    expect(skipped).toEqual([
+      { collection: 'directus_access', detail: 'policy p2 → role r2' },
+    ]);
+  });
+});
+
 describe('DirectusLogicalService.importCollection — batching', () => {
   let service: DirectusLogicalService;
 

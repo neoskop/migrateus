@@ -106,7 +106,7 @@ function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } 
   const fakeClient = { request: jest.fn(async () => ({ status: 200 })) } as any;
 
   const directusLogicalService = {
-    importCollection: jest.fn(async () => undefined) as AnyMock,
+    importCollection: jest.fn(async () => []) as AnyMock,
   };
 
   const directusAssetService = {
