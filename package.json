@@ -55,7 +55,7 @@
     "mime-types": "3.0.2",
     "nanoid": "5.1.15",
     "nest-commander": "3.20.1",
-    "ora": "9.4.0",
+    "ora": "9.4.1",
     "p-limit": "7.3.0",
     "portfinder": "1.0.38",
     "pretty-bytes": "7.1.0",
