@@ -16,7 +16,9 @@ jest.unstable_mockModule('node:fs', () => ({
   },
 }));
 
-const { AcaContainerService } = await import('./aca-container.service.js');
+const { AcaContainerService, stripAcaExecBanner } = await import(
+  './aca-container.service.js'
+);
 
 function makeService(acaConfigOverrides?: Partial<{
   subscription: string;
@@ -40,16 +42,23 @@ function makeService(acaConfigOverrides?: Partial<{
   };
 
   const mockAz = jest.fn<(args: string, opts?: unknown) => Promise<{ code: number; stdout: string; stderr: string }>>();
+  // `execute()` (and the setup readiness probe) go through `azExec`. Default:
+  // echo the az command back as stdout so the `waitUntilExecReady` marker check
+  // succeeds on the first attempt; individual tests override as needed.
+  const mockAzExec = jest.fn<(args: string, opts?: unknown) => Promise<{ code: number; stdout: string; stderr: string }>>(
+    async (args: string) => ({ code: 0, stdout: args, stderr: '' }),
+  );
 
   const acaService = {
     acaEnv: acaConfig,
     az: mockAz,
+    azExec: mockAzExec,
   };
 
   const service = new AcaContainerService(logger as any, acaService as any);
   service.image = 'directus/directus:latest';
 
-  return { service, acaService: { ...acaService, az: mockAz }, mockAz };
+  return { service, acaService, mockAz, mockAzExec };
 }
 
 describe('AcaContainerService', () => {
@@ -121,49 +130,73 @@ describe('AcaContainerService', () => {
 
   describe('execute()', () => {
     let service: InstanceType<typeof AcaContainerService>;
-    let mockAz: ReturnType<typeof makeService>['mockAz'];
+    let mockAzExec: ReturnType<typeof makeService>['mockAzExec'];
 
     beforeEach(() => {
       const result = makeService();
       service = result.service;
-      mockAz = result.mockAz;
+      mockAzExec = result.mockAzExec;
     });
 
-    it('calls az containerapp exec with the app name and command', async () => {
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
+    it('runs via azExec (PTY) — az exec needs a TTY', async () => {
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
 
       await service.execute('echo hello');
 
-      const args = mockAz.mock.calls[0][0] as string;
+      const args = mockAzExec.mock.calls[0][0] as string;
       expect(args).toMatch(/containerapp exec/);
       expect(args).toMatch(new RegExp(`-n ${service.migrateusAppName}`));
-    });
-
-    it('includes -g resourceGroup in exec command', async () => {
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
-
-      await service.execute('echo hello');
-
-      const args = mockAz.mock.calls[0][0] as string;
       expect(args).toMatch(/-g my-rg/);
     });
 
-    it('collapses newlines in the command to spaces', async () => {
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
+    it('hides spaces as ${IFS} so az does not word-split the script', async () => {
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
 
-      await service.execute('line1\nline2\nline3');
+      await service.execute('line1\nline2 word');
 
-      const args = mockAz.mock.calls[0][0] as string;
+      const args = mockAzExec.mock.calls[0][0] as string;
       expect(args).not.toContain('\n');
-      expect(args).toMatch(/line1 line2 line3/);
+      // newlines collapse to spaces, then every space becomes ${IFS}
+      expect(args).toContain('line1${IFS}line2${IFS}word');
+      expect(args).toContain('bash');
     });
 
-    it('returns the exec result', async () => {
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: 'result output', stderr: '' });
+    it('undoes the driver bash-double-quote escaping (\\" → ")', async () => {
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
 
-      const result = await service.execute('echo hello');
+      await service.execute('psql -c \\"SELECT 1\\"');
 
-      expect(result).toMatchObject({ code: 0, stdout: 'result output' });
+      const args = mockAzExec.mock.calls[0][0] as string;
+      expect(args).not.toContain('\\"');
+      expect(args).toContain('"SELECT${IFS}1"');
+    });
+
+    it('strips the az connection banner from stdout', async () => {
+      mockAzExec.mockResolvedValueOnce({
+        code: 0,
+        stdout:
+          'INFO: Connecting to the container ...\r\nabc-123\r\nDisconnecting...\r',
+        stderr: '',
+      });
+
+      const result = await service.execute('echo hi');
+
+      expect(result.stdout).toBe('abc-123');
+    });
+  });
+
+  describe('stripAcaExecBanner()', () => {
+    it('drops INFO: lines, banner phrases, ANSI codes and CRs, keeping data', () => {
+      const raw = [
+        'INFO: Connecting to the container ...\r',
+        'INFO: received success status from cluster\r',
+        '\x1b[93mUse ctrl + D to exit.\x1b[0m\r',
+        'b1a7f0e2-0000-4000-8000-000000000000\r',
+        'Disconnecting...\r',
+      ].join('\n');
+      expect(stripAcaExecBanner(raw)).toBe(
+        'b1a7f0e2-0000-4000-8000-000000000000',
+      );
     });
   });
 
@@ -252,31 +285,32 @@ describe('AcaContainerService', () => {
 
   describe('exfilFile()', () => {
     let service: InstanceType<typeof AcaContainerService>;
-    let mockAz: ReturnType<typeof makeService>['mockAz'];
+    let mockAzExec: ReturnType<typeof makeService>['mockAzExec'];
 
     beforeEach(() => {
       mockFsWriteFile.mockReset();
       mockFsReadFile.mockReset();
       const result = makeService();
       service = result.service;
-      mockAz = result.mockAz;
+      mockAzExec = result.mockAzExec;
     });
 
     it('executes base64 on the source file in container', async () => {
       const b64 = Buffer.from('file content').toString('base64');
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: b64, stderr: '' });
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: b64, stderr: '' });
       mockFsWriteFile.mockResolvedValueOnce(undefined);
 
       await service.exfilFile('/tmp/source.sql', '/local/dest.sql');
 
-      const args = mockAz.mock.calls[0][0] as string;
-      expect(args).toMatch(/base64 \/tmp\/source\.sql/);
+      // spaces are hidden as ${IFS} for az's argv word-split
+      const args = mockAzExec.mock.calls[0][0] as string;
+      expect(args).toContain('base64${IFS}/tmp/source.sql');
     });
 
     it('writes decoded base64 to the destination', async () => {
       const content = 'file content here';
       const b64 = Buffer.from(content).toString('base64');
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: b64 + '\n', stderr: '' });
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: b64 + '\n', stderr: '' });
       mockFsWriteFile.mockResolvedValueOnce(undefined);
 
       await service.exfilFile('/tmp/source.sql', '/local/dest.sql');
@@ -290,7 +324,7 @@ describe('AcaContainerService', () => {
     });
 
     it('throws when execute returns non-zero exit code', async () => {
-      mockAz.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'exec failed' });
+      mockAzExec.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'exec failed' });
 
       await expect(service.exfilFile('/tmp/source.sql', '/local/dest.sql')).rejects.toThrow();
     });
@@ -298,34 +332,34 @@ describe('AcaContainerService', () => {
 
   describe('infilFile()', () => {
     let service: InstanceType<typeof AcaContainerService>;
-    let mockAz: ReturnType<typeof makeService>['mockAz'];
+    let mockAzExec: ReturnType<typeof makeService>['mockAzExec'];
 
     beforeEach(() => {
       mockFsWriteFile.mockReset();
       mockFsReadFile.mockReset();
       const result = makeService();
       service = result.service;
-      mockAz = result.mockAz;
+      mockAzExec = result.mockAzExec;
     });
 
     it('reads the source file, base64-encodes, and pipes into container', async () => {
       const content = 'local file content';
       const b64 = Buffer.from(content).toString('base64');
       mockFsReadFile.mockResolvedValueOnce(Buffer.from(content) as any);
-      mockAz.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
 
       await service.infilFile('/local/source.sql', '/tmp/dest.sql');
 
-      const args = mockAz.mock.calls[0][0] as string;
-      expect(args).toMatch(/base64 -d/);
-      expect(args).toMatch(/\/tmp\/dest\.sql/);
+      const args = mockAzExec.mock.calls[0][0] as string;
+      expect(args).toContain('base64${IFS}-d');
+      expect(args).toContain('/tmp/dest.sql');
       expect(args).toContain(b64);
     });
 
     it('throws when execute returns non-zero exit code', async () => {
       const content = 'local file content';
       mockFsReadFile.mockResolvedValueOnce(Buffer.from(content) as any);
-      mockAz.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'exec failed' });
+      mockAzExec.mockResolvedValueOnce({ code: 1, stdout: '', stderr: 'exec failed' });
 
       await expect(service.infilFile('/local/source.sql', '/tmp/dest.sql')).rejects.toThrow();
     });

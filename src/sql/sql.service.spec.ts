@@ -128,8 +128,12 @@ describe('SqlService.setupDirectusUser (CLI temp-admin wiring)', () => {
     await service.setupDirectusUser(containerService as never, 9001);
 
     expect(directusUser.setupUser).toHaveBeenCalledTimes(1);
-    const [execInDirectus, getClient, port] =
-      directusUser.setupUser.mock.calls[0];
+    const [execInDirectus, getClient, port] = directusUser.setupUser.mock
+      .calls[0] as [
+      (command: string) => Promise<unknown>,
+      (port: number, token: string) => unknown,
+      number,
+    ];
     expect(typeof execInDirectus).toBe('function');
     expect(typeof getClient).toBe('function');
     expect(port).toBe(9001);
@@ -159,6 +163,35 @@ describe('SqlService.cleanUpAllDirectusUsers (SQL sweep, unchanged)', () => {
     const { service, containerService, directusUser } = build();
     await service.cleanUpAllDirectusUsers(containerService as never);
     expect(directusUser.cleanUp).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SqlService SQL routing (file vs server engines)', () => {
+  it('routes server-engine (mysql) SQL through the sidecar (execute)', async () => {
+    const { service, containerService } = build(() => ({ code: 0, stdout: '', stderr: '' }));
+    await service.executeSql('SELECT 1', containerService as never);
+    expect(containerService.execute).toHaveBeenCalledTimes(1);
+    expect(containerService.execInDirectus).not.toHaveBeenCalled();
+  });
+
+  it('routes file-engine (sqlite) SQL into the Directus container (execInDirectus)', async () => {
+    const { service, containerService } = build();
+    service.databaseConfig = {
+      client: 'sqlite3',
+      filename: '/database/sqlite.db',
+      host: '',
+      port: '',
+      user: '',
+      password: '',
+      name: '',
+    } as never;
+    await service.executeSql('SELECT 1', containerService as never);
+    expect(containerService.execInDirectus).toHaveBeenCalledTimes(1);
+    expect(containerService.execute).not.toHaveBeenCalled();
+    // The command targets the Directus DB file via the bundled node module.
+    const cmd = containerService.execInDirectus.mock.calls[0][0] as string;
+    expect(cmd).toContain('node -e');
+    expect(cmd).toContain('/database/sqlite.db');
   });
 });
 

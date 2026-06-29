@@ -56,7 +56,12 @@ export class SqlService {
   }
 
   private execFor(containerService: ContainerService): Exec {
-    return (command: string) => containerService.execute(command);
+    // Server engines (mysql/pg) reach the DB over the network from the sidecar.
+    // File-based engines (SQLite) keep the DB *inside* the Directus container,
+    // so their SQL must run there — the sidecar has no database file.
+    return this._driver.usesSidecar
+      ? (command: string) => containerService.execute(command)
+      : (command: string) => containerService.execInDirectus(command);
   }
 
   /**

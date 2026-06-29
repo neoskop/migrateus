@@ -59,17 +59,24 @@ describe('SqliteDriver file resolution', () => {
 });
 
 describe('SqliteDriver.executeSql', () => {
-  it('uses sqlite3 with the db file path', async () => {
+  it("drives Directus' bundled sqlite3 node module against the db file", async () => {
     const { driver, exec, calls } = driverWith();
     await driver.executeSql(exec as unknown as Exec, 'SELECT 1');
-    expect(calls()[0]).toContain('sqlite3');
-    expect(calls()[0]).toContain('mydb.sqlite');
+    const cmd = calls()[0];
+    // No `sqlite3` CLI in the Directus Alpine image — runs via `node -e`.
+    expect(cmd).toContain('node -e');
+    expect(cmd).toContain('/directus/node_modules');
+    expect(cmd).toContain('node_modules/sqlite3');
+    expect(cmd).toContain('mydb.sqlite');
   });
 
-  it('escapes $ in the SQL wire command', async () => {
+  it('passes the SQL verbatim (shquoted by execInDirectus — no manual escaping)', async () => {
     const { driver, exec, calls } = driverWith();
     await driver.executeSql(exec as unknown as Exec, "SELECT '$x'");
-    expect(calls()[0]).toContain('\\\\\\$x');
+    const cmd = calls()[0];
+    // The `$` is single-quoted (inert), not bash-double-quote escaped.
+    expect(cmd).toContain("'SELECT '\\''$x'\\'''");
+    expect(cmd).not.toContain('\\\\\\$x');
   });
 
   it('throws on non-zero exit with stderr', async () => {

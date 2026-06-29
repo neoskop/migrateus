@@ -8,6 +8,18 @@ import {
   escapeAnsiString,
 } from '../sql-escape.js';
 import { DEFAULT_CONTAINER_IMAGE } from '../../container/container.constants.js';
+import { shquote } from '../../util/sh-quote.js';
+
+// Runs one SQL statement against a SQLite file using the `sqlite3` node module
+// that Directus bundles, printing the result as the `sqlite3` CLI would (column
+// values joined by '|', rows by '\n'). argv: [modulePath, dbFile, sql].
+const SQLITE_NODE_PROGRAM =
+  'const s=require(process.argv[1]);' +
+  'const db=new s.Database(process.argv[2]);' +
+  'db.all(process.argv[3],(e,rows)=>{' +
+  'if(e){process.stderr.write(String((e&&e.message)||e));process.exit(1);}' +
+  'process.stdout.write((rows||[]).map(r=>Object.values(r).join("|")).join("\\n"));' +
+  'db.close();});';
 
 export class SqliteDriver implements DbDriver {
   public readonly client = 'sqlite3' as const;
@@ -88,11 +100,17 @@ export class SqliteDriver implements DbDriver {
   }
 
   public async executeSql(exec: Exec, sql: string): Promise<string> {
-    const command = [
-      'sqlite3',
-      this.file(),
-      `\\"${sql.replaceAll(/[$`"]/g, '\\\\\\$&')}\\"`,
-    ].join(' ');
+    // SQLite SQL runs *inside* the Directus container (that is where the DB
+    // file lives). The Directus image is Alpine and ships no `sqlite3` CLI, so
+    // drive its bundled `sqlite3` node module instead. The module's nested
+    // location differs between npm and pnpm installs, so resolve it at runtime
+    // with `find` (covers both). This command is shquoted by `execInDirectus`,
+    // so no manual shell escaping is needed here.
+    // ponytail: assumes Directus's node_modules under /directus; fine — this
+    // command only ever runs in the official Directus container.
+    const command =
+      `M=$(find /directus/node_modules -type d -path ${shquote('*/node_modules/sqlite3')} | head -n1); ` +
+      `node -e ${shquote(SQLITE_NODE_PROGRAM)} "$M" ${shquote(this.file())} ${shquote(sql)}`;
     this.logger.debug(`Executing SQL: ${sql}`);
     const output = throwIfFailed(
       await exec(command),
