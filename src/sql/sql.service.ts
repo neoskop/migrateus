@@ -29,6 +29,13 @@ export class SqlService {
     this._config = config;
     this.redactService.addRedaction(`-p${config.password}`, { prefix: '-p' });
     this.redactService.addRedaction(config.password);
+    // The pg driver ships the password base64-encoded; redact that form too so
+    // it never leaks (trivially decodable) into debug logs.
+    if (config.password) {
+      this.redactService.addRedaction(
+        Buffer.from(config.password).toString('base64'),
+      );
+    }
     this.logger.debug(
       `Database config: ${highlight(JSON.stringify(config), { language: 'json' })}`,
     );
@@ -89,11 +96,15 @@ export class SqlService {
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {
     if (!this._driver) {
-      return;
+      return { users: 0, roles: 0, policies: 0 };
     }
-    await this.directusUserService.cleanUp(this._driver, (sql) =>
+    const counts = await this.directusUserService.cleanUp(this._driver, (sql) =>
       this._driver.executeSql(this.execFor(containerService), sql),
     );
+    this.logger.info(
+      `Removed Migrateus leftovers: ${counts.users} user(s), ${counts.roles} role(s), ${counts.policies} policy(ies)`,
+    );
+    return counts;
   }
 
   public async setCredentials(

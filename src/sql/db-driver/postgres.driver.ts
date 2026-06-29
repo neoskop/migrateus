@@ -32,6 +32,20 @@ export class PostgresDriver implements DbDriver {
     return assertSafeIdentifier(identifier, context);
   }
 
+  /**
+   * `PGPASSWORD=…` assignment that carries the password via base64 instead of
+   * interpolating it raw into the shell command. Azure (and other) secrets
+   * routinely contain `$`, spaces, quotes, `;` etc.; interpolated raw they
+   * corrupt the command (or get expanded), so psql authenticates with the wrong
+   * password and silently returns nothing. `echo <b64> | base64 -d` reconstitutes
+   * the exact bytes in-container, and an assignment RHS is not word-split, so
+   * spaces survive too. base64 output is `[A-Za-z0-9+/=]` — inert in every shell.
+   */
+  private passwordEnv(): string {
+    const b64 = Buffer.from(this.config.password ?? '').toString('base64');
+    return `PGPASSWORD=$(echo ${b64} | base64 -d)`;
+  }
+
   public disableFks(): string {
     return 'SET session_replication_role = replica';
   }
@@ -45,14 +59,14 @@ export class PostgresDriver implements DbDriver {
     artifact: string,
     tables?: string[],
   ): Promise<void> {
-    const { host, port, user, password, name } = this.config;
+    const { host, port, user, name } = this.config;
     const tableFlags = tables
       ? tables
           .map((t) => `-t ${assertSafeIdentifier(t, 'table_name')}`)
           .join(' ')
       : '';
     const command = [
-      `PGPASSWORD=${password}`,
+      this.passwordEnv(),
       'pg_dump',
       `-h${host}`,
       `-p${port}`,
@@ -71,9 +85,9 @@ export class PostgresDriver implements DbDriver {
   }
 
   public async restore(exec: Exec, artifact: string): Promise<void> {
-    const { host, port, user, password, name } = this.config;
+    const { host, port, user, name } = this.config;
     const command = [
-      `PGPASSWORD=${password}`,
+      this.passwordEnv(),
       'psql',
       `-h${host}`,
       `-p${port}`,
@@ -114,9 +128,9 @@ export class PostgresDriver implements DbDriver {
   }
 
   public async executeSql(exec: Exec, sql: string): Promise<string> {
-    const { host, port, user, password, name } = this.config;
+    const { host, port, user, name } = this.config;
     const command = [
-      `PGPASSWORD=${password}`,
+      this.passwordEnv(),
       'psql',
       '-tA',
       `-h${host}`,

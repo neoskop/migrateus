@@ -9,6 +9,10 @@ import { ExecOutputReturnValue } from 'shelljs';
 import { throwIfFailed } from '../../util/exec.js';
 import { shquote } from '../../util/sh-quote.js';
 
+/** Sentinel that carries the inner command's exit code out of `az exec` (which
+ * itself always exits 0 on a successful connection). */
+const EXEC_RC_MARKER = '__MIGRATEUS_RC__';
+
 /**
  * `az containerapp exec` brackets the command's real output with its own
  * SSH-style banner on stdout (`Connecting to the container …`, `Successfully
@@ -22,7 +26,9 @@ export function stripAcaExecBanner(stdout: string): string {
   const ansi = /\[[0-9;]*m/g;
   return stdout
     .split('\n')
-    .map((line) => line.replace(/\r$/, '').replace(ansi, ''))
+    // The PTY emits `\r\r\n` line endings; strip ALL carriage returns (a single
+    // leftover `\r` corrupts e.g. UUID parsing) along with ANSI colour codes.
+    .map((line) => line.replace(/\r/g, '').replace(ansi, ''))
     // Drop az's connection chatter — emitted both as `INFO: …` and as bare
     // (coloured) lines. psql `-tA` output is plain data rows, none of which
     // start with `INFO:` or carry these phrases.
@@ -94,31 +100,52 @@ export class AcaContainerService extends ContainerService {
   }
 
   public async execute(command: string): Promise<ExecOutputReturnValue> {
-    // Run the command in the migrateus sidecar via `az containerapp exec`. This
-    // mirrors `AcaService.execInDirectus` and must clear the same two hurdles:
+    // Run the command in the migrateus sidecar via `az containerapp exec`, which
+    // imposes two constraints:
     //   1. PTY — `az containerapp exec` is SSH-style and calls
     //      `tty.setcbreak(stdin)`, which throws on a non-TTY stdin. `azExec`
     //      wraps it in `script` to allocate a PTY.
     //   2. argv word-split — `az …exec --command` does NOT use a shell: it
-    //      splits the value on whitespace and execs the argv directly. Hiding
-    //      every space inside the script as `${IFS}` keeps it as ONE argv word,
-    //      so az's split yields exactly `bash -c <script>`; the in-container
-    //      bash then re-expands `${IFS}` and runs the real command.
-    // The DB drivers escape `$`, `` ` `` and `"` for embedding inside the
-    // `bash -c "…"` that docker/k8s build, where the *local* shell strips one
-    // quoting layer. Here the script is passed straight to bash (no such layer),
-    // so undo that escaping first.
-    const script = command
-      .replaceAll(/\n/g, ' ')
-      .replaceAll('\\$', '$')
-      .replaceAll('\\`', '`')
-      .replaceAll('\\"', '"')
-      .replaceAll(' ', '${IFS}');
+    //      splits the value on whitespace and execs the argv directly.
+    //
+    // The `${IFS}`-substitution trick (see execInDirectus) does NOT work here: a
+    // `VAR=val command` prefix — e.g. the drivers' `PGPASSWORD=… psql …` — is
+    // parsed by bash as ONE assignment word when every space is `${IFS}` (an
+    // assignment's RHS is not word-split after expansion), so the command never
+    // runs and exits 0 silently. Instead, base64 the real command (real spaces
+    // preserved) and decode it into bash via a pipe whose own words ARE plain
+    // commands, so the `${IFS}` split is only needed for `echo … | base64 -d |
+    // bash`. The drivers escape `$`/`` ` ``/`"` for the `bash -c "…"` that
+    // docker/k8s build (one quoting layer the local shell strips); here bash
+    // runs the command directly, so undo that escaping first.
+    //
+    // `az containerapp exec` returns exit 0 as long as it *connected*, even when
+    // the inner command failed — so a psql/sqlite error would otherwise pass
+    // silently. Append the real exit code as a sentinel and recover it below.
+    const payload =
+      command
+        .replaceAll(/\n/g, ' ')
+        .replaceAll('\\$', '$')
+        .replaceAll('\\`', '`')
+        .replaceAll('\\"', '"') + `; echo ${EXEC_RC_MARKER}$?`;
+    const b64 = Buffer.from(payload).toString('base64');
+    const script = `echo ${b64} | base64 -d | bash`.replaceAll(' ', '${IFS}');
     const { resourceGroup } = this.acaService.acaEnv;
     const result = await this.acaService.azExec(
-      `containerapp exec -n ${this.migrateusAppName} -g ${resourceGroup} --command ${shquote('bash -c ' + script)}`,
+      `containerapp exec -n ${this.migrateusAppName} -g ${resourceGroup} --command ${shquote('/bin/sh -c ' + script)}`,
     );
-    return { ...result, stdout: stripAcaExecBanner(result.stdout) };
+
+    let stdout = stripAcaExecBanner(result.stdout);
+    let code = result.code;
+    const match = stdout.match(new RegExp(`${EXEC_RC_MARKER}(\\d+)\\s*$`));
+    if (match) {
+      code = Number(match[1]);
+      stdout = stdout.slice(0, match.index).replace(/\n$/, '');
+    }
+    // On inner failure the PTY-merged psql/sqlite error sits in stdout — surface
+    // it as stderr so throwIfFailed reports something useful, not silence.
+    const stderr = code !== 0 && !result.stderr ? stdout : result.stderr;
+    return { ...result, code, stdout, stderr };
   }
 
   public execInDirectus(command: string): Promise<ExecOutputReturnValue> {

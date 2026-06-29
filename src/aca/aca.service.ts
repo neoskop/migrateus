@@ -51,7 +51,33 @@ export class AcaService {
     args: string,
     opts: ExecOptions = { silent: true },
   ): Promise<ExecOutputReturnValue> {
-    return exec(`script -qec ${shquote(this.azCommand(args))} /dev/null`, opts);
+    const command = `script -qec ${shquote(this.azCommand(args))} /dev/null`;
+    const maxAttempts = 5;
+    let output = await exec(command, opts);
+    for (let attempt = 1; attempt < maxAttempts && this.isTransientExecError(output); attempt++) {
+      this.logger.debug(
+        `az containerapp exec hit a transient connection error; retry ${attempt}/${maxAttempts - 1}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      output = await exec(command, opts);
+    }
+    return output;
+  }
+
+  /**
+   * True when `az containerapp exec` failed to *establish* the session (so the
+   * inner command never ran) rather than the command itself failing. These are
+   * intermittent Azure-side faults and safe to retry — the command didn't run,
+   * so even non-idempotent commands won't be double-applied.
+   */
+  private isTransientExecError(output: ExecOutputReturnValue): boolean {
+    if (output.code === 0) {
+      return false;
+    }
+    const text = `${output.stdout}\n${output.stderr}`;
+    return /(WebSocketBadStatusException|Handshake status|ClusterExecEndpointWebSocketConnectionError|failed to establish.*WebSocket|The command failed with an unexpected error)/i.test(
+      text,
+    );
   }
 
   public async setup(): Promise<void> {
@@ -71,13 +97,24 @@ export class AcaService {
       secretRef?: string;
     }> = JSON.parse(result.stdout);
 
+    // Secret-backed env vars (e.g. DB_PASSWORD) carry only a `secretRef`, not a
+    // value. Resolve the actual secret values so the sidecar can authenticate —
+    // without this the DB password is empty and every SQL statement silently
+    // fails against a password-protected engine (Postgres).
+    const secrets = envArray.some((e) => e.secretRef !== undefined)
+      ? await this.loadSecrets(app, resourceGroup)
+      : {};
+
     const envMap: Record<string, string> = {};
     for (const entry of envArray) {
       if (entry.secretRef !== undefined) {
-        this.logger.debug(
-          `ACA env var ${entry.name} is a secretRef and cannot be read directly; using empty string`,
-        );
-        envMap[entry.name] = '';
+        const value = secrets[entry.secretRef];
+        if (value === undefined) {
+          this.logger.warn(
+            `ACA secret ${entry.secretRef} (for ${entry.name}) could not be resolved; using empty string`,
+          );
+        }
+        envMap[entry.name] = value ?? '';
       } else {
         envMap[entry.name] = entry.value ?? '';
       }
@@ -100,6 +137,34 @@ export class AcaService {
     }
 
     this.sqlService.databaseConfig = config;
+  }
+
+  /**
+   * Resolves every secret of the Directus container app to its value, keyed by
+   * secret name, so secret-backed env vars (`secretRef`) can be dereferenced.
+   * `--show-values` is required; the call is silent so values never hit the log.
+   */
+  private async loadSecrets(
+    app: string,
+    resourceGroup: string,
+  ): Promise<Record<string, string>> {
+    const result = throwIfFailed(
+      await this.az(
+        `containerapp secret list -n ${app} -g ${resourceGroup} --show-values -o json`,
+      ),
+      (o) => `Failed to read ACA secrets for ${app} (code ${o.code}): ${o.stderr}`,
+    );
+
+    const secrets: Array<{ name: string; value?: string }> = JSON.parse(
+      result.stdout,
+    );
+    const map: Record<string, string> = {};
+    for (const secret of secrets) {
+      if (secret.value !== undefined) {
+        map[secret.name] = secret.value;
+      }
+    }
+    return map;
   }
 
   /**

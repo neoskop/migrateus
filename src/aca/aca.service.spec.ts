@@ -110,6 +110,33 @@ describe('AcaService', () => {
       expect(cmd).toContain('az containerapp exec -n my-app');
       expect(cmd).toContain('--subscription sub-123');
     });
+
+    it('retries a transient exec connection error, then returns success', async () => {
+      mockExecFn
+        .mockResolvedValueOnce({
+          code: 1,
+          stdout: '',
+          stderr: 'WebSocketBadStatusException: Handshake status 404 Not Found',
+        })
+        .mockResolvedValueOnce({ code: 0, stdout: 'ok', stderr: '' });
+
+      const result = await service.azExec('containerapp exec -n my-app');
+
+      expect(result.stdout).toBe('ok');
+      expect(mockExecFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does NOT retry a genuine (non-transient) command failure', async () => {
+      mockExecFn.mockResolvedValue({
+        code: 1,
+        stdout: '',
+        stderr: 'psql: FATAL: password authentication failed',
+      });
+
+      await service.azExec('containerapp exec -n my-app');
+
+      expect(mockExecFn).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('setup()', () => {
@@ -213,7 +240,7 @@ describe('AcaService', () => {
       });
     });
 
-    it('sets secretRef values to empty string (does not fail)', async () => {
+    it('resolves secretRef env vars (e.g. DB_PASSWORD) from the app secrets', async () => {
       const envVars = [
         { name: 'DB_HOST', value: 'db.example.com' },
         { name: 'DB_PORT', value: '5432' },
@@ -222,7 +249,34 @@ describe('AcaService', () => {
         { name: 'DB_PASSWORD', secretRef: 'db-password-secret' },
         { name: 'DB_CLIENT', value: 'pg' },
       ];
-      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' });
+      mockExecFn
+        .mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' })
+        .mockResolvedValueOnce({
+          code: 0,
+          stdout: JSON.stringify([
+            { name: 'db-password-secret', value: 'resolved-pw' },
+          ]),
+          stderr: '',
+        });
+
+      await service.setup();
+
+      expect(sqlService.databaseConfig.password).toBe('resolved-pw');
+      // the secret list call must request the actual values
+      const secretCall = mockExecFn.mock.calls[1][0] as string;
+      expect(secretCall).toMatch(/containerapp secret list/);
+      expect(secretCall).toMatch(/--show-values/);
+    });
+
+    it('falls back to empty string when a secretRef cannot be resolved', async () => {
+      const envVars = [
+        { name: 'DB_HOST', value: 'db.example.com' },
+        { name: 'DB_PASSWORD', secretRef: 'missing-secret' },
+        { name: 'DB_CLIENT', value: 'pg' },
+      ];
+      mockExecFn
+        .mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' })
+        .mockResolvedValueOnce({ code: 0, stdout: '[]', stderr: '' });
 
       await expect(service.setup()).resolves.not.toThrow();
       expect(sqlService.databaseConfig.password).toBe('');
@@ -252,10 +306,12 @@ describe('AcaService', () => {
         { name: 'DB_DATABASE', value: 'mydb' },
         { name: 'DB_USER', value: 'admin' },
         { name: 'DB_PASSWORD', value: 's3cret' },
-        // secretRef → empty string in envMap
+        // secretRef that resolves to empty → no client set
         { name: 'DB_CLIENT', secretRef: 'some-secret-ref' },
       ];
-      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' });
+      mockExecFn
+        .mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' })
+        .mockResolvedValueOnce({ code: 0, stdout: '[]', stderr: '' });
 
       await service.setup();
 
@@ -270,10 +326,12 @@ describe('AcaService', () => {
         { name: 'DB_USER', value: 'admin' },
         { name: 'DB_PASSWORD', value: 's3cret' },
         { name: 'DB_CLIENT', value: 'pg' },
-        // secretRef → empty string in envMap
+        // secretRef that resolves to empty → no filename set
         { name: 'DB_FILENAME', secretRef: 'some-secret-ref' },
       ];
-      mockExecFn.mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' });
+      mockExecFn
+        .mockResolvedValueOnce({ code: 0, stdout: JSON.stringify(envVars), stderr: '' })
+        .mockResolvedValueOnce({ code: 0, stdout: '[]', stderr: '' });
 
       await service.setup();
 

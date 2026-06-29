@@ -59,7 +59,10 @@ describe('PostgresDriver.executeSql', () => {
   it('sets PGPASSWORD env var', async () => {
     const { driver, exec, calls } = driverWith();
     await driver.executeSql(exec as unknown as Exec, 'SELECT 1');
-    expect(calls()[0]).toContain('PGPASSWORD=p@ss');
+    const pw64 = Buffer.from('p@ss').toString('base64');
+    // password is shipped base64-encoded, not interpolated raw
+    expect(calls()[0]).toContain(`PGPASSWORD=$(echo ${pw64} | base64 -d)`);
+    expect(calls()[0]).not.toContain('PGPASSWORD=p@ss');
   });
 
   it('uses -tA flags for clean output', async () => {
@@ -103,7 +106,10 @@ describe('PostgresDriver.dump', () => {
   it('sets PGPASSWORD env var', async () => {
     const { driver, exec, calls } = driverWith();
     await driver.dump(exec as unknown as Exec, '/tmp/backup.sql');
-    expect(calls()[0]).toContain('PGPASSWORD=p@ss');
+    const pw64 = Buffer.from('p@ss').toString('base64');
+    // password is shipped base64-encoded, not interpolated raw
+    expect(calls()[0]).toContain(`PGPASSWORD=$(echo ${pw64} | base64 -d)`);
+    expect(calls()[0]).not.toContain('PGPASSWORD=p@ss');
   });
 
   it('includes -t flags when table list provided', async () => {
@@ -150,7 +156,10 @@ describe('PostgresDriver.restore', () => {
   it('sets PGPASSWORD env var', async () => {
     const { driver, exec, calls } = driverWith();
     await driver.restore(exec as unknown as Exec, '/tmp/backup.sql');
-    expect(calls()[0]).toContain('PGPASSWORD=p@ss');
+    const pw64 = Buffer.from('p@ss').toString('base64');
+    // password is shipped base64-encoded, not interpolated raw
+    expect(calls()[0]).toContain(`PGPASSWORD=$(echo ${pw64} | base64 -d)`);
+    expect(calls()[0]).not.toContain('PGPASSWORD=p@ss');
   });
 
   it('throws on non-zero exit', async () => {

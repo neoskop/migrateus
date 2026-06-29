@@ -20,6 +20,14 @@ const { AcaContainerService, stripAcaExecBanner } = await import(
   './aca-container.service.js'
 );
 
+// execute() ships `echo <b64> | base64 -d | bash` (spaces hidden as ${IFS}).
+// Decode the base64 payload back to the real command it runs in-container.
+function decodePayload(args) {
+  const m = args.match(/echo\$\{IFS\}([A-Za-z0-9+/=]+)\$\{IFS\}\|/);
+  if (!m) throw new Error('no base64 payload found in: ' + args);
+  return Buffer.from(m[1], 'base64').toString('utf8');
+}
+
 function makeService(acaConfigOverrides?: Partial<{
   subscription: string;
   resourceGroup: string;
@@ -46,7 +54,9 @@ function makeService(acaConfigOverrides?: Partial<{
   // echo the az command back as stdout so the `waitUntilExecReady` marker check
   // succeeds on the first attempt; individual tests override as needed.
   const mockAzExec = jest.fn<(args: string, opts?: unknown) => Promise<{ code: number; stdout: string; stderr: string }>>(
-    async (args: string) => ({ code: 0, stdout: args, stderr: '' }),
+    // Default: "run" the payload by echoing its decoded form, so the readiness
+    // probe's marker round-trips. Tests override with mockResolvedValueOnce.
+    async (args: string) => ({ code: 0, stdout: decodePayload(args), stderr: '' }),
   );
 
   const acaService = {
@@ -147,28 +157,59 @@ describe('AcaContainerService', () => {
       expect(args).toMatch(/containerapp exec/);
       expect(args).toMatch(new RegExp(`-n ${service.migrateusAppName}`));
       expect(args).toMatch(/-g my-rg/);
-    });
-
-    it('hides spaces as ${IFS} so az does not word-split the script', async () => {
-      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
-
-      await service.execute('line1\nline2 word');
-
-      const args = mockAzExec.mock.calls[0][0] as string;
-      expect(args).not.toContain('\n');
-      // newlines collapse to spaces, then every space becomes ${IFS}
-      expect(args).toContain('line1${IFS}line2${IFS}word');
+      // delivered as `echo <b64> | base64 -d | bash` (space-hidden for az)
+      expect(args).toContain('base64${IFS}-d');
       expect(args).toContain('bash');
     });
 
-    it('undoes the driver bash-double-quote escaping (\\" → ")', async () => {
+    it('ships the command base64-encoded with real spaces (so VAR=val prefixes parse)', async () => {
+      mockAzExec.mockResolvedValueOnce({ code: 0, stdout: 'done', stderr: '' });
+
+      await service.execute('PGPASSWORD=x psql -c "SELECT 1"');
+
+      const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
+      // real spaces preserved inside the decoded command, NOT ${IFS}
+      expect(payload).toContain('PGPASSWORD=x psql -c "SELECT 1"');
+      expect(payload).not.toContain('${IFS}');
+    });
+
+    it('undoes the driver bash-double-quote escaping (\\" → ") in the payload', async () => {
       mockAzExec.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
 
       await service.execute('psql -c \\"SELECT 1\\"');
 
-      const args = mockAzExec.mock.calls[0][0] as string;
-      expect(args).not.toContain('\\"');
-      expect(args).toContain('"SELECT${IFS}1"');
+      const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
+      expect(payload).toContain('psql -c "SELECT 1"');
+      expect(payload).not.toContain('\\"');
+    });
+
+    it('appends the exit-code sentinel to the payload', async () => {
+      mockAzExec.mockResolvedValueOnce({
+        code: 0,
+        stdout: 'abc-123\n__MIGRATEUS_RC__0',
+        stderr: '',
+      });
+
+      const result = await service.execute('echo hi');
+
+      expect(result.code).toBe(0);
+      expect(result.stdout).toBe('abc-123');
+      // the payload carries the sentinel so az's always-0 exit can't hide failures
+      const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
+      expect(payload).toContain('; echo __MIGRATEUS_RC__$?');
+    });
+
+    it('surfaces an inner failure even though az exec itself exits 0', async () => {
+      mockAzExec.mockResolvedValueOnce({
+        code: 0,
+        stdout: 'psql: error: connection failed\n__MIGRATEUS_RC__2',
+        stderr: '',
+      });
+
+      const result = await service.execute('psql -c "SELECT 1"');
+
+      expect(result.code).toBe(2);
+      expect(result.stderr).toContain('connection failed');
     });
 
     it('strips the az connection banner from stdout', async () => {
@@ -302,9 +343,8 @@ describe('AcaContainerService', () => {
 
       await service.exfilFile('/tmp/source.sql', '/local/dest.sql');
 
-      // spaces are hidden as ${IFS} for az's argv word-split
-      const args = mockAzExec.mock.calls[0][0] as string;
-      expect(args).toContain('base64${IFS}/tmp/source.sql');
+      const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
+      expect(payload).toContain('base64 /tmp/source.sql');
     });
 
     it('writes decoded base64 to the destination', async () => {
@@ -350,10 +390,10 @@ describe('AcaContainerService', () => {
 
       await service.infilFile('/local/source.sql', '/tmp/dest.sql');
 
-      const args = mockAzExec.mock.calls[0][0] as string;
-      expect(args).toContain('base64${IFS}-d');
-      expect(args).toContain('/tmp/dest.sql');
-      expect(args).toContain(b64);
+      const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
+      expect(payload).toContain('base64 -d');
+      expect(payload).toContain('/tmp/dest.sql');
+      expect(payload).toContain(b64);
     });
 
     it('throws when execute returns non-zero exit code', async () => {

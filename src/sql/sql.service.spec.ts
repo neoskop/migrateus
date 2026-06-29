@@ -31,11 +31,11 @@ interface Built {
 }
 
 function build(execImpl?: (cmd: string) => ExecOutput | Promise<ExecOutput>): Built {
-  const logger = { debug: jest.fn() };
+  const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const directusUser = {
     setupUser: jest.fn(async () => undefined) as AnyMock,
     removeUser: jest.fn(async () => undefined) as AnyMock,
-    cleanUp: jest.fn(async () => undefined) as AnyMock,
+    cleanUp: jest.fn(async () => ({ users: 0, roles: 0, policies: 0 })) as AnyMock,
     setCredentials: jest.fn(async () => undefined) as AnyMock,
   };
   const directus = {
@@ -105,7 +105,7 @@ describe('SqlService cleanup guards (no driver / setup failed)', () => {
     const directusUser = {
       setupUser: jest.fn(async () => undefined) as AnyMock,
       removeUser: jest.fn(async () => undefined) as AnyMock,
-      cleanUp: jest.fn(async () => undefined) as AnyMock,
+      cleanUp: jest.fn(async () => ({ users: 0, roles: 0, policies: 0 })) as AnyMock,
       setCredentials: jest.fn(async () => undefined) as AnyMock,
     };
     const service = new SqlService(
@@ -230,11 +230,15 @@ describe('SqlService.clientImage getter', () => {
 });
 
 describe('SqlService.databaseConfig setter', () => {
-  it('registers two redactions and stores config', () => {
+  it('registers redactions (raw, -p-prefixed, and base64) and stores config', () => {
     const { redact } = build();
-    expect(redact.addRedaction).toHaveBeenCalledTimes(2);
+    expect(redact.addRedaction).toHaveBeenCalledTimes(3);
     expect(redact.addRedaction).toHaveBeenCalledWith('-pp@ss', { prefix: '-p' });
     expect(redact.addRedaction).toHaveBeenCalledWith('p@ss');
+    // the base64 form is shipped to the pg sidecar, so it must be redacted too
+    expect(redact.addRedaction).toHaveBeenCalledWith(
+      Buffer.from('p@ss').toString('base64'),
+    );
   });
 });
 

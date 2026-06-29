@@ -189,7 +189,12 @@ export class DirectusUserService {
     }
   }
 
-  public async cleanUp(driver: DbDriver, execSql: MysqlExecutor) {
+  /** Sweeps every Migrateus leftover (users, roles, policies) and returns how
+   * many of each were removed — surfaced in the log for debugging. */
+  public async cleanUp(
+    driver: DbDriver,
+    execSql: MysqlExecutor,
+  ): Promise<{ users: number; roles: number; policies: number }> {
     const userIds = (
       await execSql(
         `SELECT id from directus_users WHERE email LIKE 'migrateus%'`,
@@ -207,21 +212,44 @@ export class DirectusUserService {
     }
 
     await execSql(`DELETE FROM directus_users WHERE email LIKE 'migrateus%'`);
-    await execSql(`DELETE FROM directus_roles WHERE name LIKE 'migrateus%'`);
-    const policyIds = await execSql(
-      `SELECT id FROM directus_policies WHERE name LIKE 'migrateus%'`,
-    );
 
-    for (const rawPolicyId of policyIds.split('\n')) {
-      if (rawPolicyId) {
-        const policyId = driver.escapeString(
-          assertUuid(rawPolicyId, 'directus_policies.id'),
-        );
-        await execSql(
-          `DELETE FROM directus_access WHERE policy = ${policyId}`,
-        );
-        await execSql(`DELETE FROM directus_policies WHERE id = ${policyId}`);
-      }
+    const roleIds = (
+      await execSql(`SELECT id FROM directus_roles WHERE name LIKE 'migrateus%'`)
+    )
+      .split('\n')
+      .filter(Boolean)
+      .map((id) => assertUuid(id, 'directus_roles.id'));
+    await execSql(`DELETE FROM directus_roles WHERE name LIKE 'migrateus%'`);
+
+    // The admin policy created by `roles create --admin --app` is named by
+    // Directus as `Policy for <role>` — i.e. `Policy for migrateus+…`, NOT
+    // `migrateus…`. Match both so these policies (and their directus_access
+    // rows) are swept; deleting the role cascades the access link, so by the
+    // time we get here orphaned policies are found by name, not by join.
+    const policyMatch =
+      "name LIKE 'migrateus%' OR name LIKE 'Policy for migrateus%'";
+    const policyCount = (
+      await execSql(`SELECT id FROM directus_policies WHERE ${policyMatch}`)
+    )
+      .split('\n')
+      .filter(Boolean).length;
+
+    if (policyCount > 0) {
+      // Delete via a sub-select on the same name pattern rather than one
+      // round-trip per policy: each `execSql` is a slow, intermittently flaky
+      // `az containerapp exec` on ACA, so keeping the call count flat (2 instead
+      // of 2×N) is what makes the sweep actually complete. Access rows first
+      // (they reference the policy), then the policies.
+      await execSql(
+        `DELETE FROM directus_access WHERE policy IN (SELECT id FROM directus_policies WHERE ${policyMatch})`,
+      );
+      await execSql(`DELETE FROM directus_policies WHERE ${policyMatch}`);
     }
+
+    return {
+      users: userIds.length,
+      roles: roleIds.length,
+      policies: policyCount,
+    };
   }
 }

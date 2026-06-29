@@ -413,18 +413,60 @@ describe('DirectusUserService.cleanUp', () => {
     const u1 = '550e8400-e29b-41d4-a716-446655440000';
     const u2 = '550e8400-e29b-41d4-a716-446655440001';
     const policy = '550e8400-e29b-41d4-a716-44665544aaaa';
-    const replies = [`${u1}\n${u2}\n`, ``, ``, ``, `${policy}\n`, ``, ``];
+    // order: SELECT users, UPDATE files, DELETE users, SELECT roles,
+    // DELETE roles, SELECT policies, (DELETE access, DELETE policies)
+    const replies = [`${u1}\n${u2}\n`, ``, ``, ``, ``, `${policy}\n`, ``, ``];
     const { fn, calls } = makeSqlExecutor(replies);
 
     await service.cleanUp(fakeDriver(), fn as never);
 
     expect(calls[0]).toContain('SELECT id from directus_users');
     expect(calls[1]).toContain(`('${u1}','${u2}')`);
+    // policies are swept via a sub-select (one DELETE), not per-policy round-trips
     expect(
       calls.some((c) =>
-        c.includes(`DELETE FROM directus_access WHERE policy = '${policy}'`),
+        c.includes(
+          'DELETE FROM directus_access WHERE policy IN (SELECT id FROM directus_policies',
+        ),
       ),
     ).toBe(true);
+    expect(
+      calls.some((c) =>
+        /DELETE FROM directus_policies WHERE name LIKE/.test(c),
+      ),
+    ).toBe(true);
+  });
+
+  it('returns the count of users, roles and policies removed', async () => {
+    const { service } = build();
+    const uid = '550e8400-e29b-41d4-a716-446655440000';
+    const r1 = '550e8400-e29b-41d4-a716-4466554400a1';
+    const r2 = '550e8400-e29b-41d4-a716-4466554400a2';
+    const p1 = '550e8400-e29b-41d4-a716-44665544aaaa';
+    // SELECT users, UPDATE files, DELETE users, SELECT roles, DELETE roles,
+    // SELECT policies, then per-policy (DELETE access, DELETE policies)
+    const replies = [`${uid}\n`, ``, ``, `${r1}\n${r2}\n`, ``, `${p1}\n`, ``, ``];
+    const { fn } = makeSqlExecutor(replies);
+
+    const counts = await service.cleanUp(fakeDriver(), fn as never);
+
+    expect(counts).toEqual({ users: 1, roles: 2, policies: 1 });
+  });
+
+  it("matches policies named 'Policy for migrateus…' (Directus's auto name)", async () => {
+    const { service } = build();
+    const u1 = '550e8400-e29b-41d4-a716-446655440000';
+    const replies = [`${u1}\n`, ``, ``, ``, ``];
+    const { fn, calls } = makeSqlExecutor(replies);
+
+    await service.cleanUp(fakeDriver(), fn as never);
+
+    const policySelect = calls.find(
+      (c) => c.includes('SELECT id FROM directus_policies'),
+    );
+    // `roles create --admin --app` names the policy `Policy for <role>`, not
+    // `migrateus…`, so the bare `migrateus%` pattern would never sweep it.
+    expect(policySelect).toContain("name LIKE 'Policy for migrateus%'");
   });
 
   it('throws if a returned user id is not a UUID, before any UPDATE', async () => {
@@ -438,13 +480,25 @@ describe('DirectusUserService.cleanUp', () => {
     expect(calls.some((c) => c.startsWith('UPDATE directus_files'))).toBe(false);
   });
 
-  it('throws when a returned policy id is not a UUID', async () => {
+  it('sweeps policies with a single sub-select DELETE (no per-policy round-trips)', async () => {
     const { service } = build();
     const u1 = '550e8400-e29b-41d4-a716-446655440000';
-    const replies = [`${u1}\n`, ``, ``, ``, `not-a-uuid\n`];
-    const { fn } = makeSqlExecutor(replies);
-    await expect(service.cleanUp(fakeDriver(), fn as never)).rejects.toThrow(
-      /Invalid UUID for directus_policies\.id/,
-    );
+    const p1 = '550e8400-e29b-41d4-a716-44665544aaaa';
+    const p2 = '550e8400-e29b-41d4-a716-44665544bbbb';
+    // SELECT users, UPDATE, DELETE users, SELECT roles, DELETE roles,
+    // SELECT policies (2), DELETE access, DELETE policies
+    const replies = [`${u1}\n`, ``, ``, ``, ``, `${p1}\n${p2}\n`, ``, ``];
+    const { fn, calls } = makeSqlExecutor(replies);
+
+    const counts = await service.cleanUp(fakeDriver(), fn as never);
+
+    expect(counts.policies).toBe(2);
+    // exactly one access-delete and one policy-delete regardless of policy count
+    expect(
+      calls.filter((c) => c.startsWith('DELETE FROM directus_access')),
+    ).toHaveLength(1);
+    expect(
+      calls.filter((c) => c.startsWith('DELETE FROM directus_policies')),
+    ).toHaveLength(1);
   });
 });
