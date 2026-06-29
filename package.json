@@ -51,7 +51,7 @@
     "dotenv": "17.4.2",
     "file-type": "22.0.1",
     "glob": "13.0.6",
-    "js-yaml": "4.2.0",
+    "js-yaml": "4.3.0",
     "mime-types": "3.0.2",
     "nanoid": "5.1.16",
     "nest-commander": "3.20.1",
