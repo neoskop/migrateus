@@ -1,4 +1,5 @@
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import zlib from 'node:zlib';
 
 const mockFsWriteFile = jest.fn<(...args: any[]) => Promise<void>>();
 const mockFsReadFile = jest.fn<(...args: any[]) => Promise<Buffer>>();
@@ -336,20 +337,20 @@ describe('AcaContainerService', () => {
       mockAzExec = result.mockAzExec;
     });
 
-    it('executes base64 on the source file in container', async () => {
-      const b64 = Buffer.from('file content').toString('base64');
+    it('gzips and base64s the source file in container', async () => {
+      const b64 = zlib.gzipSync(Buffer.from('file content')).toString('base64');
       mockAzExec.mockResolvedValueOnce({ code: 0, stdout: b64, stderr: '' });
       mockFsWriteFile.mockResolvedValueOnce(undefined);
 
       await service.exfilFile('/tmp/source.sql', '/local/dest.sql');
 
       const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
-      expect(payload).toContain('base64 /tmp/source.sql');
+      expect(payload).toContain('gzip -c /tmp/source.sql | base64');
     });
 
-    it('writes decoded base64 to the destination', async () => {
+    it('gunzips the decoded base64 to the destination', async () => {
       const content = 'file content here';
-      const b64 = Buffer.from(content).toString('base64');
+      const b64 = zlib.gzipSync(Buffer.from(content)).toString('base64');
       mockAzExec.mockResolvedValueOnce({ code: 0, stdout: b64 + '\n', stderr: '' });
       mockFsWriteFile.mockResolvedValueOnce(undefined);
 
@@ -382,16 +383,16 @@ describe('AcaContainerService', () => {
       mockAzExec = result.mockAzExec;
     });
 
-    it('reads the source file, base64-encodes, and pipes into container', async () => {
+    it('reads the source file, gzips+base64-encodes, and pipes into container', async () => {
       const content = 'local file content';
-      const b64 = Buffer.from(content).toString('base64');
+      const b64 = zlib.gzipSync(Buffer.from(content)).toString('base64');
       mockFsReadFile.mockResolvedValueOnce(Buffer.from(content) as any);
       mockAzExec.mockResolvedValueOnce({ code: 0, stdout: '', stderr: '' });
 
       await service.infilFile('/local/source.sql', '/tmp/dest.sql');
 
       const payload = decodePayload(mockAzExec.mock.calls[0][0] as string);
-      expect(payload).toContain('base64 -d');
+      expect(payload).toContain('base64 -d | gunzip');
       expect(payload).toContain('/tmp/dest.sql');
       expect(payload).toContain(b64);
     });

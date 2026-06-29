@@ -5,6 +5,7 @@ import { ContainerService } from '../container.service.js';
 import { customAlphabet } from 'nanoid/non-secure';
 import { AcaService } from '../../aca/aca.service.js';
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 import { ExecOutputReturnValue } from 'shelljs';
 import { throwIfFailed } from '../../util/exec.js';
 import { shquote } from '../../util/sh-quote.js';
@@ -40,6 +41,14 @@ export function stripAcaExecBanner(stdout: string): string {
         ),
     )
     .join('\n');
+}
+
+/** Keep the last `max` chars, prefixing a note when anything was dropped. */
+function truncateTail(text: string, max: number): string {
+  if (text.length <= max) {
+    return text;
+  }
+  return `…(${text.length - max} chars truncated)…\n${text.slice(-max)}`;
 }
 
 @Injectable()
@@ -143,8 +152,12 @@ export class AcaContainerService extends ContainerService {
       stdout = stdout.slice(0, match.index).replace(/\n$/, '');
     }
     // On inner failure the PTY-merged psql/sqlite error sits in stdout — surface
-    // it as stderr so throwIfFailed reports something useful, not silence.
-    const stderr = code !== 0 && !result.stderr ? stdout : result.stderr;
+    // it as stderr so throwIfFailed reports something useful, not silence. Cap
+    // it: a failed large-output command (e.g. the base64 file exfil) would
+    // otherwise flood the log/error with megabytes of payload. Errors land at
+    // the tail, so keep the end.
+    const stderr =
+      code !== 0 && !result.stderr ? truncateTail(stdout, 4000) : result.stderr;
     return { ...result, code, stdout, stderr };
   }
 
@@ -178,22 +191,33 @@ export class AcaContainerService extends ContainerService {
   }
 
   public async exfilFile(source: string, destination: string): Promise<void> {
-    // TODO(verify): large .sqlite via Azure Files share; base64-through-exec is for small payloads only
+    // A real DB dump is multi-MB and this rides the `az containerapp exec`
+    // websocket/PTY, which is lossy (the PTY injects spaces mid-stream) and
+    // drops the connection past a few MB — a plain `base64 <file>` floods the
+    // log and fails. gzip shrinks the payload ~10x so it fits, and its CRC
+    // turns any residual corruption into a hard gunzip error instead of a
+    // silently-truncated backup. base64 stays shell-inert; Buffer.from ignores
+    // the PTY's injected whitespace.
     const result = throwIfFailed(
-      await this.execute(`base64 ${source}`),
+      await this.execute(`gzip -c ${source} | base64`),
       (o) => `Failed to exfil file ${source}: ${o.stderr}`,
     );
 
     const decoded = Buffer.from(result.stdout.trim(), 'base64');
-    await fs.promises.writeFile(destination, decoded);
+    await fs.promises.writeFile(destination, zlib.gunzipSync(decoded));
   }
 
   public async infilFile(source: string, destination: string): Promise<void> {
     // source is always a controlled CLI-internal path, not user-supplied HTTP input — path traversal risk is acceptable here
+    // gzip mirrors exfil so the base64 stays small: the whole command is itself
+    // base64'd into ONE argv word for `az containerapp exec`, so an uncompressed
+    // multi-MB dump would blow the local ARG_MAX. The sidecar decodes, gunzips.
+    // ponytail: gzip pushes the ceiling ~10x, not away — a dump whose gzip+b64
+    // still tops ~2MB needs chunked infil. Add that when a restore actually hits it.
     const fileContent = await fs.promises.readFile(source);
-    const b64 = fileContent.toString('base64');
+    const b64 = zlib.gzipSync(fileContent).toString('base64');
     throwIfFailed(
-      await this.execute(`echo ${b64} | base64 -d > ${destination}`),
+      await this.execute(`echo ${b64} | base64 -d | gunzip > ${destination}`),
       (o) => `Failed to infil file to ${destination}: ${o.stderr}`,
     );
   }
