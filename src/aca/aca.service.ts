@@ -8,6 +8,7 @@ import { AcaEnvironment } from '../config/environment.interface.js';
 import { SqlService } from '../sql/sql.service.js';
 import { exec, throwIfFailed } from '../util/exec.js';
 import { shquote } from '../util/sh-quote.js';
+import { spawn } from 'node:child_process';
 import { ExecOptions, ExecOutputReturnValue } from 'shelljs';
 import { DatabaseConfig } from '../backup-db/database-config.interface.js';
 
@@ -62,6 +63,77 @@ export class AcaService {
       output = await exec(command, opts);
     }
     return output;
+  }
+
+  /**
+   * Like {@link azExec}, but streams `input` to the inner command's stdin over
+   * the exec websocket instead of carrying data in the command itself.
+   *
+   * `az containerapp exec` ships `--command` in the websocket *handshake URL*,
+   * which Azure caps (~8 KiB → `Handshake status 414 URI Too Long`). So a bulk
+   * payload can't ride the command, and a single argument can't either (local
+   * `MAX_ARG_STRLEN` is 128 KiB). The interactive *stream* has no such limit —
+   * backup already proves ~tens of MB flow over it (as stdout). Here we keep the
+   * command tiny (e.g. `base64 -d > file`) and push the bytes through stdin: the
+   * `script` PTY forwards our stdin to the in-container command, EOF on close.
+   *
+   * `input` must be PTY-safe: base64 text wrapped with `\n` (no control bytes;
+   * lines under the canonical-mode limit). Echo comes back on stdout — ignored.
+   */
+  public async azExecStream(
+    args: string,
+    input: Buffer,
+  ): Promise<ExecOutputReturnValue> {
+    const command = this.azCommand(args);
+    const maxAttempts = 5;
+    let output = await this.spawnStream(command, input);
+    for (
+      let attempt = 1;
+      attempt < maxAttempts && this.isTransientExecError(output);
+      attempt++
+    ) {
+      this.logger.debug(
+        `az containerapp exec (stream) hit a transient connection error; retry ${attempt}/${maxAttempts - 1}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      output = await this.spawnStream(command, input);
+    }
+    return output;
+  }
+
+  /** Spawn `script -qec <azcmd> /dev/null`, feed `input` to its stdin with
+   * backpressure, and resolve once it closes. stdout is drained (the PTY echoes
+   * the whole input back) but not retained; stderr is kept (capped) so transient
+   * websocket faults are still detectable. */
+  private spawnStream(
+    command: string,
+    input: Buffer,
+  ): Promise<ExecOutputReturnValue> {
+    return new Promise((resolve) => {
+      const child = spawn('script', ['-qec', command, '/dev/null']);
+      let stderr = '';
+      child.stdout.on('data', () => {});
+      child.stderr.on('data', (d: Buffer) => {
+        stderr = (stderr + d.toString()).slice(-65536);
+      });
+      child.stdin.on('error', () => {}); // EPIPE if the child died early
+      child.on('error', (err) =>
+        resolve({ code: 1, stdout: '', stderr: stderr || String(err) }),
+      );
+      child.on('close', (code) =>
+        resolve({ code: code ?? 1, stdout: '', stderr }),
+      );
+
+      const CH = 64 * 1024;
+      const pump = async () => {
+        for (let i = 0; i < input.length; i += CH) {
+          if (!child.stdin.write(input.subarray(i, i + CH))) {
+            await new Promise((r) => child.stdin.once('drain', r));
+          }
+        }
+      };
+      pump().finally(() => child.stdin.end());
+    });
   }
 
   /**

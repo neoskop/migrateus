@@ -43,6 +43,13 @@ export function stripAcaExecBanner(stdout: string): string {
     .join('\n');
 }
 
+/** Newline-wrap a base64 string (and terminate it) so it survives the exec PTY:
+ * short lines stay well under any canonical-mode line limit, and `base64 -d`
+ * ignores the inserted whitespace when reconstructing the bytes. */
+function wrapBase64(b64: string): string {
+  return (b64.match(/.{1,1024}/g) ?? []).join('\n') + '\n';
+}
+
 /** Keep the last `max` chars, prefixing a note when anything was dropped. */
 function truncateTail(text: string, max: number): string {
   if (text.length <= max) {
@@ -209,16 +216,35 @@ export class AcaContainerService extends ContainerService {
 
   public async infilFile(source: string, destination: string): Promise<void> {
     // source is always a controlled CLI-internal path, not user-supplied HTTP input — path traversal risk is acceptable here
-    // gzip mirrors exfil so the base64 stays small: the whole command is itself
-    // base64'd into ONE argv word for `az containerapp exec`, so an uncompressed
-    // multi-MB dump would blow the local ARG_MAX. The sidecar decodes, gunzips.
-    // ponytail: gzip pushes the ceiling ~10x, not away — a dump whose gzip+b64
-    // still tops ~2MB needs chunked infil. Add that when a restore actually hits it.
-    const fileContent = await fs.promises.readFile(source);
-    const b64 = zlib.gzipSync(fileContent).toString('base64');
+    // The payload can't ride the exec command: `az containerapp exec` puts
+    // `--command` in the websocket handshake URL (Azure caps it ~8 KiB →
+    // `414 URI Too Long`), and a single local argv argument caps at 128 KiB
+    // (`spawn E2BIG`). So stream it over the exec STDIN instead (see
+    // AcaService.azExecStream). gzip first to halve the bytes; the in-container
+    // command stays tiny (`base64 -d > file.gz`), and a follow-up gunzip both
+    // places the file and validates the transfer via its CRC.
+    const remote = `${destination}.gz`;
+    const b64 = wrapBase64(
+      zlib.gzipSync(await fs.promises.readFile(source)).toString('base64'),
+    );
+    // ${IFS} hides spaces: az word-splits --command and execs argv directly, so
+    // the `/bin/sh -c <script>` must survive the split as one script word. The
+    // file is written via `dd of=<path>`, NOT a `> <path>` redirect: a redirect
+    // target is expanded but NOT field-split, so the `${IFS}` before it would
+    // survive as leading whitespace in the filename (bogus path, empty file);
+    // `dd`'s `of=` is an ordinary word that field-splits cleanly.
+    const inner = `base64 -d | dd of=${remote}`.replaceAll(' ', '${IFS}');
+    const { resourceGroup } = this.acaService.acaEnv;
     throwIfFailed(
-      await this.execute(`echo ${b64} | base64 -d | gunzip > ${destination}`),
-      (o) => `Failed to infil file to ${destination}: ${o.stderr}`,
+      await this.acaService.azExecStream(
+        `containerapp exec -n ${this.migrateusAppName} -g ${resourceGroup} --command ${shquote('/bin/sh -c ' + inner)}`,
+        Buffer.from(b64),
+      ),
+      (o) => `Failed to stream ${destination} into the container: ${o.stderr}`,
+    );
+    throwIfFailed(
+      await this.execute(`gunzip -c ${remote} > ${destination} && rm -f ${remote}`),
+      (o) => `Failed to decompress ${destination} in the container (corrupt transfer?): ${o.stderr}`,
     );
   }
 
