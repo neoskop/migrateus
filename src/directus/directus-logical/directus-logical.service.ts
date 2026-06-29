@@ -5,6 +5,7 @@ import {
   createPolicies,
   createRoles,
   createUsers,
+  deleteUser,
   readItems,
   readPermissions,
   readPolicies,
@@ -196,11 +197,35 @@ export class DirectusLogicalService {
         return rest;
       });
     } else if (strategy === 'skip-existing') {
-      const existing = new Set(
-        (await this.exportCollection(client, collection)).map((r) => r.id),
-      );
+      const existingRows = await this.exportCollection(client, collection);
+      const existing = new Set(existingRows.map((r) => r.id));
       rowsToCreate = sourceRows.filter((row) => !existing.has(row.id));
       createdIds = new Set(rowsToCreate.map((row) => row.id));
+
+      // directus_users.email is UNIQUE. A freshly-bootstrapped target already
+      // has an admin with the configured ADMIN_EMAIL, whose id differs from the
+      // backup's same-email user — so the id-based skip above misses it and the
+      // createUsers batch dies on the email constraint, aborting the whole
+      // restore. Free the email by deleting the target's placeholder holder so
+      // the backup row inserts with its own id, keeping every FK that points at
+      // it intact. Passwords don't migrate regardless (masked on read), so the
+      // bootstrap admin's lost password is no extra loss. The migrateus temp
+      // admin (random per-run email) can never be a holder, so we never delete
+      // the user we're authenticated as.
+      // ponytail: reconciles only `email` — the sole surviving unique field on
+      // directus_users (token/tfa_secret are stripped on import). Add other
+      // unique fields here if a future carried collection needs them.
+      if (collection === 'directus_users') {
+        const holderByEmail = new Map(
+          existingRows.filter((r) => r.email).map((r) => [r.email, r.id]),
+        );
+        for (const row of rowsToCreate) {
+          const holderId = row.email ? holderByEmail.get(row.email) : undefined;
+          if (holderId !== undefined && holderId !== row.id) {
+            await client.request(deleteUser(holderId as never));
+          }
+        }
+      }
     }
 
     const skipped: any[] = [];

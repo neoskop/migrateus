@@ -11,6 +11,7 @@ import {
   updatePolicy,
   updatePermission,
   updateSettings,
+  deleteUser,
 } from '@directus/sdk';
 import {
   DirectusLogicalService,
@@ -697,6 +698,44 @@ describe('DirectusLogicalService.importCollection — directus_users (system col
     expect(descriptor(calls[1][0])).toEqual(
       descriptor(createUsers([{ id: 'user-1', email: 'a@b.com' }] as never)),
     );
+  });
+
+  it('frees a colliding email by deleting the target user that holds it, then inserts the backup row (regression: email unique abort)', async () => {
+    // The fresh target already has an admin with the same email but a DIFFERENT
+    // id (the bootstrapped ADMIN_EMAIL user). skip-existing by id misses it, so
+    // without freeing the email the createUsers batch dies on the unique gate.
+    const existingUsers = [{ id: 'target-admin', email: 'admin@example.com' }];
+    let call = 0;
+    const client = {
+      request: jest.fn(async (_cmd: () => any) => {
+        // First request is the skip-existing read of current users.
+        return call++ === 0 ? existingUsers : [];
+      }),
+    };
+    const rows = [{ id: 'src-admin', email: 'admin@example.com' }];
+
+    await service.importCollection(client as never, 'directus_users', rows, []);
+
+    // calls: [0] read existing, [1] deleteUser(holder), [2] createUsers(source).
+    const calls = (client.request as jest.MockedFunction<typeof client.request>).mock.calls;
+    expect(descriptor(calls[1][0])).toEqual(descriptor(deleteUser('target-admin' as never)));
+    expect(descriptor(calls[2][0])).toEqual(
+      descriptor(createUsers([{ id: 'src-admin', email: 'admin@example.com' }] as never)),
+    );
+  });
+
+  it('does NOT delete a target user when the same email already maps to the same id (true skip)', async () => {
+    const existingUsers = [{ id: 'same-id', email: 'admin@example.com' }];
+    let call = 0;
+    const client = {
+      request: jest.fn(async (_cmd: () => any) => (call++ === 0 ? existingUsers : [])),
+    };
+    const rows = [{ id: 'same-id', email: 'admin@example.com' }];
+
+    await service.importCollection(client as never, 'directus_users', rows, []);
+
+    // Only the existing-id read; the row is skipped, nothing created or deleted.
+    expect(client.request).toHaveBeenCalledTimes(1);
   });
 
   it('uses updateUser for the deferred-fields patch pass on directus_users', async () => {

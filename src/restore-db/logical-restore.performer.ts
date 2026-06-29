@@ -112,7 +112,7 @@ export class LogicalRestorePerformer {
       );
 
       const limitationsMsg =
-        'Logical restore imports users/roles/permissions with their IDs but does NOT migrate user passwords (the Directus API masks them) — affected users must reset their password or use SSO. The target should be a freshly-bootstrapped Directus; existing system rows are not pre-deleted, so a non-empty target may hit conflicts.';
+        'Logical restore imports users/roles/permissions with their IDs but does NOT migrate user passwords (the Directus API masks them) — affected users must reset their password or use SSO. A target user whose email collides with an imported one is deleted and replaced, so the target\'s own bootstrap admin (ADMIN_PASSWORD) also stops working — reset it via `directus users passwd`. The target should be a freshly-bootstrapped Directus; other non-empty system rows are not pre-deleted, so a non-empty target may hit conflicts.';
       this.progressService.warn(limitationsMsg);
       this.logger.warn(limitationsMsg);
 
