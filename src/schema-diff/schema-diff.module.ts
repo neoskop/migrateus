@@ -15,6 +15,7 @@ import { ProgressModule } from '../progress/progress.module.js';
 import { UpdateModule } from '../update/update.module.js';
 import { SchemaDiffPromptService } from './schema-diff-prompt/schema-diff-prompt.service.js';
 import { ErrorFormatterModule } from '../error-formatter/error-formatter.module.js';
+import { PlatformModule } from '../platform/platform.module.js';
 
 @Module({
   providers: [
@@ -36,6 +37,7 @@ import { ErrorFormatterModule } from '../error-formatter/error-formatter.module.
     ProgressModule,
     UpdateModule,
     ErrorFormatterModule,
+    PlatformModule,
   ],
 })
 export class SchemaDiffModule {}

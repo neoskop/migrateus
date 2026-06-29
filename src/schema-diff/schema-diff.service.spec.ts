@@ -8,7 +8,7 @@ describe('SchemaDiffService', () => {
   });
 });
 
-describe('SchemaDiffService.setupDirectusClient — ACA platform', () => {
+describe('SchemaDiffService.setupDirectusClient — platform resolution', () => {
   type AnyMock = jest.Mock<any>;
 
   function build() {
@@ -30,17 +30,19 @@ describe('SchemaDiffService.setupDirectusClient — ACA platform', () => {
       })) as AnyMock,
     };
 
-    const dockerService = { setup: jest.fn(async () => undefined) as AnyMock };
-    const portForwardService = {
-      forward: jest.fn(async () => 8055) as AnyMock,
-      stop: jest.fn() as AnyMock,
+    // Every resolved platform is the same stub so we can assert connect/teardown
+    // ran. connect() returns the forwarded port + a container handle, exactly as
+    // the real Platform does — this is what was missing on the docker/aca paths
+    // and caused the ECONNREFUSED (port 8055 was used without forwarding).
+    const platform = {
+      connect: jest.fn(async () => ({
+        port: 9001,
+        containerService: { execInDirectus: jest.fn() },
+      })) as AnyMock,
+      teardown: jest.fn(async () => undefined) as AnyMock,
     };
-    const k8sService = {
-      setup: jest.fn(async () => undefined) as AnyMock,
-      cleanUp: jest.fn(async () => undefined) as AnyMock,
-    };
-    const acaService = {
-      setup: jest.fn(async () => undefined) as AnyMock,
+    const platformResolver = {
+      resolve: jest.fn(() => platform) as AnyMock,
     };
     const sqlService = {
       setupDirectusUser: jest.fn(async () => undefined) as AnyMock,
@@ -59,20 +61,12 @@ describe('SchemaDiffService.setupDirectusClient — ACA platform', () => {
       updateText: jest.fn(),
     };
     const errorFormatter = { format: jest.fn((e: any) => String(e)) as AnyMock };
-    const acaContainerService = {
-      setup: jest.fn(async () => undefined) as AnyMock,
-      cleanUp: jest.fn(async () => undefined) as AnyMock,
-    };
 
     const service = new SchemaDiffService(
       logger as never,
       config as never,
       directus as never,
-      dockerService as never,
-      portForwardService as never,
-      k8sService as never,
-      acaService as never,
-      acaContainerService as never,
+      platformResolver as never,
       sqlService as never,
       directusUserService as never,
       environmentService as never,
@@ -81,30 +75,31 @@ describe('SchemaDiffService.setupDirectusClient — ACA platform', () => {
       errorFormatter as never,
     );
 
-    return { service, acaService, acaContainerService, k8sService, dockerService, sqlService, config };
+    return { service, platform, platformResolver, directus, sqlService, config };
   }
 
-  it('calls AcaService.setup when environment platform is aca', async () => {
-    const { service, acaService, k8sService, dockerService } = build();
+  it('resolves a platform and connects (forwarding Directus) for each environment', async () => {
+    const { service, platform, platformResolver } = build();
 
-    // diff() calls setupDirectusClient twice (from, to), but we only need to verify
-    // that when the env is aca, acaService.setup is called instead of k8s/docker.
-    // We trigger diff() and catch early since the clients will error; we only
-    // care about which setup was called.
     await service.diff('aca-prod', 'aca-prod').catch(() => {});
 
-    expect(acaService.setup).toHaveBeenCalled();
-    expect(k8sService.setup).not.toHaveBeenCalled();
-    expect(dockerService.setup).not.toHaveBeenCalled();
+    expect(platformResolver.resolve).toHaveBeenCalledWith('aca');
+    expect(platform.connect).toHaveBeenCalled();
   });
 
-  it('calls AcaContainerService.setup when environment platform is aca', async () => {
-    const { service, acaContainerService, k8sService, dockerService } = build();
+  it('builds the Directus client with the forwarded port, not the hard-coded 8055', async () => {
+    const { service, directus } = build();
 
-    await service.diff('aca-prod', 'aca-prod').catch(() => {});
+    await service.diff('dev', 'dev').catch(() => {});
 
-    expect(acaContainerService.setup).toHaveBeenCalled();
-    expect(k8sService.setup).not.toHaveBeenCalled();
-    expect(dockerService.setup).not.toHaveBeenCalled();
+    expect(directus.getClient).toHaveBeenCalledWith(9001, 'tok');
+  });
+
+  it('tears the platform down during cleanup', async () => {
+    const { service, platform } = build();
+
+    await service.diff('dev', 'dev').catch(() => {});
+
+    expect(platform.teardown).toHaveBeenCalled();
   });
 });

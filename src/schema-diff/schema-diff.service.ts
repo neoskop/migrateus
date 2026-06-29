@@ -12,16 +12,10 @@ import {
   serverInfo,
 } from '@directus/sdk';
 import chalk from 'chalk';
-import { DockerService } from '../docker/docker.service.js';
-import { PortForwardService } from '../k8s/port-forward/port-forward.service.js';
-import { K8sContainerService } from '../container/k8s-container/k8s-container.service.js';
-import { DockerContainerService } from '../container/docker-container/docker-container.service.js';
-import { AcaContainerService } from '../container/aca-container/aca-container.service.js';
-import { K8sService } from '../k8s/k8s.service.js';
-import { AcaService } from '../aca/aca.service.js';
 import { SqlService } from '../sql/sql.service.js';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
-import { ContainerService } from '../container/container.service.js';
+import { PlatformResolver } from '../platform/platform-resolver.service.js';
+import { Platform } from '../platform/platform.js';
 import { EnvironmentService } from '../environment/environment.service.js';
 import confirm from '@inquirer/confirm';
 import semver from 'semver';
@@ -34,17 +28,13 @@ import { ErrorFormatterService } from '../error-formatter/error-formatter.servic
 
 @Injectable()
 export class SchemaDiffService {
-  private containerServices: { [name: string]: ContainerService } = {};
+  private platforms: { [name: string]: Platform } = {};
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
     private readonly config: ConfigService,
     private readonly directus: DirectusService,
-    private readonly dockerService: DockerService,
-    private readonly portForwardService: PortForwardService,
-    private readonly k8sService: K8sService,
-    private readonly acaService: AcaService,
-    private readonly acaContainerService: AcaContainerService,
+    private readonly platformResolver: PlatformResolver,
     private readonly sqlService: SqlService,
     private readonly directusUserService: DirectusUserService,
     private readonly environmentService: EnvironmentService,
@@ -112,7 +102,6 @@ export class SchemaDiffService {
       this.progressService.advance('🧹 Cleaning up');
       await this.cleanUpEnv(from);
       await this.cleanUpEnv(to);
-      this.portForwardService.stop();
       this.progressService.finish();
     }
   }
@@ -153,61 +142,37 @@ export class SchemaDiffService {
   }
 
   private async cleanUpEnv(name: string) {
-    const env = this.config.getEnvironment(name);
-    this.environmentService.environment = env;
+    const platform = this.platforms[name];
 
-    if (env.platform === 'k8s') {
-      await this.k8sService.setup();
-    } else if (env.platform === 'aca') {
-      await this.acaService.setup();
-    } else {
-      await this.dockerService.setup();
+    if (!platform) {
+      return;
     }
 
-    const containerService = this.containerServices[name];
-
-    if (containerService) {
+    // Remove the temp admin (an HTTP call) BEFORE teardown closes the
+    // tunnel/port-forward. Best-effort: a failure must not skip teardown, which
+    // closes local servers that would otherwise keep the process alive.
+    try {
       await this.sqlService.cleanUpDirectusUser();
-      await containerService.cleanUp();
+    } catch (error: any) {
+      this.logger.warn(
+        `Failed to remove the temporary Directus admin: ${error?.message ?? error}`,
+      );
     }
 
-    if (env.platform === 'k8s') {
-      await this.k8sService.cleanUp();
-    }
+    await platform.teardown();
   }
 
   private async setupDirectusClient(name: string): Promise<RestClient<any>> {
-    let port = 8055;
-    let containerService: ContainerService;
     const env = this.config.getEnvironment(name);
     this.environmentService.environment = env;
-
-    if (env.platform === 'k8s') {
-      this.progressService.advance(
-        `🔌 Set-up port forward to Directus in Kubernetes (${chalk.bold(name)})`,
-      );
-      containerService = new K8sContainerService(this.logger, this.k8sService);
-      await this.k8sService.setup();
-      port = await this.portForwardService.forward();
-    } else if (env.platform === 'aca') {
-      this.progressService.advance(
-        `🔌 Set-up ACA environment (${chalk.bold(name)})`,
-      );
-      containerService = this.acaContainerService;
-      await this.acaService.setup();
-    } else {
-      containerService = new DockerContainerService(
-        this.logger,
-        this.dockerService,
-      );
-      await this.dockerService.setup();
-    }
+    const platform = this.platformResolver.resolve(env.platform);
+    this.platforms[name] = platform;
 
     this.progressService.advance(
-      `🚀 Set-up Migrateus container for environment ${chalk.bold(name)}`,
+      `🚀 Set-up platform for environment ${chalk.bold(name)}`,
     );
-    await containerService.setup();
-    this.containerServices[name] = containerService;
+    const { port, containerService } = await platform.connect();
+
     this.progressService.advance(
       `👤 Set-up Directus user in environment ${chalk.bold(name)}`,
     );
