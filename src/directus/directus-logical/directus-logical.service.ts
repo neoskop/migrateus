@@ -123,6 +123,7 @@ export class DirectusLogicalService {
     aliasFields: string[] = [],
     isSingleton = false,
     jsonFields: string[] = [],
+    maskedFields: string[] = [],
   ): Promise<LicenseSkippedRow[]> {
     if (rows.length === 0) {
       return [];
@@ -132,10 +133,16 @@ export class DirectusLogicalService {
     // Directus rejects them on write — strip them. System-collection aliases
     // are known here; user-collection aliases are supplied by the caller from
     // the snapshot (fields with a null schema).
+    // `maskedFields` are schema-derived: any field whose meta.special contains
+    // `hash`/`conceal` cannot round-trip the /items API — Directus re-hashes the
+    // value on write, double-hashing an already-hashed password into an
+    // unverifiable string. Strip them (same reset-password limitation as the
+    // hardcoded MASKED_FIELDS system fields), regardless of collection.
     const stripFields = new Set([
       ...(SYSTEM_ALIAS_FIELDS[collection] ?? []),
       ...(MASKED_FIELDS[collection] ?? []),
       ...aliasFields,
+      ...maskedFields,
     ]);
 
     // Pass 1 — strip aliases, normalize json fields, null deferred back-edges

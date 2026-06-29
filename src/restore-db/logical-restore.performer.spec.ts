@@ -76,7 +76,17 @@ const SNAPSHOT = {
     { collection: 'Theo', schema: null },
     { collection: 'directus_files', schema: { name: 'directus_files' } },
   ],
-  fields: [],
+  fields: [
+    // A custom hash-special field: must be stripped on import (the /items API
+    // re-hashes it, double-hashing an already-hashed value).
+    {
+      collection: 'authors',
+      field: 'password',
+      type: 'hash',
+      schema: { name: 'password' },
+      meta: { special: ['hash'] },
+    },
+  ],
   relations: [
     { collection: 'articles', field: 'author', related_collection: 'authors' },
   ],
@@ -377,6 +387,34 @@ describe('LogicalRestorePerformer.restore (docker)', () => {
       (c) => c[1] === 'authors',
     );
     expect(authorsCall![3]).toEqual([]);
+  });
+
+  it('passes schema-derived masked fields (hash/conceal special) to importCollection so they are stripped', async () => {
+    const { performer, directusLogicalService } = build();
+    await performer.restore('backup.tgz', 'docker-env');
+
+    const authorsCall = directusLogicalService.importCollection.mock.calls.find(
+      (c) => c[1] === 'authors',
+    );
+    // 8th arg (index 7) is maskedFields
+    expect(authorsCall![7]).toEqual(['password']);
+
+    // collections without a hash field get no masked fields
+    const articlesCall = directusLogicalService.importCollection.mock.calls.find(
+      (c) => c[1] === 'articles',
+    );
+    expect(articlesCall![7]).toEqual([]);
+  });
+
+  it('warns naming the collections/fields that cannot be migrated and must be reset', async () => {
+    const { performer, progressService } = build();
+    await performer.restore('backup.tgz', 'docker-env');
+
+    const warnCalls: string[] = (progressService.warn as jest.Mock).mock.calls.map(
+      (c) => c[0] as string,
+    );
+    const maskWarning = warnCalls.find((w) => w.includes('authors.password'));
+    expect(maskWarning).toBeDefined();
   });
 
   it('restores assets when --no-assets is not set', async () => {

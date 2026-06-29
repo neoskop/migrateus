@@ -500,6 +500,58 @@ describe('DirectusLogicalService.importCollection — strips relational alias fi
     expect(sent[0]).toEqual({ id: 1, title: 'A' });
   });
 
+  it('strips caller-supplied masked fields (hash/conceal special) before insert — they cannot round-trip the /items API', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return [];
+      }),
+    };
+    const rows = [
+      { id: 1, email: 'a@b.de', password: '$argon2id$v=19$m=65536$abc', secret: 'shh' },
+    ];
+
+    await service.importCollection(
+      client as never,
+      'theo_app_user',
+      rows,
+      [],
+      [],
+      false,
+      [],
+      ['password', 'secret'],
+    );
+
+    const sent = JSON.parse(captured.body);
+    expect(sent[0]).toEqual({ id: 1, email: 'a@b.de' });
+  });
+
+  it('does NOT strip a non-masked field whose value merely looks like a hash', async () => {
+    let captured: any;
+    const client = {
+      request: jest.fn(async (cmd: () => any) => {
+        captured = cmd();
+        return [];
+      }),
+    };
+    const rows = [{ id: 1, note: '$argon2id$looks-like-a-hash-but-isnt' }];
+
+    await service.importCollection(
+      client as never,
+      'articles',
+      rows,
+      [],
+      [],
+      false,
+      [],
+      [],
+    );
+
+    const sent = JSON.parse(captured.body);
+    expect(sent[0]).toEqual({ id: 1, note: '$argon2id$looks-like-a-hash-but-isnt' });
+  });
+
   it('strips known system alias fields on directus_policies automatically (regression: POST /policies 403)', async () => {
     let captured: any;
     const client = {

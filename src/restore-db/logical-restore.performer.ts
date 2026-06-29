@@ -225,6 +225,7 @@ export class LogicalRestorePerformer {
         field: string;
         type?: string;
         schema?: unknown;
+        meta?: { special?: string[] | null } | null;
       }[];
       relations?: { collection: string; field: string; related_collection: string }[];
     },
@@ -241,6 +242,12 @@ export class LogicalRestorePerformer {
     // Postgres accepts them.
     const aliasByCollection = new Map<string, string[]>();
     const jsonByCollection = new Map<string, string[]>();
+    // Fields with a `hash`/`conceal` special cannot round-trip the /items API:
+    // Directus re-hashes the value on write, silently double-hashing an
+    // already-hashed password into a permanently unverifiable string. Strip
+    // them on import (same reset-password limitation as directus_users), keyed
+    // off the schema's `special` — never off a value that merely looks hashed.
+    const maskedByCollection = new Map<string, string[]>();
     for (const field of snapshot.fields ?? []) {
       if (field.schema == null) {
         const list = aliasByCollection.get(field.collection) ?? [];
@@ -252,6 +259,26 @@ export class LogicalRestorePerformer {
         list.push(field.field);
         jsonByCollection.set(field.collection, list);
       }
+      const special = field.meta?.special ?? [];
+      if (special.includes('hash') || special.includes('conceal')) {
+        const list = maskedByCollection.get(field.collection) ?? [];
+        list.push(field.field);
+        maskedByCollection.set(field.collection, list);
+      }
+    }
+
+    if (maskedByCollection.size > 0) {
+      const detail = [...maskedByCollection.entries()]
+        .map(([collection, fields]) =>
+          fields.map((f) => `${collection}.${f}`).join(', '),
+        )
+        .join(', ');
+      const msg =
+        `The following fields use a Directus 'hash'/'conceal' special and ` +
+        `cannot be migrated by logical restore (the /items API would re-hash ` +
+        `them) — their values are stripped and must be reset/re-issued: ${detail}.`;
+      this.progressService.warn(msg);
+      this.logger.warn(msg);
     }
 
     const userCollections = (snapshot.collections ?? [])
@@ -294,6 +321,7 @@ export class LogicalRestorePerformer {
         aliasByCollection.get(collection) ?? [],
         singletons.has(collection),
         jsonByCollection.get(collection) ?? [],
+        maskedByCollection.get(collection) ?? [],
       );
       licenseSkips.push(...skipped);
     }
