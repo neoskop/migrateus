@@ -46,6 +46,8 @@ function buildAcaBackupService() {
   const config = { noAssets: true } as never;
   const logger = { debug: jest.fn() };
 
+  const platformResolver = { resolve: jest.fn(() => ({})) } as never;
+
   const service = new AcaBackupService(
     logger as never,
     sqlService as never,
@@ -55,6 +57,7 @@ function buildAcaBackupService() {
     config,
     progressService,
     directusVersionService,
+    platformResolver,
   );
 
   return { service };

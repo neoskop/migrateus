@@ -11,10 +11,17 @@ import { ProgressService } from '../../progress/progress.service.js';
 import { DirectusSettingService } from '../../directus/directus-setting/directus-setting.service.js';
 import { DirectusVersionService } from '../../directus/directus-version/directus-version.service.js';
 import { ConfigService } from '../../config/config.service.js';
+import { PlatformResolver } from '../../platform/platform-resolver.service.js';
+import { Platform } from '../../platform/platform.js';
 
 @Injectable()
 export class AcaRestoreService extends RestorePerformer {
   private backupDir: string;
+  // ACA has no port-forward; reach Directus through the platform's local
+  // HTTP→ingress proxy (same path the logical performers use). ponytail: the
+  // resolved platform spins its own (unused) container service — harmless; the
+  // performer keeps its own injected one for exec/infil.
+  private platform: Platform;
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
@@ -27,6 +34,7 @@ export class AcaRestoreService extends RestorePerformer {
     progressService: ProgressService,
     directusVersionService: DirectusVersionService,
     configService: ConfigService,
+    private readonly platformResolver: PlatformResolver,
   ) {
     super(
       logger,
@@ -43,6 +51,7 @@ export class AcaRestoreService extends RestorePerformer {
 
   protected async setup(backupDir: string): Promise<void> {
     this.backupDir = backupDir;
+    this.platform = this.platformResolver.resolve('aca');
     await this.acaService.setup();
   }
 
@@ -54,8 +63,11 @@ export class AcaRestoreService extends RestorePerformer {
   }
 
   protected getDirectusPort(): Promise<number> {
-    // TODO(verify): ACA Directus HTTP reachability is UNVERIFIED — assumes Directus reachable on 8055 from the tooling context.
-    return Promise.resolve(8055);
+    return this.platform.forwardDirectus();
+  }
+
+  protected cleanUp(): Promise<void> {
+    return this.platform.teardown();
   }
 
   protected async restartDirectus(): Promise<void> {

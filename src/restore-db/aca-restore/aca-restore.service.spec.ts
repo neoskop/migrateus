@@ -55,6 +55,8 @@ describe('AcaRestoreService.copyDatabaseIn', () => {
     const configService = { force: true };
     const logger = { debug: jest.fn(), warn: jest.fn() };
 
+    const platformResolver = { resolve: jest.fn(() => ({})) } as never;
+
     const service = new AcaRestoreService(
       logger as never,
       sqlService as never,
@@ -66,6 +68,7 @@ describe('AcaRestoreService.copyDatabaseIn', () => {
       progressService,
       directusVersionService,
       configService as never,
+      platformResolver,
     );
 
     return { service };
