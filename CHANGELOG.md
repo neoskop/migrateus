@@ -2,6 +2,136 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0] - 2026-07-03
+
+### 🚀 Features
+
+- *(sql)* Add DbDriver interface and MysqlDriver
+- *(sql)* Add DbDriverFactory selecting by client
+- *(sql)* Add ANSI-SQL escapeAnsiString and escapeAnsiIdentifier helpers
+- *(sql)* Add PostgresDriver and SqliteDriver behind DbDriver seam
+- *(transfer)* Add cross-engine transfer building blocks
+- *(docker)* Support remote daemon over SSH via DOCKER_HOST
+- *(aca)* Add Azure Container Apps platform
+- *(config)* Detect DB engine (DB_CLIENT/DB_FILENAME) and interpolate env vars
+- *(aca)* Wire ACA into backup/restore/dispatch paths
+- *(container)* Default to bundled neoskop/migrateus sidecar image
+- *(container)* Run sidecar image as non-root user (uid 1000)
+- *(sql)* Add DbDriver.usesSidecar flag
+- *(container)* Copy files to/from the Directus container (docker); add storage getters
+- *(backup)* SQLite backup via direct file copy from the Directus container
+- *(restore)* SQLite restore via direct file copy into the Directus container
+- *(transfer)* Surface pgloader output and verify tables were created
+- *(platform)* Add execInDirectus (run a command in the Directus container)
+- *(backup)* Add -l/--logical flag, format metadata, -logical filename
+- *(directus)* Add DirectusLogicalService schema + item export
+- *(backup)* Logical backup performer (schema + items + assets) wired to -l
+- *(transfer)* Import-order topo-sort with back-edge deferral
+- *(directus)* Two-pass item import preserving ids and deferring back-edge FKs
+- *(restore)* Logical restore performer (schema apply + ordered item import + assets)
+- *(docker)* SSH-tunnel the Directus HTTP API for remote docker hosts
+- *(logical)* Align uuid foreign-key field types for cross-DBMS restore
+- *(platform)* Add Platform abstraction and resolver
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v11.1.24 ([#1004](https://github.com/neoskop/migrateus/issues/1004))
+- *(deps)* Update dependency @inquirer/figures to v2.0.6 ([#1006](https://github.com/neoskop/migrateus/issues/1006))
+- *(deps)* Update dependency @inquirer/type to v4.0.6 ([#1007](https://github.com/neoskop/migrateus/issues/1007))
+- *(deps)* Update dependency @inquirer/confirm to v6.1.0 ([#1009](https://github.com/neoskop/migrateus/issues/1009))
+- *(deps)* Update dependency @inquirer/core to v11.2.0 ([#1010](https://github.com/neoskop/migrateus/issues/1010))
+- *(deps)* Update dependency @inquirer/expand to v5.1.0 ([#1011](https://github.com/neoskop/migrateus/issues/1011))
+- *(deps)* Update dependency @inquirer/password to v5.1.0 ([#1012](https://github.com/neoskop/migrateus/issues/1012))
+- *(deps)* Update dependency @inquirer/select to v5.2.0 ([#1013](https://github.com/neoskop/migrateus/issues/1013))
+- *(deps)* Update dependency @inquirer/confirm to v6.1.1 ([#1018](https://github.com/neoskop/migrateus/issues/1018))
+- *(deps)* Update dependency @inquirer/core to v11.2.1 ([#1019](https://github.com/neoskop/migrateus/issues/1019))
+- *(deps)* Update dependency @inquirer/expand to v5.1.1 ([#1020](https://github.com/neoskop/migrateus/issues/1020))
+- *(deps)* Update dependency @inquirer/figures to v2.0.7 ([#1021](https://github.com/neoskop/migrateus/issues/1021))
+- *(deps)* Update dependency @inquirer/password to v5.1.1 ([#1022](https://github.com/neoskop/migrateus/issues/1022))
+- *(deps)* Update dependency @inquirer/select to v5.2.1 ([#1023](https://github.com/neoskop/migrateus/issues/1023))
+- *(deps)* Update dependency @inquirer/type to v4.0.7 ([#1024](https://github.com/neoskop/migrateus/issues/1024))
+- *(deps)* Update dependency date-fns to v4.4.0 ([#1027](https://github.com/neoskop/migrateus/issues/1027))
+- *(deps)* Update dependency js-yaml to v4.2.0 ([#1029](https://github.com/neoskop/migrateus/issues/1029))
+- *(deps)* Update dependency semver to v7.8.2 ([#1033](https://github.com/neoskop/migrateus/issues/1033))
+- *(deps)* Update nest monorepo ([#1038](https://github.com/neoskop/migrateus/issues/1038))
+- *(deps)* Update dependency semver to v7.8.3 ([#1040](https://github.com/neoskop/migrateus/issues/1040))
+- *(deps)* Update nest monorepo to v11.1.26 ([#1041](https://github.com/neoskop/migrateus/issues/1041))
+- *(deps)* Update dependency semver to v7.8.4 ([#1046](https://github.com/neoskop/migrateus/issues/1046))
+- *(deps)* Update dependency @directus/sdk to v22
+- *(deps)* Update nest monorepo to v11.1.27 ([#1059](https://github.com/neoskop/migrateus/issues/1059))
+- *(deps)* Update dependency nanoid to v5.1.14 ([#1067](https://github.com/neoskop/migrateus/issues/1067))
+- *(deps)* Update dependency semver to v7.8.5 ([#1069](https://github.com/neoskop/migrateus/issues/1069))
+- *(deps)* Update dependency nanoid to v5.1.15 ([#1071](https://github.com/neoskop/migrateus/issues/1071))
+- *(deps)* Update dependency uuid to v14.0.1 ([#1072](https://github.com/neoskop/migrateus/issues/1072))
+- *(sql)* Validate table identifiers in PostgresDriver.dump
+- *(transfer)* Robust pgloader load-file write, URL-encode creds, honor artifact + target-engine default
+- *(container)* Select sidecar image from active driver + quote sqlite cp
+- *(docker)* Resolve Swarm `service` to its task container; guard cleanup when setup failed
+- *(docker)* Don't require DB_HOST/port/user for sqlite (file-based) envs
+- *(docker)* Skip database-container start for file-based (sqlite) envs
+- *(sql)* Resolve SQLite db path via filename??name and guard against undefined
+- *(backup,restore)* Run platform setup before branching on usesSidecar
+- *(backup)* Tolerate missing SQLite uploads dir (best-effort, warn)
+- *(transfer)* Drop SQLite 'null' defaults on non-text types so pgloader can create the schema
+- *(transfer)* Convert SQLite epoch-millis/ISO dates + float notation; quote identifiers
+- *(security)* POSIX single-quote shell commands for Directus exec + CLI args
+- *(security)* Restrict logical backup staging dir to owner-only (0o700)
+- *(directus)* Export/import directus_access via raw /access endpoint (SDK blocks items API for core collections)
+- *(logical)* Correct import-order cycle handling; warn + document logical limitations
+- *(directus)* Create temp-admin role with --app, parse CLI id from log-prefixed stdout, surface stdout in exec errors
+- *(directus)* Use example.com for temp-admin email; Directus rejects .local TLD
+- *(docker)* Forward Directus through a docker-exec relay, not ssh -L
+- *(logical)* Skip folder collections on export/import; delete temp user before role
+- *(logical)* Handle singleton user collections on export
+- *(backup)* Respect absolute output paths for the archive
+- *(logical)* Make cross-DBMS restore import system + user data faithfully
+- *(deps)* Update dependency tmp to v0.2.6 [security]
+- *(aca)* Harden ACA exec, proxy, and license-gate restore
+- *(deps)* Update dependency ora to v9.4.1 ([#1081](https://github.com/neoskop/migrateus/issues/1081))
+- *(deps)* Update dependency nanoid to v5.1.16 ([#1084](https://github.com/neoskop/migrateus/issues/1084))
+- *(deps)* Update dependency tmp to v0.2.7 [security]
+- *(logical-restore)* Strip hash/conceal fields to prevent double-hashing
+- *(aca,sqlite)* Fix exec PTY, word-split, banner, and SQLite driver
+- *(aca)* Route physical backup/restore through ingress proxy
+- *(aca)* Resolve secrets, base64-encode passwords, and sweep policies
+- *(aca)* Gzip file transfers to shrink PTY payload and detect corruption
+- *(aca)* Gzip exfil and stream infil over exec stdin
+- *(logical-restore)* Delete email-colliding bootstrap user before import
+- *(deps)* Update dependency js-yaml to v4.3.0 ([#1090](https://github.com/neoskop/migrateus/issues/1090))
+
+### 🚜 Refactor
+
+- *(sql)* Route SqlService and DirectusUserService through DbDriver
+- *(sql)* Route rename-collection escaping through DbDriver seam
+- *(restore)* Drop-all-tables via driver + cross-engine transfer step
+- *(logger)* Replace nest-winston with custom LoggerService
+- *(directus)* Create the temp admin via the Directus CLI (engine-agnostic), not SQL
+- *(transfer)* Drop pgloader; cross-DBMS physical restore now errors toward logical
+- *(backup)* Extract shared backup-archive util
+- *(exec)* Centralise non-zero exit handling in throwIfFailed
+- *(platform)* Route consumers through the Platform resolver
+- *(schema-diff)* Replace per-platform services with PlatformResolver
+
+### 📚 Documentation
+
+- *(readme)* Add Development section for local pnpm link workflow.
+- Cross-engine migration design, plans 1-5, and status
+- *(readme)* Document SQLite/SSH, ACA, cross-engine, and the bundled sidecar image
+- *(architecture)* Document sidecar-for-servers / SQLite-file-copy model
+- *(logical)* Add logical backup/restore spec and implementation plan
+
+### 🧪 Testing
+
+- *(sql)* Cover backtick escaping and restore error path in MysqlDriver
+- *(platform)* Cover platformKey/selectByPlatform; finalise seam
+
+### ⚙️ Miscellaneous Tasks
+
+- *(aikido)* Add Aikido MCP security scan instructions
+- *(transfer)* Log pgloader exit code + output unconditionally
+- Untrack output.tar.gz test artifact
+- *(sidecar)* Add QEMU setup for multi-platform image builds
+
 ## [2.6.2] - 2026-05-27
 
 ### 🐛 Bug Fixes
