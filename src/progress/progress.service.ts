@@ -39,13 +39,15 @@ export class ProgressService {
   }
 
   public finish() {
-    if (this.useSpinner) {
+    // `spinner` is created lazily on the first `advance()`; guard against an
+    // error before any step started (e.g. setup() throwing).
+    if (this.useSpinner && this.spinner) {
       this.spinner.succeed(this.currentMessage);
     }
   }
 
   public succeed(info: string) {
-    if (this.useSpinner) {
+    if (this.useSpinner && this.spinner) {
       this.spinner.succeed(`${this.currentMessage}: ${info}`);
     } else {
       this.logger.info(info);
@@ -53,7 +55,7 @@ export class ProgressService {
   }
 
   public warn(warning: string) {
-    if (this.useSpinner) {
+    if (this.useSpinner && this.spinner) {
       this.spinner.warn(
         `${this.currentMessage} finished, however: ${chalk.yellow(warning)}`,
       );
@@ -68,7 +70,9 @@ export class ProgressService {
         highlight(JSON.stringify(error, null, 2), { language: 'json' }),
     );
 
-    if (this.useSpinner) {
+    // Without a started spinner, fall back to the logger so the real error
+    // surfaces instead of a `Cannot read properties of undefined` TypeError.
+    if (this.useSpinner && this.spinner) {
       this.spinner.fail(`${this.currentMessage} failed: ${formattedError}`);
     } else {
       this.logger.error(formattedError);
@@ -76,7 +80,7 @@ export class ProgressService {
   }
 
   public updateText(newText: string) {
-    if (!this.useSpinner) {
+    if (!this.useSpinner || !this.spinner) {
       return;
     }
 
