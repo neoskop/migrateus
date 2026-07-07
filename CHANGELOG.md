@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.1] - 2026-07-07
+
+### 🐛 Bug Fixes
+
+- *(sidecar)* Use Percona mysql client so mysqldump supports --set-gtid-purged
+- *(progress)* Fall back to logger when spinner not yet started
+
 ## [3.0.0] - 2026-07-03
 
 ### 🚀 Features
