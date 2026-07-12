@@ -113,10 +113,10 @@ importers:
         version: 30.4.1
       '@nestjs/cli':
         specifier: 11.0.23
-        version: 11.0.23(@types/node@24.13.3)(prettier@3.9.4)
+        version: 11.0.23(@types/node@24.13.3)(prettier@3.9.5)
       '@nestjs/schematics':
         specifier: 11.1.0
-        version: 11.1.0(chokidar@4.0.3)(prettier@3.9.4)(typescript@6.0.3)
+        version: 11.1.0(chokidar@4.0.3)(prettier@3.9.5)(typescript@6.0.3)
       '@nestjs/testing':
         specifier: 11.1.28
         version: 11.1.28(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@nestjs/platform-express@11.1.28)
@@ -164,7 +164,7 @@ importers:
         version: 10.1.8(eslint@10.6.0(supports-color@5.5.0))
       eslint-plugin-prettier:
         specifier: 5.5.6
-        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.6.0(supports-color@5.5.0)))(eslint@10.6.0(supports-color@5.5.0))(prettier@3.9.4)
+        version: 5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.6.0(supports-color@5.5.0)))(eslint@10.6.0(supports-color@5.5.0))(prettier@3.9.5)
       genversion:
         specifier: 3.2.0
         version: 3.2.0
@@ -184,8 +184,8 @@ importers:
         specifier: 3.1.14
         version: 3.1.14
       prettier:
-        specifier: 3.9.4
-        version: 3.9.4
+        specifier: 3.9.5
+        version: 3.9.5
       source-map-support:
         specifier: 0.5.21
         version: 0.5.21
@@ -3048,8 +3048,8 @@ packages:
     resolution: {integrity: sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg==}
     engines: {node: '>=6.0.0'}
 
-  prettier@3.9.4:
-    resolution: {integrity: sha512-yWG/o/4oJfo036EKAfK6ACAoDOfHeRHx4tuxkfBZiauURiaSmYwlpOr5LQqKtIkRD2z1PLteme2WoxEnj4tHTg==}
+  prettier@3.9.5:
+    resolution: {integrity: sha512-/FVl766LpUfB5vXgCYOYa0MeV/441Ia99AeICQIQFTY/Nw0roZwULcXpku5i1/m5kt/baz+s4Zogspd839HSMg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -4061,7 +4061,7 @@ snapshots:
   '@fig/complete-commander@3.2.0(commander@11.1.0)':
     dependencies:
       commander: 11.1.0
-      prettier: 3.9.4
+      prettier: 3.9.5
 
   '@golevelup/nestjs-discovery@5.0.0(@nestjs/common@11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)':
     dependencies:
@@ -4511,13 +4511,13 @@ snapshots:
       '@tybys/wasm-util': 0.10.3
     optional: true
 
-  '@nestjs/cli@11.0.23(@types/node@24.13.3)(prettier@3.9.4)':
+  '@nestjs/cli@11.0.23(@types/node@24.13.3)(prettier@3.9.5)':
     dependencies:
       '@angular-devkit/core': 19.2.27(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.2.27(chokidar@4.0.3)
       '@angular-devkit/schematics-cli': 19.2.27(@types/node@24.13.3)(chokidar@4.0.3)
       '@inquirer/prompts': 7.10.1(@types/node@24.13.3)
-      '@nestjs/schematics': 11.1.0(chokidar@4.0.3)(prettier@3.9.4)(typescript@5.9.3)
+      '@nestjs/schematics': 11.1.0(chokidar@4.0.3)(prettier@3.9.5)(typescript@5.9.3)
       ansis: 4.2.0
       chokidar: 4.0.3
       cli-table3: 0.6.5
@@ -4595,7 +4595,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@nestjs/schematics@11.1.0(chokidar@4.0.3)(prettier@3.9.4)(typescript@5.9.3)':
+  '@nestjs/schematics@11.1.0(chokidar@4.0.3)(prettier@3.9.5)(typescript@5.9.3)':
     dependencies:
       '@angular-devkit/core': 19.2.24(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.2.24(chokidar@4.0.3)
@@ -4604,11 +4604,11 @@ snapshots:
       pluralize: 8.0.0
       typescript: 5.9.3
     optionalDependencies:
-      prettier: 3.9.4
+      prettier: 3.9.5
     transitivePeerDependencies:
       - chokidar
 
-  '@nestjs/schematics@11.1.0(chokidar@4.0.3)(prettier@3.9.4)(typescript@6.0.3)':
+  '@nestjs/schematics@11.1.0(chokidar@4.0.3)(prettier@3.9.5)(typescript@6.0.3)':
     dependencies:
       '@angular-devkit/core': 19.2.24(chokidar@4.0.3)
       '@angular-devkit/schematics': 19.2.24(chokidar@4.0.3)
@@ -4617,7 +4617,7 @@ snapshots:
       pluralize: 8.0.0
       typescript: 6.0.3
     optionalDependencies:
-      prettier: 3.9.4
+      prettier: 3.9.5
     transitivePeerDependencies:
       - chokidar
 
@@ -5615,10 +5615,10 @@ snapshots:
     dependencies:
       eslint: 10.6.0(supports-color@5.5.0)
 
-  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.6.0(supports-color@5.5.0)))(eslint@10.6.0(supports-color@5.5.0))(prettier@3.9.4):
+  eslint-plugin-prettier@5.5.6(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@10.6.0(supports-color@5.5.0)))(eslint@10.6.0(supports-color@5.5.0))(prettier@3.9.5):
     dependencies:
       eslint: 10.6.0(supports-color@5.5.0)
-      prettier: 3.9.4
+      prettier: 3.9.5
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.13
     optionalDependencies:
@@ -6978,7 +6978,7 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier@3.9.4: {}
+  prettier@3.9.5: {}
 
   pretty-bytes@7.1.0: {}
 
