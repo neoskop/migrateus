@@ -138,6 +138,13 @@ export class DirectusUserService {
         // token may be invalid post-user-deletion, or the role still referenced
       }
     }
+
+    // Forget the temp admin so a repeated cleanup no-ops instead of re-issuing
+    // the DELETE against a torn-down tunnel. Only reached when the user delete
+    // succeeded, so a failure still leaves the state around for a retry.
+    this.token = undefined;
+    this.userId = undefined;
+    this.roleId = undefined;
   }
 
   private async login(port: number): Promise<string> {

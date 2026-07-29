@@ -5,12 +5,14 @@ import { ConfigService } from '../config/config.service.js';
 import { DirectusService } from '../directus/directus.service.js';
 import {
   RestClient,
-  schemaApply,
-  schemaDiff,
   SchemaDiffOutput,
   schemaSnapshot,
   serverInfo,
 } from '@directus/sdk';
+import {
+  schemaApply,
+  schemaDiff,
+} from '../directus/schema-commands.js';
 import chalk from 'chalk';
 import { SqlService } from '../sql/sql.service.js';
 import { DirectusUserService } from '../directus/directus-user/directus-user.service.js';
@@ -28,7 +30,8 @@ import { ErrorFormatterService } from '../error-formatter/error-formatter.servic
 
 @Injectable()
 export class SchemaDiffService {
-  private platforms: { [name: string]: Platform } = {};
+  /** The single currently-connected environment; see the note in `diff()`. */
+  private platform: Platform | null = null;
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
@@ -45,25 +48,43 @@ export class SchemaDiffService {
 
   public async diff(from: string, to: string) {
     try {
-      const fromClient = await this.setupDirectusClient(from);
-      const toClient = await this.setupDirectusClient(to);
-      this.progressService.advance('🔎 Compare Directus versions');
-      await this.checkVersions(from, fromClient, to, toClient);
-      this.progressService.advance('📸 Get schema snapshot');
-      const snapshot = await fromClient.request(schemaSnapshot());
-      this.progressService.advance('🧬 Get schema diff');
-      const diffOutput = await toClient.request<
-        SchemaDiffOutput & { status: number }
-      >(schemaDiff(snapshot, true));
-      this.logger.debug(
-        `Schema diff: ${highlight(JSON.stringify(diffOutput), { language: 'json' })}`,
-      );
+      // Only ONE environment may be live at a time: the kubeconfig, the
+      // port-forward and the temporary admin all live in process-wide
+      // singletons, so connecting the second environment overwrites the first's
+      // state — the first port-forward and temp admin leak, and both teardowns
+      // then race over the same kubeconfig. Snapshot the source, drop it, and
+      // only then connect the target.
+      const source = await this.withEnvironment(from, async (client) => {
+        this.progressService.advance('📸 Get schema snapshot');
+        return {
+          version: await this.getDirectusVersion(client),
+          snapshot: await client.request(schemaSnapshot()),
+        };
+      });
 
-      if (!diffOutput || diffOutput.status === 204) {
-        this.progressService.succeed(
-          `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
+      await this.withEnvironment(to, async (toClient) => {
+        this.progressService.advance('🔎 Compare Directus versions');
+        this.checkVersions(
+          from,
+          source.version,
+          to,
+          await this.getDirectusVersion(toClient),
         );
-      } else {
+        this.progressService.advance('🧬 Get schema diff');
+        const diffOutput = await toClient.request<
+          SchemaDiffOutput & { status: number }
+        >(schemaDiff(source.snapshot, true));
+        this.logger.debug(
+          `Schema diff: ${highlight(JSON.stringify(diffOutput), { language: 'json' })}`,
+        );
+
+        if (!diffOutput || diffOutput.status === 204) {
+          this.progressService.succeed(
+            `No changes between ${chalk.bold(from)} and ${chalk.bold(to)}`,
+          );
+          return;
+        }
+
         if (this.config.schemaDiffSavePath) {
           this.logger.debug(
             `Saving diff to ${chalk.bold(this.config.schemaDiffSavePath)}`,
@@ -95,26 +116,36 @@ export class SchemaDiffService {
         } else {
           this.logger.debug(`No changes to apply - stopping!`);
         }
-      }
+      });
     } catch (error: any) {
       this.progressService.fail(this.errorFormatter.format(error));
     } finally {
-      this.progressService.advance('🧹 Cleaning up');
-      await this.cleanUpEnv(from);
-      await this.cleanUpEnv(to);
       this.progressService.finish();
     }
   }
 
-  private async checkVersions(
-    fromName: string,
-    fromClient: RestClient<any>,
-    toName: string,
-    toClient: RestClient<any>,
-  ) {
-    const fromVersion = await this.getDirectusVersion(fromClient);
-    const toVersion = await this.getDirectusVersion(toClient);
+  /**
+   * Connects `name`, runs `fn` against it and always tears it down again —
+   * including when the connect itself failed half-way.
+   */
+  private async withEnvironment<T>(
+    name: string,
+    fn: (client: RestClient<any>) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await fn(await this.setupDirectusClient(name));
+    } finally {
+      this.progressService.advance(`🧹 Cleaning up ${chalk.bold(name)}`);
+      await this.cleanUpEnv();
+    }
+  }
 
+  private checkVersions(
+    fromName: string,
+    fromVersion: string,
+    toName: string,
+    toVersion: string,
+  ) {
     if (fromVersion !== toVersion) {
       throw new Error(
         `Directus server versions mismatch. ${chalk.bold(fromName)} has ${semver.lt(fromVersion, toVersion) ? chalk.red(fromVersion) : chalk.green(fromVersion)}, while ${chalk.bold(toName)} has ${semver.lt(toVersion, fromVersion) ? chalk.red(toVersion) : chalk.green(toVersion)}`,
@@ -141,12 +172,13 @@ export class SchemaDiffService {
     }
   }
 
-  private async cleanUpEnv(name: string) {
-    const platform = this.platforms[name];
+  private async cleanUpEnv() {
+    const platform = this.platform;
 
     if (!platform) {
       return;
     }
+    this.platform = null;
 
     // Remove the temp admin (an HTTP call) BEFORE teardown closes the
     // tunnel/port-forward. Best-effort: a failure must not skip teardown, which
@@ -166,7 +198,7 @@ export class SchemaDiffService {
     const env = this.config.getEnvironment(name);
     this.environmentService.environment = env;
     const platform = this.platformResolver.resolve(env.platform);
-    this.platforms[name] = platform;
+    this.platform = platform;
 
     this.progressService.advance(
       `🚀 Set-up platform for environment ${chalk.bold(name)}`,
