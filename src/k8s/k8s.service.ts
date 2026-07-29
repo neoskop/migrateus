@@ -33,7 +33,10 @@ export class K8sService {
       this.logger.debug(
         `Deleting kubeconfig at ${chalk.bold(this.kubeconfigPath)}`,
       );
-      await fs.promises.unlink(this.kubeconfigPath);
+      // `force` because tmp's own exit hook may have won the race; forget the
+      // path either way so a second cleanUp() is a no-op instead of an ENOENT.
+      await fs.promises.rm(this.kubeconfigPath, { force: true });
+      this.kubeconfigPath = undefined;
     }
   }
 
@@ -194,7 +197,9 @@ export class K8sService {
     }
 
     return spawn('kubectl', args, {
-      stdio: ['ignore', 'ignore', 'ignore'],
+      // stderr is piped (and unref'd by the caller) so kubectl's reason for
+      // dropping a forward reaches the debug log instead of /dev/null.
+      stdio: ['ignore', 'ignore', 'pipe'],
       detached: true,
       env,
     });

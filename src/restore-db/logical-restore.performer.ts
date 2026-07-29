@@ -7,12 +7,8 @@ import {
   removeWorkDir,
   extractArchive,
 } from '../util/backup-archive.js';
-import {
-  schemaApply,
-  schemaDiff,
-  SchemaDiffOutput,
-  SchemaSnapshotOutput,
-} from '@directus/sdk';
+import { SchemaDiffOutput, SchemaSnapshotOutput } from '@directus/sdk';
+import { schemaApply, schemaDiff } from '../directus/schema-commands.js';
 import { LoggerService } from '../logger/logger.service.js';
 import { LOGGER_MODULE_PROVIDER } from '../logger/logger.constants.js';
 import { PlatformResolver } from '../platform/platform-resolver.service.js';

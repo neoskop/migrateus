@@ -102,4 +102,22 @@ describe('SchemaDiffService.setupDirectusClient — platform resolution', () => 
 
     expect(platform.teardown).toHaveBeenCalled();
   });
+
+  it('holds one environment at a time: the source is torn down before the target connects', async () => {
+    const { service, platform } = build();
+    const order: string[] = [];
+    platform.connect.mockImplementation(async () => {
+      order.push('connect');
+      return { port: 9001, containerService: { execInDirectus: jest.fn() } };
+    });
+    platform.teardown.mockImplementation(async () => {
+      order.push('teardown');
+    });
+
+    await service.diff('dev', 'aca-prod').catch(() => {});
+
+    // Interleaved, never connect/connect: the kubeconfig, port-forward and temp
+    // admin are singletons, so two live environments clobber each other.
+    expect(order).toEqual(['connect', 'teardown', 'connect', 'teardown']);
+  });
 });

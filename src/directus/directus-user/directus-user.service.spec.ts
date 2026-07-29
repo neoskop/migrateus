@@ -267,6 +267,29 @@ describe('DirectusUserService.removeUser', () => {
     expect(request).toHaveBeenCalled();
   }, 20000);
 
+  it('is idempotent: a second removeUser issues no further requests', async () => {
+    const { service } = build();
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
+
+    globalThis.fetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      }) as never) as never;
+
+    const request = jest.fn(async () => undefined);
+    const getClient = jest.fn(() => ({ request }));
+
+    await service.setupUser(fn as never, getClient as never, 8055);
+    await service.removeUser();
+    const afterFirst = request.mock.calls.length;
+    // Cleanup can run twice (once per environment); the repeat must not fire a
+    // DELETE at an already-torn-down tunnel.
+    await service.removeUser();
+
+    expect(request.mock.calls.length).toBe(afterFirst);
+  }, 20000);
+
   it('deletes the user FIRST, then the role (deleting the role first strips the admin access the user delete needs)', async () => {
     const { service } = build();
     const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);

@@ -33,10 +33,7 @@ const mockSchemaDiff = jest.fn((snapshot: unknown, force?: boolean) => ({
 }));
 const mockSchemaApply = jest.fn((diff: unknown) => ({ __cmd: 'schemaApply', diff }));
 
-const actualSdk = await import('@directus/sdk');
-
-jest.unstable_mockModule('@directus/sdk', () => ({
-  ...actualSdk,
+jest.unstable_mockModule('../directus/schema-commands.js', () => ({
   schemaDiff: mockSchemaDiff,
   schemaApply: mockSchemaApply,
 }));
