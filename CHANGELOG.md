@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.2] - 2026-08-05
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update nest monorepo to v11.1.28 ([#1104](https://github.com/neoskop/migrateus/issues/1104))
+- *(schema-diff)* Upload schema payloads as files, tear down one env at a time
+
 ## [3.0.1] - 2026-07-07
 
 ### 🐛 Bug Fixes
