@@ -9,7 +9,7 @@
 # Published as `neoskop/migrateus` (see .github/workflows/sidecar-image.yml and
 # docs/sidecar-image.md). The CLI defaults to this image and accepts `--image`
 # to override (e.g. to pin a version or pg_dump major).
-FROM debian:bookworm-slim@sha256:60eac759739651111db372c07be67863818726f754804b8707c90979bda511df
+FROM debian:bookworm-slim@sha256:7c7b2c966bc9ee8cedfeef67e0e279108992c77681fa595db4a9d65c06ccc587
 
 ENV DEBIAN_FRONTEND=noninteractive
 
