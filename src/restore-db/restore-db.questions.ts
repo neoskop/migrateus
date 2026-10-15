@@ -5,6 +5,7 @@ import { RestoreDbAnswers } from './restore-db-answers.interface.js';
 import { Glob } from 'glob';
 import { intlFormatDistance } from 'date-fns/intlFormatDistance';
 import chalk from 'chalk';
+import { BACKUP_DIR } from '../util/resolve-output-path.js';
 
 @Injectable()
 @QuestionSet({ name: 'restore-db-questions' })
@@ -12,10 +13,13 @@ export class RestoreDbQuestions {
   private glob: Glob<{ stat: true; withFileTypes: true }>;
 
   constructor(private readonly config: ConfigService) {
-    this.glob = new Glob('**/migrateus*.{tgz,tar.gz}', {
-      stat: true,
-      withFileTypes: true,
-    });
+    this.glob = new Glob(
+      ['**/migrateus*.{tgz,tar.gz}', `${BACKUP_DIR}/migrateus*.{tgz,tar.gz}`],
+      {
+        stat: true,
+        withFileTypes: true,
+      },
+    );
   }
 
   @Question({
@@ -39,8 +43,8 @@ export class RestoreDbQuestions {
       .map((file) => {
         const time = intlFormatDistance(file.mtimeMs, Date.now());
         return {
-          name: `${chalk.bold(file.name)} (${time})`,
-          value: file.name,
+          name: `${chalk.bold(file.name)} ${chalk.dim(file.parent?.fullpath())} (${time})`,
+          value: file.fullpath(),
         };
       });
   }

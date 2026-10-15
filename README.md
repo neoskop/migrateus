@@ -233,7 +233,7 @@ Where `from` is the `name` of the environment to back-up and `to` is the path to
 
 If assets should not be backed up, use the `--no-assets | -n` flag.
 
-If you don't specify either of those options, Migrateus will ask you for them resp. suggest values.
+If you don't specify either of those options, Migrateus will ask you for them resp. suggest values. The suggested path is under `/tmp/migrateus`, so backups are eventually cleaned up by the OS.
 
 ### Restore DB
 
@@ -247,7 +247,9 @@ Where `from` is the path to the backup tgz file to restore and `to` is the `name
 
 If you restore a backup created on an instance with a different Directus storage location (for example `s3`) to an environment that only has `local`, set `assetStorage: local` on the target environment. Migrateus will remap `directus_files.storage` before re-uploading the assets.
 
-If you don't specify either of those options, Migrateus will ask you for them.
+If you don't specify either of those options, Migrateus will ask you for them. Backups in the current directory and in `/tmp/migrateus` are offered.
+
+After a successful restore, Migrateus asks whether to delete the backup file.
 
 ### Logical vs physical backup
 

@@ -8,6 +8,7 @@ import {
 } from 'nest-commander';
 import { ConfigService } from '../config/config.service.js';
 import { BackupDbAnswers } from './backup-db-answers.interface.js';
+import { BACKUP_DIR } from '../util/resolve-output-path.js';
 
 @Injectable()
 @QuestionSet({ name: 'backup-db-questions' })
@@ -46,6 +47,6 @@ export class BackupDbQuestions {
   defaultTo(answers: BackupDbAnswers) {
     const date = new Date().toISOString().substring(0, 10).replaceAll('-', '');
     const suffix = this.config.logical ? '-logical' : '';
-    return `migrateus-${answers.from}-${date}${suffix}.tgz`;
+    return `${BACKUP_DIR}/migrateus-${answers.from}-${date}${suffix}.tgz`;
   }
 }

@@ -14,6 +14,7 @@ import { RedactService } from '../redact/redact.service.js';
 import { DependenciesService } from '../dependencies/dependencies.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import confirm from '@inquirer/confirm';
+import fs from 'node:fs';
 import { ContainerService } from '../container/container.service.js';
 import { UpdateService } from '../update/update.service.js';
 import { LogicalRestorePerformer } from './logical-restore.performer.js';
@@ -113,13 +114,21 @@ export class RestoreDbCommand extends MigrateusCommand {
     // archive's meta.json before dispatching to the physical platform branch.
     if ((await peekArchiveFormat(from)) === 'logical') {
       await this.logicalRestorePerformer.restore(from, to);
-      return;
+    } else {
+      await selectByPlatform<RestorePerformer>(environment.platform, {
+        docker: this.dockerRestoreService,
+        aca: this.acaRestoreService,
+        k8s: this.k8sRestoreService,
+      }).restore(from);
     }
 
-    await selectByPlatform<RestorePerformer>(environment.platform, {
-      docker: this.dockerRestoreService,
-      aca: this.acaRestoreService,
-      k8s: this.k8sRestoreService,
-    }).restore(from);
+    const deleteBackup = await confirm({
+      message: `Delete the backup file ${chalk.bold(from)}?`,
+      default: false,
+    });
+
+    if (deleteBackup) {
+      await fs.promises.rm(from);
+    }
   }
 }
