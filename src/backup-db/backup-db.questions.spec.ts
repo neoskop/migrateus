@@ -15,7 +15,7 @@ describe('BackupDbQuestions.defaultTo', () => {
     const answers = { from: 'staging' } as BackupDbAnswers;
     const result = q.defaultTo(answers);
     const date = new Date().toISOString().substring(0, 10).replaceAll('-', '');
-    expect(result).toBe(`migrateus-staging-${date}.tgz`);
+    expect(result).toBe(`/tmp/migrateus/migrateus-staging-${date}.tgz`);
     expect(result).not.toContain('-logical');
   });
 
@@ -24,6 +24,6 @@ describe('BackupDbQuestions.defaultTo', () => {
     const answers = { from: 'production' } as BackupDbAnswers;
     const result = q.defaultTo(answers);
     const date = new Date().toISOString().substring(0, 10).replaceAll('-', '');
-    expect(result).toBe(`migrateus-production-${date}-logical.tgz`);
+    expect(result).toBe(`/tmp/migrateus/migrateus-production-${date}-logical.tgz`);
   });
 });

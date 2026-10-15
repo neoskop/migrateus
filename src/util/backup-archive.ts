@@ -1,9 +1,9 @@
 import fs from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import chalk from 'chalk';
 import tmp from 'tmp';
 import prettyBytes from 'pretty-bytes';
-import { resolveOutputPath } from './resolve-output-path.js';
+import { BACKUP_DIR, resolveOutputPath } from './resolve-output-path.js';
 import { fileExists } from './file-exists.js';
 import { exec, throwIfFailed } from './exec.js';
 
@@ -38,6 +38,24 @@ export async function removeWorkDir(dir: string): Promise<void> {
 }
 
 /**
+ * Create `dir` with mode 0o700, or verify an existing one. `/tmp` is shared, so
+ * another user could pre-create the directory (or a symlink) to read the
+ * backups, which contain DB dumps including password hashes.
+ */
+export async function ensurePrivateDir(dir: string): Promise<void> {
+  await fs.promises.mkdir(dir, { recursive: true, mode: 0o700 });
+  const stat = await fs.promises.lstat(dir);
+  if (!stat.isDirectory() || stat.uid !== process.getuid?.()) {
+    throw new Error(
+      `Refusing to write backups to ${chalk.bold(dir)}: not a directory owned by the current user`,
+    );
+  }
+  if (stat.mode & 0o077) {
+    await fs.promises.chmod(dir, 0o700);
+  }
+}
+
+/**
  * Tar+gzip the contents of `dir` into `outFile` and return the human-readable
  * archive size. Relative `outFile` paths are resolved against the cwd.
  */
@@ -46,6 +64,12 @@ export async function createArchive(
   outFile: string,
 ): Promise<string> {
   const targetPath = resolveOutputPath(outFile);
+  const targetDir = dirname(targetPath);
+  if (targetDir === BACKUP_DIR) {
+    await ensurePrivateDir(targetDir);
+  } else {
+    await fs.promises.mkdir(targetDir, { recursive: true });
+  }
   throwIfFailed(
     await exec(`tar -czf ${targetPath} *`, { silent: true, cwd: dir }),
     (o) =>

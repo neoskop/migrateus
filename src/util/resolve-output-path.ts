@@ -1,6 +1,9 @@
 import path from 'node:path';
 import shell from 'shelljs';
 
+/** Default directory for backups; under /tmp so the OS eventually cleans it up. */
+export const BACKUP_DIR = '/tmp/migrateus';
+
 /**
  * Resolves a backup output path. Absolute paths are returned unchanged;
  * relative paths are resolved against the current working directory.

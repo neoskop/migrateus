@@ -26,6 +26,12 @@ jest.unstable_mockModule('tmp', () => ({
   dirSync: mockDirSync,
 }));
 
+const mockConfirm = jest.fn(async () => false);
+
+jest.unstable_mockModule('@inquirer/confirm', () => ({
+  default: mockConfirm,
+}));
+
 const { RestoreDbCommand } = await import('./restore-db.command.js');
 
 const mockReadFile = jest.spyOn(fs.promises, 'readFile');
@@ -144,5 +150,28 @@ describe('RestoreDbCommand.execute dispatch', () => {
 
     expect(logicalRestorePerformer.restore).not.toHaveBeenCalled();
     expect(dockerRestoreService.restore).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('RestoreDbCommand.execute backup cleanup', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDirSync.mockReturnValue({ name: '/tmp/migrateus-peek' });
+    mockExec.mockResolvedValue({ code: 0, stdout: '', stderr: '' });
+    mockAccess.mockRejectedValue(new Error('ENOENT') as never);
+    mockReadFile.mockRejectedValue(new Error('ENOENT') as never);
+  });
+
+  it('deletes the backup file only when the user confirms', async () => {
+    const mockRm = jest.spyOn(fs.promises, 'rm').mockResolvedValue(undefined);
+    const { command } = build('docker-compose');
+
+    mockConfirm.mockResolvedValueOnce(false);
+    await command.execute(['backup.tgz', 'env']);
+    expect(mockRm).not.toHaveBeenCalled();
+
+    mockConfirm.mockResolvedValueOnce(true);
+    await command.execute(['backup.tgz', 'env']);
+    expect(mockRm).toHaveBeenCalledWith('backup.tgz');
   });
 });
