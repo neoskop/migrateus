@@ -5,6 +5,11 @@
       "matchUpdateTypes": ["minor", "patch"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
+    },
+    {
+      "description": "TypeScript 7.0 ships no compiler API; nest build, ts-jest and ts-loader break. Revisit with 7.1.",
+      "matchPackageNames": ["typescript"],
+      "allowedVersions": "<7"
     }
   ],
   "lockFileMaintenance": {
