@@ -130,7 +130,7 @@ export class ConfigService {
   }
 
   private async checkDotenvIsIgnored() {
-    const hasGitCli = await which('git');
+    const hasGitCli = await which('git', { nothrow: true });
 
     if (!hasGitCli) {
       return;
@@ -233,7 +233,7 @@ export class ConfigService {
     const { message, filePath, exitOnReject } = opts;
     let { fileContents } = opts;
     const hasOnePasswordRefs = fileContents.includes('op://');
-    const hasOpCli = await which('op');
+    const hasOpCli = await which('op', { nothrow: true });
 
     if (!hasOnePasswordRefs || !hasOpCli) return fileContents;
 
