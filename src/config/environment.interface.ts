@@ -8,6 +8,8 @@ export interface Environment {
   doubleCheck?: boolean;
   settings?: ProjectSettings;
   assetStorage?: string;
+  /** Pseudonymize raw backups restored into this environment. */
+  pseudonymize?: boolean;
 }
 
 export interface AcaEnvironment extends Environment {

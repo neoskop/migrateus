@@ -22,6 +22,7 @@ import { DirectusUserService } from '../directus/directus-user/directus-user.ser
 import { ConfigService } from '../config/config.service.js';
 import { ProgressService } from '../progress/progress.service.js';
 import { EnvironmentService } from '../environment/environment.service.js';
+import { newSalt, pseudonymizeRows } from '../pseudonymize/pseudonymize.js';
 
 @Injectable()
 export class LogicalBackupPerformer {
@@ -81,11 +82,20 @@ export class LogicalBackupPerformer {
         .filter((c) => c && !c.startsWith('directus_'));
       const collections = [...SYSTEM_COLLECTIONS, ...userCollections];
 
+      const rules = this.config.raw
+        ? undefined
+        : this.config.getPseudonymizeRules();
+      const salt = newSalt();
+      const keepEmails = this.config.getCredentialEmails();
+
       for (const collection of collections) {
-        const items = await this.directusLogicalService.exportCollection(
+        let items = await this.directusLogicalService.exportCollection(
           client,
           collection,
         );
+        if (rules) {
+          items = pseudonymizeRows(collection, items, rules, salt, keepEmails);
+        }
         await fs.promises.writeFile(
           join(dataDir, `${collection}.json`),
           JSON.stringify(items, null, 2),
@@ -104,7 +114,7 @@ export class LogicalBackupPerformer {
       }
 
       this.progressService.advance('🏷️ Save backup metadata');
-      await this.storeMetadata(port, backupDir);
+      await this.storeMetadata(port, backupDir, rules !== undefined);
 
       this.progressService.advance('📦 Create backup archive');
       const size = await createArchive(backupDir, backupFile);
@@ -120,7 +130,11 @@ export class LogicalBackupPerformer {
     }
   }
 
-  private async storeMetadata(port: number, backupDir: string) {
+  private async storeMetadata(
+    port: number,
+    backupDir: string,
+    pseudonymized: boolean,
+  ) {
     const version = await this.directusVersionService.getVersion(port);
     await fs.promises.writeFile(
       join(backupDir, 'meta.json'),
@@ -129,6 +143,7 @@ export class LogicalBackupPerformer {
           format: 'logical',
           version,
           sourceClient: this.sqlService.client,
+          pseudonymized,
           timestamp: new Date().toISOString(),
         },
         null,

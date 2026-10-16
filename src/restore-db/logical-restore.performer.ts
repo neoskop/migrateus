@@ -28,6 +28,12 @@ import { EnvironmentService } from '../environment/environment.service.js';
 import { planImportOrder, Relation } from '../transfer/import-order.js';
 import { alignUuidForeignKeyTypes } from '../transfer/align-relation-field-types.js';
 import { fileExists } from '../util/file-exists.js';
+import {
+  PseudonymizeRules,
+  newSalt,
+  pseudonymizeRows,
+  rulesForRestore,
+} from '../pseudonymize/pseudonymize.js';
 
 /**
  * Foreign keys between system collections. The schema snapshot omits relations
@@ -136,7 +142,12 @@ export class LogicalRestorePerformer {
       await this.applySchema(client, snapshot);
 
       this.progressService.advance('📥 Import items');
-      await this.importItems(client, snapshot, backupDir);
+      await this.importItems(
+        client,
+        snapshot,
+        backupDir,
+        await this.restoreRules(backupDir),
+      );
 
       if (this.config.noAssets) {
         this.logger.debug('Skipping restore of assets');
@@ -186,6 +197,21 @@ export class LogicalRestorePerformer {
     }
   }
 
+  /** Pseudonymization rules for this restore, based on the target environment and meta.json. */
+  private async restoreRules(
+    backupDir: string,
+  ): Promise<PseudonymizeRules | undefined> {
+    const metaPath = join(backupDir, 'meta.json');
+    const meta = (await fileExists(metaPath))
+      ? JSON.parse(await fs.promises.readFile(metaPath, 'utf8'))
+      : {};
+    return rulesForRestore(
+      this.environmentService.environment,
+      this.config.getPseudonymizeRules(),
+      meta.pseudonymized === true,
+    );
+  }
+
   /** Non-interactive schema apply: snapshot → diff → apply (skips the no-change 204). */
   private async applySchema(
     client: { request: (cmd: unknown) => Promise<unknown> },
@@ -226,7 +252,10 @@ export class LogicalRestorePerformer {
       relations?: { collection: string; field: string; related_collection: string }[];
     },
     backupDir: string,
+    rules: PseudonymizeRules | undefined,
   ): Promise<void> {
+    const salt = newSalt();
+    const keepEmails = this.config.getCredentialEmails();
     // Singleton collections have no /items POST route — import via updateSingleton.
     const singletons = new Set(
       (snapshot.collections ?? [])
@@ -308,7 +337,10 @@ export class LogicalRestorePerformer {
         this.logger.debug(`No data file for ${chalk.bold(collection)} — skipping`);
         continue;
       }
-      const rows = JSON.parse(await fs.promises.readFile(file, 'utf8'));
+      let rows = JSON.parse(await fs.promises.readFile(file, 'utf8'));
+      if (rules) {
+        rows = pseudonymizeRows(collection, rows, rules, salt, keepEmails);
+      }
       const skipped = await this.directusLogicalService.importCollection(
         client,
         collection,

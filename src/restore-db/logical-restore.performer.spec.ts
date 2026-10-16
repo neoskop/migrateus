@@ -105,7 +105,15 @@ const DATA: Record<string, any[]> = {
   'articles.json': [{ id: 'art-1', author: 'a-1' }],
 };
 
-function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } = {}) {
+function build(
+  opts: {
+    noAssets?: boolean;
+    force?: boolean;
+    platform?: string;
+    pseudonymize?: boolean;
+    rules?: Record<string, Record<string, string | null>>;
+  } = {},
+) {
   const { noAssets = false, force = false, platform = 'docker-compose' } = opts;
 
   const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -161,7 +169,12 @@ function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } 
     stop: jest.fn(),
   };
 
-  const config = { noAssets, force, logical: true };
+  const config = {
+    noAssets,
+    force,
+    getPseudonymizeRules: () => opts.rules,
+    getCredentialEmails: () => new Set<string>(),
+  };
   const progressService = {
     advance: jest.fn(),
     succeed: jest.fn(),
@@ -170,7 +183,9 @@ function build(opts: { noAssets?: boolean; force?: boolean; platform?: string } 
     updateText: jest.fn(),
     warn: jest.fn(),
   };
-  const environmentService = { environment: { platform } };
+  const environmentService = {
+    environment: { platform, name: 'stage', pseudonymize: opts.pseudonymize },
+  };
 
   // Use the real resolver over mocked platform services so the docker/k8s
   // lifecycle (setup → forward → teardown → restart) is exercised end-to-end.
@@ -401,6 +416,35 @@ describe('LogicalRestorePerformer.restore (docker)', () => {
       (c) => c[1] === 'articles',
     );
     expect(articlesCall![7]).toEqual([]);
+  });
+
+  it('pseudonymizes rows before import when the target env opts in', async () => {
+    const { performer, directusLogicalService } = build({
+      pseudonymize: true,
+      rules: { authors: { id: null } },
+    });
+    await performer.restore('backup.tgz', 'docker-env');
+
+    const authorsCall = directusLogicalService.importCollection.mock.calls.find(
+      (c) => c[1] === 'authors',
+    );
+    expect(authorsCall![2]).toEqual([{ id: null }]);
+    const articlesCall = directusLogicalService.importCollection.mock.calls.find(
+      (c) => c[1] === 'articles',
+    );
+    expect(articlesCall![2]).toEqual([{ id: 'art-1', author: 'a-1' }]);
+  });
+
+  it('imports rows unchanged when the env does not opt in', async () => {
+    const { performer, directusLogicalService } = build({
+      rules: { authors: { id: null } },
+    });
+    await performer.restore('backup.tgz', 'docker-env');
+
+    const authorsCall = directusLogicalService.importCollection.mock.calls.find(
+      (c) => c[1] === 'authors',
+    );
+    expect(authorsCall![2]).toEqual([{ id: 'a-1' }]);
   });
 
   it('warns naming the collections/fields that cannot be migrated and must be reset', async () => {

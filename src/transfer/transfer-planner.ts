@@ -10,7 +10,7 @@ export class TransferPlanner {
   ): { mode: TransferMode } {
     if (source === target) return { mode: 'native' };
     throw new Error(
-      "This is a physical backup; cross-DBMS restore needs a logical backup — re-run 'backup-db -l' on the source.",
+      "This is a physical backup; cross-DBMS restore needs a logical backup — re-run 'backup-db' (logical, the default) on the source.",
     );
   }
 }
