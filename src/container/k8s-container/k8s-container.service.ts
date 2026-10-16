@@ -8,6 +8,14 @@ import { highlight } from 'cli-highlight';
 import { K8sService } from '../../k8s/k8s.service.js';
 import { throwIfFailed } from '../../util/exec.js';
 
+/**
+ * Kills a sidecar that a crashed run leaked. Must outlast the longest run: a
+ * restore of a few hundred MB (import, pseudonymization, Directus scaled down
+ * and up again, asset upload) took more than the former 10 minutes.
+ * ponytail: fixed ceiling; make it configurable if bigger databases hit it.
+ */
+const POD_DEADLINE_SECONDS = 4 * 60 * 60;
+
 @Injectable()
 export class K8sContainerService extends ContainerService {
   public migrateusPodName: string;
@@ -26,7 +34,7 @@ export class K8sContainerService extends ContainerService {
       kind: 'Pod',
       metadata: { name: this.migrateusPodName },
       spec: {
-        activeDeadlineSeconds: 600,
+        activeDeadlineSeconds: POD_DEADLINE_SECONDS,
         terminationGracePeriodSeconds: 0,
         containers: [
           {
