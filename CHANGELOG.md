@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.5] - 2026-10-16
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency pretty-bytes to v7.2.0 ([#1150](https://github.com/neoskop/migrateus/issues/1150))
+- *(deps)* Update nest monorepo to v11.2.7 ([#1151](https://github.com/neoskop/migrateus/issues/1151))
+- *(k8s)* Give the sidecar pod 4 hours before its deadline
+- *(restore)* Keep cleaning up when the temp admin cannot be removed
+
 ## [4.0.4] - 2026-10-16
 
 ### 🐛 Bug Fixes
