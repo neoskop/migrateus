@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.0] - 2026-10-16
+
+### 🚀 Features
+
+- Default backups to /tmp/migrateus and offer deletion after restore
+- [**breaking**] Pseudonymize personal data in backups and restores
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency js-yaml to v4.3.1 [security] ([#1117](https://github.com/neoskop/migrateus/issues/1117))
+- *(deps)* Update dependency js-yaml to v4.3.2 [security] ([#1118](https://github.com/neoskop/migrateus/issues/1118))
+- *(deps)* Update dependency @inquirer/expand to v5.1.6 ([#1126](https://github.com/neoskop/migrateus/issues/1126))
+- *(deps)* Update dependency @inquirer/figures to v2.0.9 ([#1127](https://github.com/neoskop/migrateus/issues/1127))
+- *(deps)* Update dependency @inquirer/select to v5.2.6 ([#1128](https://github.com/neoskop/migrateus/issues/1128))
+- *(deps)* Update dependency p-limit to v7.3.3 ([#1129](https://github.com/neoskop/migrateus/issues/1129))
+- *(deps)* Update dependency uuid to v14.0.3 ([#1130](https://github.com/neoskop/migrateus/issues/1130))
+- Import singletons without their id in logical restore
+- *(deps)* Deny @parcel/watcher build script
+
+### ⚙️ Miscellaneous Tasks
+
+- *(renovate)* Hold typescript below v7 ([#1122](https://github.com/neoskop/migrateus/issues/1122))
+- Build and test pull requests; fix .env ignored without op CLI ([#1124](https://github.com/neoskop/migrateus/issues/1124))
+
 ## [3.0.2] - 2026-08-05
 
 ### 🐛 Bug Fixes
