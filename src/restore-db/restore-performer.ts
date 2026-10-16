@@ -156,7 +156,15 @@ export abstract class RestorePerformer {
           ),
         );
       }
-      await this.sqlService.cleanUpDirectusUser();
+      // Keep cleaning up when the temp admin can't be removed, else the sidecar
+      // pod and port-forward leak too. `migrateus clean` sweeps the admin.
+      await this.sqlService
+        .cleanUpDirectusUser()
+        .catch((error: any) =>
+          this.logger.error(
+            `Failed to remove the temporary Directus admin, run \`migrateus clean\`: ${error?.message ?? error}`,
+          ),
+        );
       await this.cleanUp();
       await this.containerService.cleanUp();
       await removeWorkDir(backupDir);

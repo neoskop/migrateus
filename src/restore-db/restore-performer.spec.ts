@@ -68,7 +68,7 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
   pseudonymize?: boolean;
   rules?: Record<string, Record<string, string | null>>;
 }) {
-  const logger = { debug: jest.fn(), warn: jest.fn() };
+  const logger = { debug: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const containerService = { setup: jest.fn(async () => undefined) as AnyMock, cleanUp: jest.fn(async () => undefined) as AnyMock, execute: jest.fn(async () => ({ code: 0, stdout: '', stderr: '' })) as AnyMock, image: 'neoskop/migrateus:latest' };
   const environmentService = {
     environment: {
@@ -568,5 +568,28 @@ describe('RestorePerformer server flow: Directus is stopped during the restore',
 
     expect(progressService.fail).toHaveBeenCalled();
     expect(performer.start).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('RestorePerformer server flow: clean-up', () => {
+  it('removes the sidecar even when the temp admin cannot be removed', async () => {
+    const tmpDir = makeTempDir();
+    try {
+      fs.writeFileSync(path.join(tmpDir, 'backup.sql'), '-- sql');
+      const archivePath = path.join(tmpDir, 'backup.tar');
+      const { execSync } = await import('node:child_process');
+      execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
+      const sqlService = makeMockSqlService('mysql');
+      sqlService.cleanUpDirectusUser.mockImplementation(async () => {
+        throw new Error('cannot exec into a container in a completed pod');
+      });
+      const { performer, containerService } = buildPerformer(sqlService);
+
+      await performer.restore(archivePath);
+
+      expect(containerService.cleanUp).toHaveBeenCalledTimes(1);
+    } finally {
+      cleanTempDir(tmpDir);
+    }
   });
 });
