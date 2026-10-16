@@ -23,7 +23,7 @@ export class BackupDbService {
     const environment = this.config.getEnvironment(sourceEnvironment);
     this.environmentService.environment = environment;
 
-    if (this.config.logical) {
+    if (!this.config.physical) {
       await this.logicalBackupPerformer.backup(sourceEnvironment, backupFile);
       return;
     }

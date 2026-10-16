@@ -74,6 +74,8 @@ function buildSqliteRestorePerformer() {
 
   const configService = {
     force: true,
+    getPseudonymizeRules: () => undefined,
+    getCredentialEmails: () => new Set<string>(),
   };
 
   const copyDatabaseIn = jest.fn(async () => undefined) as AnyMock;

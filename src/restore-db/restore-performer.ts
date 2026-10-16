@@ -16,6 +16,11 @@ import { DirectusSettingService } from '../directus/directus-setting/directus-se
 import { DirectusVersionService } from '../directus/directus-version/directus-version.service.js';
 import { fileExists } from '../util/file-exists.js';
 import { ConfigService } from '../config/config.service.js';
+import {
+  newSalt,
+  pseudonymizeDatabase,
+  rulesForRestore,
+} from '../pseudonymize/pseudonymize.js';
 
 export abstract class RestorePerformer {
   constructor(
@@ -87,6 +92,7 @@ export abstract class RestorePerformer {
         manifest.client,
         `/tmp/${artifactName}`,
       );
+      await this.pseudonymize(manifest.pseudonymized);
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(
         this.containerService,
@@ -144,6 +150,9 @@ export abstract class RestorePerformer {
     try {
       this.progressService.advance('💾 Copy database file');
       await this.copyDatabaseIn(backupDir);
+      await this.pseudonymize(
+        (await this.readManifest(backupDir)).pseudonymized,
+      );
 
       this.progressService.advance('🔄 Restarting Directus');
       await this.restartDirectus();
@@ -159,17 +168,54 @@ export abstract class RestorePerformer {
 
   private async readManifest(
     backupDir: string,
-  ): Promise<{ version?: string; client: 'mysql' | 'pg' | 'sqlite3'; format: 'physical' | 'logical' }> {
+  ): Promise<{
+    version?: string;
+    client: 'mysql' | 'pg' | 'sqlite3';
+    format: 'physical' | 'logical';
+    pseudonymized: boolean;
+  }> {
     const metaFilePath = join(backupDir, 'meta.json');
     if (!(await fileExists(metaFilePath))) {
-      return { format: 'physical', client: this.sqlService.client };
+      return {
+        format: 'physical',
+        client: this.sqlService.client,
+        pseudonymized: false,
+      };
     }
     const parsed = JSON.parse(await fs.promises.readFile(metaFilePath, 'utf8'));
     return {
       version: parsed.version,
       client: parsed.client ?? this.sqlService.client,
       format: parsed.format ?? 'physical',
+      pseudonymized: parsed.pseudonymized === true,
     };
+  }
+
+  /** Overwrites configured fields in the restored database (opt-in per environment). */
+  private async pseudonymize(archivePseudonymized: boolean) {
+    const rules = rulesForRestore(
+      this.environmentService.environment,
+      this.configService.getPseudonymizeRules(),
+      archivePseudonymized,
+    );
+    if (!rules) {
+      return;
+    }
+    this.progressService.advance('🎭 Pseudonymizing personal data');
+    this.progressService.warn(
+      'Physical backups are pseudonymized after the dump is restored, so real personal data was briefly present in the target database.',
+    );
+    await pseudonymizeDatabase(
+      {
+        executeSql: (sql) =>
+          this.sqlService.executeSql(sql, this.containerService),
+        escapeIdentifier: (id) => this.sqlService.escapeIdentifier(id),
+        escapeString: (value) => this.sqlService.escapeString(value),
+      },
+      rules,
+      newSalt(),
+      this.configService.getCredentialEmails(),
+    );
   }
 
   private async compareDirectusVersions(

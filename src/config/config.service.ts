@@ -18,6 +18,10 @@ import { glob } from 'glob';
 import path from 'node:path';
 import { exec } from '../util/exec.js';
 import { fileExists } from '../util/file-exists.js';
+import {
+  PseudonymizeRules,
+  validateRules,
+} from '../pseudonymize/pseudonymize.js';
 
 @Injectable()
 export class ConfigService {
@@ -29,7 +33,8 @@ export class ConfigService {
     environments: [],
   };
   public noAssets = false;
-  public logical = false;
+  public physical = false;
+  public raw = false;
   public envConfig: dotenv.DotenvParseOutput;
   public force: boolean = false;
   public pageSize: number = 25;
@@ -75,6 +80,9 @@ export class ConfigService {
       );
       this.config = yaml.load(subsitutedConfig) as Config;
       this.redactCredentials();
+      for (const warning of validateRules(this.config.pseudonymize ?? {})) {
+        this.logger.warn(warning);
+      }
       this.logger.debug(
         `Loaded Migrateus config: ${highlight(JSON.stringify(this.config), { language: 'json' })}`,
       );
@@ -305,6 +313,20 @@ export class ConfigService {
     }
 
     return { collections, fields };
+  }
+
+  public getPseudonymizeRules(): PseudonymizeRules | undefined {
+    const rules = this.config.pseudonymize;
+    return rules && Object.keys(rules).length > 0 ? rules : undefined;
+  }
+
+  /** Emails whose users must keep their identity: credentials are matched by email. */
+  public getCredentialEmails(): Set<string> {
+    return new Set(
+      this.config.environments.flatMap((env) =>
+        (env.credentials ?? []).map((c) => c.email),
+      ),
+    );
   }
 
   public getEnvironments() {

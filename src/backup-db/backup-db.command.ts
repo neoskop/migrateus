@@ -57,10 +57,25 @@ export class BackupDbCommand extends MigrateusCommand {
 
   @Option({
     flags: '-l, --logical',
-    description: 'Logical (Directus-API) backup for cross-DBMS migration',
+    description: 'Deprecated, no-op: logical backup is the default',
   })
-  setLogical() {
-    this.config.logical = true;
+  setLogical() {}
+
+  @Option({
+    flags: '-p, --physical',
+    description:
+      'Physical (database dump) backup; contains real personal data, same-DBMS restore only',
+  })
+  setPhysical() {
+    this.config.physical = true;
+  }
+
+  @Option({
+    flags: '-r, --raw',
+    description: 'Keep real personal data; skip pseudonymization',
+  })
+  setRaw() {
+    this.config.raw = true;
   }
 
   async execute(params: string[]): Promise<void> {
@@ -81,6 +96,15 @@ export class BackupDbCommand extends MigrateusCommand {
     this.logger.debug(
       `Backup up the DB from environment ${chalk.bold(from)} to the local file ${chalk.bold(to)}`,
     );
+
+    if (
+      this.config.getPseudonymizeRules() &&
+      (this.config.physical || this.config.raw)
+    ) {
+      this.logger.warn(
+        `The backup ${chalk.bold(to)} will contain ${chalk.red('real personal data')} (${this.config.physical ? 'physical backups cannot be pseudonymized' : '--raw'}). Store it safely and delete it when done.`,
+      );
+    }
 
     try {
       await this.backupDbService.backup(from, to);

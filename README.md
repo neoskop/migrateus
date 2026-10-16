@@ -31,6 +31,11 @@ schemaDiff:
     foo:
       - bar # Ignore field `bar` of collection `foo`
     baz: true # Ignore collection `baz`
+pseudonymize:
+  directus_users:
+    email: internet.exampleEmail
+    first_name: person.firstName
+    last_name: person.lastName
 environments:
   - name: local
     platform: docker
@@ -47,6 +52,7 @@ environments:
     platform: k8s
     namespace: directus
     context: foo-dev
+    pseudonymize: true
   - name: live
     platform: k8s
     namespace: directus
@@ -55,6 +61,8 @@ environments:
 ```
 
 Under the key `schemaDiff` you can specify which fields or collections to `ignore` during schema diffs.
+
+Under the key `pseudonymize` you can specify which fields contain personal data, see [Pseudonymization](#pseudonymization).
 
 An environment under the key `environments` takes the following options:
 
@@ -66,6 +74,7 @@ An environment under the key `environments` takes the following options:
 | `doubleCheck` | `boolean`                               | Whether to ask before restores / schema diffs      |
 | `settings`    | `object`                                | Specify Directus [project settings][2]             |
 | `assetStorage`| `string`                                | Remap restored `directus_files.storage` to this storage location before uploading assets |
+| `pseudonymize`| `boolean`                               | Pseudonymize backups with real personal data when restoring to this environment |
 
 Depending on the `platform` the following options are furthermore available:
 
@@ -233,6 +242,8 @@ Where `from` is the `name` of the environment to back-up and `to` is the path to
 
 If assets should not be backed up, use the `--no-assets | -n` flag.
 
+By default, the backup is a [logical backup](#logical-vs-physical-backup), pseudonymized if [rules](#pseudonymization) are configured. Use `--physical | -p` for a database dump and `--raw | -r` to keep real personal data in a logical backup.
+
 If you don't specify either of those options, Migrateus will ask you for them resp. suggest values. The suggested path is under `/tmp/migrateus`, so backups are eventually cleaned up by the OS.
 
 ### Restore DB
@@ -255,21 +266,15 @@ After a successful restore, Migrateus asks whether to delete the backup file.
 
 Migrateus supports two backup formats, selected at backup time. `restore-db` auto-detects the format from the backup's metadata.
 
-#### Physical backup (default)
-
-`backup-db` without any extra flags produces a **physical** backup: a DB-native dump (`mysqldump`/`pg_dump`) or, for SQLite, a direct file copy. This is the fastest option and is suitable for **same-DBMS** restores.
-
-Attempting a cross-DBMS restore from a physical backup (e.g. restoring a `pg_dump` into MySQL) will fail with an error that tells you to use a logical backup instead.
-
-#### Logical backup (`-l` / `--logical`)
+#### Logical backup (default)
 
 ```bash
-migrateus backup-db -l <from> <to>
+migrateus backup-db <from> <to>
 ```
 
-`backup-db -l` produces a **logical** backup via the Directus API: a schema snapshot plus per-collection item exports plus assets. The resulting archive gets a `-logical` suffix by default (e.g. `migrateus-prod-2026-06-19-logical.tgz`).
+`backup-db` produces a **logical** backup via the Directus API: a schema snapshot plus per-collection item exports plus assets.
 
-Logical backups are **engine-agnostic** and are required for **cross-DBMS** migrations (e.g. SQLite → PostgreSQL). They carry: the schema snapshot, all user-collection data, core system collections (`directus_users`, `directus_roles`, `directus_policies`, `directus_permissions`, `directus_access`, `directus_settings`), and all file assets.
+Logical backups are **engine-agnostic** and are required for **cross-DBMS** migrations (e.g. SQLite → PostgreSQL). They carry: the schema snapshot, all user-collection data, core system collections (`directus_users`, `directus_roles`, `directus_policies`, `directus_permissions`, `directus_access`, `directus_settings`), and all file assets. Personal data is [pseudonymized](#pseudonymization) during the backup, so the archive never contains it.
 
 > [!WARNING]
 > **Limitations of logical backup/restore (v1):**
@@ -279,6 +284,56 @@ Logical backups are **engine-agnostic** and are required for **cross-DBMS** migr
 > - **Scope is limited to v1 collections.** Flows, operations, dashboards, panels, presets, translations, and webhooks are not yet carried by the logical backup.
 
 `restore-db` emits a warning at the start of every logical restore to remind you of these constraints.
+
+The `-l` / `--logical` flag is still accepted, but it has no effect.
+
+#### Physical backup (`-p` / `--physical`)
+
+```bash
+migrateus backup-db -p <from> <to>
+```
+
+`backup-db -p` produces a **physical** backup: a DB-native dump (`mysqldump`/`pg_dump`) or, for SQLite, a direct file copy. The resulting archive gets a `-physical` suffix by default. Use it for a full clone of an instance (e.g. disaster recovery): it is faster, keeps user passwords, flows and all other system data, and restores into a non-empty Directus.
+
+Physical backups are suitable for **same-DBMS** restores only. Attempting a cross-DBMS restore from a physical backup (e.g. restoring a `pg_dump` into MySQL) fails with an error that tells you to use a logical backup instead.
+
+> [!WARNING]
+> Physical backups always contain **real personal data**. They cannot be pseudonymized at backup time.
+
+### Pseudonymization
+
+To keep personal data out of backups and non-production environments, list the fields that contain personal data under the top-level `pseudonymize` key:
+
+```yml
+pseudonymize:
+  directus_users:
+    email: internet.exampleEmail
+    first_name: person.firstName
+    last_name: person.lastName
+  customers:
+    _pk: customer_id # primary key column, default `id` (used for physical backups)
+    name: person.fullName
+    phone: phone.number
+    iban: null # clear the field
+environments:
+  - name: stage
+    platform: k8s
+    pseudonymize: true
+```
+
+Each field maps to a [Faker][5] method path (`module.method`), or to `null` to clear the field. Unknown paths stop Migrateus when it loads the config.
+
+- **Logical backups** are pseudonymized while they are created. Use `--raw` to keep real data.
+- **Restores** pseudonymize backups with real data (physical or `--raw` backups) when the target environment sets `pseudonymize: true`. For logical backups, rows are replaced before the import. For physical backups, rows are replaced with SQL after the dump is restored, and `directus_revisions`, `directus_activity` and `directus_sessions` are emptied because they hold copies of the original data.
+
+Within one run, equal values become equal pseudonyms, also across collections. Different runs give different pseudonyms. Physical restores read only primary keys, so equal values in different rows get different pseudonyms there.
+
+Users whose email is listed in the `credentials` of any environment keep their real data, so Migrateus can still set their password after a restore.
+
+> [!WARNING]
+> Use `internet.exampleEmail` for email fields. `internet.email` generates real-looking domains, so a restored system could send emails to real people. Migrateus warns about it.
+
+Assets (uploaded files) are not pseudonymized. Use `--no-assets` if they contain personal data.
 
 ### Clean
 
@@ -347,3 +402,4 @@ See [License](LICENSE).
 [2]: https://docs.directus.io/reference/system/settings.html#the-settings-object
 [3]: https://learn.microsoft.com/cli/azure/install-azure-cli
 [4]: https://pgloader.io
+[5]: https://fakerjs.dev/api/

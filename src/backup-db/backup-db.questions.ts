@@ -46,7 +46,7 @@ export class BackupDbQuestions {
   @DefaultFor({ name: 'to' })
   defaultTo(answers: BackupDbAnswers) {
     const date = new Date().toISOString().substring(0, 10).replaceAll('-', '');
-    const suffix = this.config.logical ? '-logical' : '';
+    const suffix = this.config.physical ? '-physical' : '';
     return `${BACKUP_DIR}/migrateus-${answers.from}-${date}${suffix}.tgz`;
   }
 }

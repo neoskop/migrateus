@@ -11,14 +11,14 @@ describe('BackupDbService', () => {
 describe('BackupDbService.backup dispatch', () => {
   type AnyMock = jest.Mock<any>;
 
-  function build(platform: string, logical = false) {
+  function build(platform: string, physical = true) {
     const dockerBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
     const k8sBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
     const acaBackupService = { backup: jest.fn(async () => undefined) as AnyMock };
     const logicalBackupPerformer = { backup: jest.fn(async () => undefined) as AnyMock };
 
     const environment = { platform };
-    const config = { getEnvironment: jest.fn(() => environment) as AnyMock, logical };
+    const config = { getEnvironment: jest.fn(() => environment) as AnyMock, physical };
     const environmentService = { environment: undefined as unknown };
 
     const service = new BackupDbService(
@@ -69,14 +69,14 @@ describe('BackupDbService.backup dispatch', () => {
     expect(acaBackupService.backup).toHaveBeenCalledWith('my-backup.tgz');
   });
 
-  it('routes to LogicalBackupPerformer when config.logical is set, bypassing platform performers', async () => {
+  it('routes to LogicalBackupPerformer by default (no --physical), bypassing platform performers', async () => {
     const {
       service,
       logicalBackupPerformer,
       dockerBackupService,
       k8sBackupService,
       acaBackupService,
-    } = build('docker-compose', true);
+    } = build('docker-compose', false);
     await service.backup('dev', 'logical.tgz');
     expect(logicalBackupPerformer.backup).toHaveBeenCalledTimes(1);
     expect(logicalBackupPerformer.backup).toHaveBeenCalledWith('dev', 'logical.tgz');

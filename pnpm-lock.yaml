@@ -11,6 +11,9 @@ importers:
       '@directus/sdk':
         specifier: 22.0.0
         version: 22.0.0
+      '@faker-js/faker':
+        specifier: 10.6.0
+        version: 10.6.0
       '@inquirer/confirm':
         specifier: 6.1.1
         version: 6.1.1(@types/node@24.19.2)
@@ -481,6 +484,10 @@ packages:
   '@eslint/plugin-kit@0.7.3':
     resolution: {integrity: sha512-IkO+/KEUvwbVpiURZg+P7zF74z5Jxe0UgJxVni+RtoHQ6IZieXaO02kmadomap/q+l6bc/jdPGGqTjhuZnuz1Q==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
+
+  '@faker-js/faker@10.6.0':
+    resolution: {integrity: sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@fig/complete-commander@3.2.0':
     resolution: {integrity: sha512-1Holl3XtRiANVKURZwgpjCnPuV4RsHp+XC0MhgvyAX/avQwj7F2HUItYOvGi/bXjJCkEzgBZmVfCr0HBA+q+Bw==}
@@ -4107,6 +4114,8 @@ snapshots:
     dependencies:
       '@eslint/core': 1.2.1
       levn: 0.4.1
+
+  '@faker-js/faker@10.6.0': {}
 
   '@fig/complete-commander@3.2.0(commander@11.1.0)':
     dependencies:

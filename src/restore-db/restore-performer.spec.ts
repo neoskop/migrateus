@@ -32,6 +32,9 @@ interface MockSqlService {
   cleanUpDirectusUser: AnyMock;
   setCredentials: AnyMock;
   setAssetStorage: AnyMock;
+  executeSql: AnyMock;
+  escapeIdentifier: (id: string) => string;
+  escapeString: (v: string) => string;
 }
 
 const CLIENT_IMAGE_MAP: Record<'mysql' | 'pg' | 'sqlite3', string> = {
@@ -52,6 +55,9 @@ function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql', client
     cleanUpDirectusUser: jest.fn(async () => undefined),
     setCredentials: jest.fn(async () => undefined),
     setAssetStorage: jest.fn(async () => undefined),
+    executeSql: jest.fn(async () => ''),
+    escapeIdentifier: (id: string) => `"${id}"`,
+    escapeString: (v: string) => `'${v}'`,
   };
 }
 
@@ -59,6 +65,8 @@ function makeMockSqlService(client: 'mysql' | 'pg' | 'sqlite3' = 'mysql', client
 function buildPerformer(sqlService: MockSqlService, opts?: {
   force?: boolean;
   directusPort?: number;
+  pseudonymize?: boolean;
+  rules?: Record<string, Record<string, string | null>>;
 }) {
   const logger = { debug: jest.fn(), warn: jest.fn() };
   const containerService = { setup: jest.fn(async () => undefined) as AnyMock, cleanUp: jest.fn(async () => undefined) as AnyMock, execute: jest.fn(async () => ({ code: 0, stdout: '', stderr: '' })) as AnyMock, image: 'neoskop/migrateus:latest' };
@@ -67,6 +75,8 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
       credentials: [],
       assetStorage: undefined as string | undefined,
       settings: undefined as any,
+      name: 'stage',
+      pseudonymize: opts?.pseudonymize,
     },
   };
   const progressService = {
@@ -88,6 +98,8 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
   };
   const configService = {
     force: opts?.force ?? true, // default force=true to skip version comparison
+    getPseudonymizeRules: () => opts?.rules,
+    getCredentialEmails: () => new Set<string>(),
   };
 
   class TestPerformer extends RestorePerformer {
@@ -145,13 +157,13 @@ describe('RestorePerformer.readManifest', () => {
   it('returns target engine client when meta.json is absent (mysql target)', async () => {
     const { performer } = buildPerformer(makeMockSqlService('mysql'));
     const manifest = await performer.readManifestPublic(tmpDir);
-    expect(manifest).toEqual({ client: 'mysql', format: 'physical' });
+    expect(manifest).toEqual({ client: 'mysql', format: 'physical', pseudonymized: false });
   });
 
   it('returns target engine client when meta.json is absent (pg target)', async () => {
     const { performer } = buildPerformer(makeMockSqlService('pg'));
     const manifest = await performer.readManifestPublic(tmpDir);
-    expect(manifest).toEqual({ client: 'pg', format: 'physical' });
+    expect(manifest).toEqual({ client: 'pg', format: 'physical', pseudonymized: false });
   });
 
   it('returns parsed client from meta.json', async () => {
@@ -436,5 +448,71 @@ describe('RestorePerformer server flow: artifact path is manifest-aware', () => 
     } finally {
       cleanTempDir(srcDir);
     }
+  });
+});
+
+describe('RestorePerformer server flow: pseudonymization', () => {
+  let tmpDir: string;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanTempDir(tmpDir); });
+
+  async function archive(meta?: object): Promise<string> {
+    fs.writeFileSync(path.join(tmpDir, 'backup.sql'), '-- sql');
+    const members = ['backup.sql'];
+    if (meta) {
+      fs.writeFileSync(path.join(tmpDir, 'meta.json'), JSON.stringify(meta));
+      members.push('meta.json');
+    }
+    const archivePath = path.join(tmpDir, 'backup.tar');
+    const { execSync } = await import('node:child_process');
+    execSync(`tar -cf ${archivePath} -C ${tmpDir} ${members.join(' ')}`);
+    return archivePath;
+  }
+
+  const rules = { customers: { name: 'person.fullName' } };
+
+  it('pseudonymizes after the dump restore and before credentials when the env opts in', async () => {
+    const sqlService = makeMockSqlService('pg');
+    sqlService.executeSql.mockImplementation(async (sql: any) =>
+      sql.startsWith('SELECT') ? '1\n' : '',
+    );
+    const { performer } = buildPerformer(sqlService, { pseudonymize: true, rules });
+
+    await performer.restore(await archive());
+
+    const statements = sqlService.executeSql.mock.calls.map((c) => c[0] as string);
+    expect(statements[0]).toBe('SELECT "id" FROM "customers"');
+    expect(statements[1]).toMatch(/^UPDATE "customers" SET "name" = /);
+    expect(statements).toContain('DELETE FROM "directus_revisions"');
+    expect(sqlService.executeSql.mock.invocationCallOrder[0]).toBeGreaterThan(
+      sqlService.transferRestore.mock.invocationCallOrder[0],
+    );
+    expect(sqlService.executeSql.mock.invocationCallOrder[0]).toBeLessThan(
+      sqlService.setCredentials.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('skips archives already pseudonymized at backup time', async () => {
+    const sqlService = makeMockSqlService('pg');
+    const { performer } = buildPerformer(sqlService, { pseudonymize: true, rules });
+    await performer.restore(await archive({ client: 'pg', pseudonymized: true }));
+    expect(sqlService.executeSql).not.toHaveBeenCalled();
+  });
+
+  it('skips environments that do not opt in', async () => {
+    const sqlService = makeMockSqlService('pg');
+    const { performer } = buildPerformer(sqlService, { rules });
+    await performer.restore(await archive());
+    expect(sqlService.executeSql).not.toHaveBeenCalled();
+  });
+
+  it('fails the restore when the env opts in but no rules exist', async () => {
+    const sqlService = makeMockSqlService('pg');
+    const { performer, progressService } = buildPerformer(sqlService, { pseudonymize: true });
+    await performer.restore(await archive());
+    expect(progressService.fail).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringMatching(/no 'pseudonymize' rules/) }),
+    );
   });
 });

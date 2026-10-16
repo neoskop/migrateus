@@ -41,7 +41,14 @@ const SYSTEM_COLLECTIONS = [
   'directus_settings',
 ];
 
-function build(opts: { noAssets?: boolean; platform?: string } = {}) {
+function build(
+  opts: {
+    noAssets?: boolean;
+    platform?: string;
+    rules?: Record<string, Record<string, string | null>>;
+    raw?: boolean;
+  } = {},
+) {
   const { noAssets = false, platform = 'docker-compose' } = opts;
 
   const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
@@ -107,7 +114,12 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
   };
   const platformResolver = { resolve: jest.fn(() => fakePlatform) as AnyMock };
 
-  const config = { noAssets, logical: true };
+  const config = {
+    noAssets,
+    raw: opts.raw ?? false,
+    getPseudonymizeRules: () => opts.rules,
+    getCredentialEmails: () => new Set<string>(),
+  };
   const progressService = {
     advance: jest.fn(),
     succeed: jest.fn(),
@@ -148,6 +160,14 @@ function build(opts: { noAssets?: boolean; platform?: string } = {}) {
     progressService,
     config,
   };
+}
+
+function dataWrite(collection: string) {
+  return mockWriteFile.mock.calls.find(
+    (c) =>
+      typeof c[0] === 'string' &&
+      (c[0] as string).endsWith(`data/${collection}.json`),
+  );
 }
 
 function metaWrite() {
@@ -240,6 +260,30 @@ describe('LogicalBackupPerformer.backup (docker)', () => {
     expect(meta).toHaveProperty('version', '11.0.0');
     expect(meta).toHaveProperty('sourceClient', 'pg');
     expect(meta).toHaveProperty('timestamp');
+  });
+
+  it('pseudonymizes exported rows when rules are configured', async () => {
+    const { performer } = build({ rules: { articles: { id: null } } });
+    await performer.backup('docker-env', 'out.tgz');
+
+    const articles = dataWrite('articles');
+    expect(JSON.parse(articles![1] as string)).toEqual([{ id: null }]);
+    expect(JSON.parse(metaWrite()![1] as string)).toHaveProperty(
+      'pseudonymized',
+      true,
+    );
+  });
+
+  it('keeps real data with --raw and marks the archive as not pseudonymized', async () => {
+    const { performer } = build({ rules: { articles: { id: null } }, raw: true });
+    await performer.backup('docker-env', 'out.tgz');
+
+    const articles = dataWrite('articles');
+    expect(JSON.parse(articles![1] as string)).toEqual([{ id: 'articles-1' }]);
+    expect(JSON.parse(metaWrite()![1] as string)).toHaveProperty(
+      'pseudonymized',
+      false,
+    );
   });
 
   it('backs up assets when --no-assets is not set', async () => {
