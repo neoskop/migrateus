@@ -962,4 +962,16 @@ describe('DirectusLogicalService.importCollection — directus_settings (singlet
     const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
     expect(descriptor(actualCmd)).toEqual(descriptor(updateSettings(rows[0])));
   });
+
+  it('drops the id so defaults exported with id: null can be imported', async () => {
+    const client = { request: jest.fn(async () => ({})) };
+    const rows = [{ id: null, project_name: 'Test' }];
+
+    await service.importCollection(client as never, 'directus_settings', rows, []);
+
+    const [actualCmd] = (client.request as jest.MockedFunction<typeof client.request>).mock.calls[0];
+    expect(descriptor(actualCmd)).toEqual(
+      descriptor(updateSettings({ project_name: 'Test' })),
+    );
+  });
 });

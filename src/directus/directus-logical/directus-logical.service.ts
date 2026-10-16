@@ -166,15 +166,19 @@ export class DirectusLogicalService {
       return copy;
     });
 
+    // A singleton's key is managed by Directus. A source that never saved the
+    // singleton exports the defaults with `id: null`, which the update rejects.
+    const { id: _id, ...singletonRow } = pass1Rows[0];
+
     if (collection === 'directus_settings') {
       // Settings is a singleton — always update
-      await client.request(updateSettings(pass1Rows[0]));
+      await client.request(updateSettings(singletonRow));
       return [];
     }
 
     if (isSingleton) {
       // User singleton collections have no /items POST route; upsert the row.
-      await client.request(updateSingleton(collection as never, pass1Rows[0]));
+      await client.request(updateSingleton(collection as never, singletonRow));
       return [];
     }
 
