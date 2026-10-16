@@ -87,8 +87,8 @@ importers:
         specifier: 1.0.38
         version: 1.0.38(supports-color@5.5.0)
       pretty-bytes:
-        specifier: 7.1.0
-        version: 7.1.0
+        specifier: 7.2.0
+        version: 7.2.0
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -3198,8 +3198,8 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
 
-  pretty-bytes@7.1.0:
-    resolution: {integrity: sha512-nODzvTiYVRGRqAOvE84Vk5JDPyyxsVk0/fbA/bq7RqlnhksGpset09XTxbpvLTIjoaF7K8Z8DG8yHtKGTPSYRw==}
+  pretty-bytes@7.2.0:
+    resolution: {integrity: sha512-T2kroepGB5DRVbkN/nOpW03+VRWqdtJhZNuCW3wYk3chdPjgi4GcTBOaxWfHq1MIM0ypidxsSWbQaAiRpxnXmg==}
     engines: {node: '>=20'}
 
   pretty-format@30.4.1:
@@ -7267,7 +7267,7 @@ snapshots:
 
   prettier@3.9.10: {}
 
-  pretty-bytes@7.1.0: {}
+  pretty-bytes@7.2.0: {}
 
   pretty-format@30.4.1:
     dependencies:
