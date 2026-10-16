@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.1] - 2026-10-16
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/confirm to v6.3.3 ([#1143](https://github.com/neoskop/migrateus/issues/1143))
+- Query npmjs for updates and never fail on the update check
+
 ## [4.0.0] - 2026-10-16
 
 ### 🚀 Features
