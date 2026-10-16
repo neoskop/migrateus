@@ -187,6 +187,9 @@ export class MysqlDriver implements DbDriver {
       `-P${port}`,
       `-u${user}`,
       `-p${password}`,
+      // Same as dump/restore: the client defaults to latin1 otherwise and
+      // stores UTF-8 literals (e.g. pseudonyms like "Dück") double-encoded.
+      '--default-character-set=utf8mb4',
       name,
       '-e',
       `\\"${sql.replaceAll(/[$`]/g, '\\\\\\$&')}\\"`,

@@ -73,6 +73,14 @@ describe('MysqlDriver.listTables', () => {
   });
 });
 
+describe('MysqlDriver.executeSql', () => {
+  it('talks utf8mb4 so non-ASCII literals are not double-encoded', async () => {
+    const { driver, exec, calls } = driverWith();
+    await driver.executeSql(exec as unknown as Exec, "UPDATE t SET n = 'Dück'");
+    expect(calls()[0]).toContain('--default-character-set=utf8mb4');
+  });
+});
+
 describe('MysqlDriver.restore', () => {
   it('throws when mysql exits non-zero', async () => {
     const { driver, exec } = driverWith(() => ({ code: 2, stdout: '', stderr: 'corrupt' }));
