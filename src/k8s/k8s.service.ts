@@ -137,6 +137,39 @@ export class K8sService {
     await this.kubectl('rollout restart deploy directus', { silent: true });
   }
 
+  /** Scales Directus to 0, waits for its pods to go and returns the previous replica count. */
+  public async scaleDownDirectus(): Promise<number> {
+    const replicas = Number(
+      (
+        await this.kubectl('get deploy directus -o jsonpath={.spec.replicas}', {
+          silent: true,
+        })
+      ).stdout.trim(),
+    );
+    await this.kubectl('scale deploy directus --replicas=0', { silent: true });
+    try {
+      await this.kubectl(
+        'wait --for=delete pod -l app.kubernetes.io/name=directus --timeout=300s',
+        { silent: true },
+      );
+    } catch (error: any) {
+      // kubectl wait fails when the pods are already gone.
+      if (!String(error?.message ?? error).includes('no matching resources')) {
+        throw error;
+      }
+    }
+    return replicas;
+  }
+
+  public async scaleUpDirectus(replicas: number) {
+    await this.kubectl(`scale deploy directus --replicas=${replicas}`, {
+      silent: true,
+    });
+    await this.kubectl('rollout status deploy directus --timeout=600s', {
+      silent: true,
+    });
+  }
+
   public async kubectl(command: string, options: ExecOptions = {}) {
     const environment = this.environmentService.environment as K8sEnvironment;
     let fullCommand = `kubectl ${command}`;

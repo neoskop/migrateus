@@ -59,13 +59,14 @@ export abstract class RestorePerformer {
   }
 
   private async restoreServerFlow(backupDir: string, backupFile: string) {
+    let isDirectusStopped = false;
     try {
       // NOTE: cross-engine (pgloader) restore needs an image bundling psql+pgloader; the per-driver clientImage selects the native CLI image. A bundled tools image must be supplied via --image for the pgloader path (UNVERIFIED).
       this.containerService.image = this.sqlService.clientImage;
       this.progressService.advance('🚀 Set-up Migrateus container');
       await this.containerService.setup();
       await this.beforeMysqlDumpRestore();
-      const directusPort = await this.getDirectusPort();
+      let directusPort = await this.getDirectusPort();
 
       const manifest = await this.readManifest(backupDir);
 
@@ -78,6 +79,13 @@ export abstract class RestorePerformer {
         this.progressService.advance('🔎 Compare Directus versions');
         await this.compareDirectusVersions(directusPort, manifest.version);
       }
+
+      // A running Directus writes to the tables being replaced (deadlocks on
+      // Galera clusters) and replays migrations against a half-restored
+      // schema when its pod restarts, so it stays down until the data is in.
+      this.progressService.advance('⏸️ Stopping Directus');
+      isDirectusStopped = true;
+      await this.stopDirectus();
 
       this.progressService.advance('🧨 Dropping existing tables');
       await this.sqlService.dropAllTables(this.containerService);
@@ -93,6 +101,9 @@ export abstract class RestorePerformer {
         `/tmp/${artifactName}`,
       );
       await this.pseudonymize(manifest.pseudonymized);
+      this.progressService.advance('▶️ Starting Directus');
+      directusPort = await this.startDirectus(directusPort);
+      isDirectusStopped = false;
       this.progressService.advance('👤 Set-up Directus user');
       await this.sqlService.setupDirectusUser(
         this.containerService,
@@ -138,6 +149,13 @@ export abstract class RestorePerformer {
       this.progressService.fail(error);
     } finally {
       this.progressService.advance('🛁 Clean-up');
+      if (isDirectusStopped) {
+        await this.startDirectus(0).catch((error: any) =>
+          this.logger.error(
+            `Failed to start Directus again: ${error?.message ?? error}`,
+          ),
+        );
+      }
       await this.sqlService.cleanUpDirectusUser();
       await this.cleanUp();
       await this.containerService.cleanUp();
@@ -166,9 +184,7 @@ export abstract class RestorePerformer {
     }
   }
 
-  private async readManifest(
-    backupDir: string,
-  ): Promise<{
+  private async readManifest(backupDir: string): Promise<{
     version?: string;
     client: 'mysql' | 'pg' | 'sqlite3';
     format: 'physical' | 'logical';
@@ -251,6 +267,16 @@ export abstract class RestorePerformer {
 
   protected abstract restartDirectus(): Promise<void>;
 
+  /** Stops Directus while the dump is restored. Only k8s implements it so far. */
+  protected stopDirectus(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  /** Starts Directus after stopDirectus and returns the (possibly new) Directus port. */
+  protected startDirectus(directusPort: number): Promise<number> {
+    return Promise.resolve(directusPort);
+  }
+
   protected cleanUp(): Promise<void> {
     return Promise.resolve();
   }
@@ -259,5 +285,4 @@ export abstract class RestorePerformer {
   protected copyDatabaseIn(_backupDir: string): Promise<void> {
     throw new Error('copyDatabaseIn is not implemented for this platform');
   }
-
 }

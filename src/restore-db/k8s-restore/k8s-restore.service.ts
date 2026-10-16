@@ -16,6 +16,7 @@ import { ConfigService } from '../../config/config.service.js';
 @Injectable()
 export class K8sRestoreService extends RestorePerformer {
   private backupDir: string;
+  private directusReplicas: number;
 
   constructor(
     @Inject(LOGGER_MODULE_PROVIDER) protected readonly logger: LoggerService,
@@ -62,6 +63,17 @@ export class K8sRestoreService extends RestorePerformer {
   protected async cleanUp(): Promise<void> {
     this.portForwardService.stop();
     await this.k8sService.cleanUp();
+  }
+
+  protected async stopDirectus(): Promise<void> {
+    // The forwarded pod goes away; stop the forward instead of letting it respawn.
+    this.portForwardService.stop();
+    this.directusReplicas = await this.k8sService.scaleDownDirectus();
+  }
+
+  protected async startDirectus(): Promise<number> {
+    await this.k8sService.scaleUpDirectus(this.directusReplicas ?? 1);
+    return this.portForwardService.forward();
   }
 
   protected async restartDirectus(): Promise<void> {

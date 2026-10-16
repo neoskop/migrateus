@@ -199,4 +199,38 @@ describe('K8sService', () => {
       expect(result.filename).toBeUndefined();
     });
   });
+
+  describe('scaleDownDirectus() / scaleUpDirectus()', () => {
+    beforeEach(() => {
+      mockExecFn.mockReset();
+    });
+
+    it('scales to 0, tolerates already-gone pods and restores the replica count', async () => {
+      const { service } = makeService();
+      mockExecFn.mockImplementation(async (cmd: string) =>
+        cmd.includes('wait --for=delete')
+          ? { code: 1, stdout: '', stderr: 'error: no matching resources found' }
+          : { code: 0, stdout: cmd.includes('jsonpath') ? '2' : '', stderr: '' },
+      );
+
+      expect(await service.scaleDownDirectus()).toBe(2);
+      await service.scaleUpDirectus(2);
+
+      const commands = mockExecFn.mock.calls.map((c) => c[0]);
+      expect(commands[1]).toContain('scale deploy directus --replicas=0');
+      expect(commands[3]).toContain('scale deploy directus --replicas=2');
+      expect(commands[4]).toContain('rollout status deploy directus');
+    });
+
+    it('fails when the pods do not go away', async () => {
+      const { service } = makeService();
+      mockExecFn.mockImplementation(async (cmd: string) =>
+        cmd.includes('wait --for=delete')
+          ? { code: 1, stdout: '', stderr: 'error: timed out waiting for the condition' }
+          : { code: 0, stdout: '1', stderr: '' },
+      );
+
+      await expect(service.scaleDownDirectus()).rejects.toThrow(/timed out/);
+    });
+  });
 });

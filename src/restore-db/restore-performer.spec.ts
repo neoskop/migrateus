@@ -115,6 +115,17 @@ function buildPerformer(sqlService: MockSqlService, opts?: {
 
     protected async restartDirectus(): Promise<void> {}
 
+    public stop = jest.fn(async () => undefined) as AnyMock;
+    public start = jest.fn(async (_port: number) => 9000) as AnyMock;
+
+    protected stopDirectus(): Promise<void> {
+      return this.stop();
+    }
+
+    protected startDirectus(port: number): Promise<number> {
+      return this.start(port);
+    }
+
     // expose private readManifest for white-box testing
     public readManifestPublic(dir: string) {
       return (this as any).readManifest(dir);
@@ -514,5 +525,48 @@ describe('RestorePerformer server flow: pseudonymization', () => {
     expect(progressService.fail).toHaveBeenCalledWith(
       expect.objectContaining({ message: expect.stringMatching(/no 'pseudonymize' rules/) }),
     );
+  });
+});
+
+describe('RestorePerformer server flow: Directus is stopped during the restore', () => {
+  let tmpDir: string;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanTempDir(tmpDir); });
+
+  async function archive(): Promise<string> {
+    fs.writeFileSync(path.join(tmpDir, 'backup.sql'), '-- sql');
+    const archivePath = path.join(tmpDir, 'backup.tar');
+    const { execSync } = await import('node:child_process');
+    execSync(`tar -cf ${archivePath} -C ${tmpDir} backup.sql`);
+    return archivePath;
+  }
+
+  it('stops Directus before dropping tables and starts it before using its API again', async () => {
+    const sqlService = makeMockSqlService('mysql');
+    const { performer, directusAssetService } = buildPerformer(sqlService);
+
+    await performer.restore(await archive());
+
+    const order = (mock: AnyMock) => mock.mock.invocationCallOrder[0];
+    expect(order(performer.stop)).toBeLessThan(order(sqlService.dropAllTables));
+    expect(order(performer.start)).toBeGreaterThan(order(sqlService.transferRestore));
+    expect(order(performer.start)).toBeLessThan(order(sqlService.setupDirectusUser));
+    expect(performer.start).toHaveBeenCalledWith(8055);
+    expect(sqlService.setupDirectusUser).toHaveBeenCalledWith(expect.anything(), 9000);
+    expect(directusAssetService.restoreAssets.mock.calls[0][0]).toBe(9000);
+  });
+
+  it('starts Directus again when the restore fails while it is stopped', async () => {
+    const sqlService = makeMockSqlService('mysql');
+    sqlService.transferRestore.mockImplementation(async () => {
+      throw new Error('deadlock');
+    });
+    const { performer, progressService } = buildPerformer(sqlService);
+
+    await performer.restore(await archive());
+
+    expect(progressService.fail).toHaveBeenCalled();
+    expect(performer.start).toHaveBeenCalledTimes(1);
   });
 });

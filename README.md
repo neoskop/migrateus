@@ -256,6 +256,8 @@ $ migrateus restore-db [options] <from> <to>
 
 Where `from` is the path to the backup tgz file to restore and `to` is the `name` of the environment to restore to.
 
+On `k8s`, Migrateus scales the `directus` deployment to 0 while it restores a physical dump and scales it back afterwards, so Directus neither writes to nor migrates a half-restored database.
+
 If you restore a backup created on an instance with a different Directus storage location (for example `s3`) to an environment that only has `local`, set `assetStorage: local` on the target environment. Migrateus will remap `directus_files.storage` before re-uploading the assets.
 
 If you don't specify either of those options, Migrateus will ask you for them. Backups in the current directory and in `/tmp/migrateus` are offered.
