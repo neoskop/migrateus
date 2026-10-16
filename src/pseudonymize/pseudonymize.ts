@@ -16,7 +16,12 @@ export interface PseudonymizeSqlTarget {
 }
 
 const PK_KEY = '_pk';
-const UPDATE_CHUNK_SIZE = 500;
+/**
+ * Max length of the CASE clauses in one UPDATE. Statements travel as one
+ * `bash -c` argument (e.g. via `kubectl exec`), and Linux caps a single
+ * argument at 128 KiB (MAX_ARG_STRLEN), else spawn fails with E2BIG.
+ */
+const MAX_UPDATE_LENGTH = 64 * 1024;
 
 /** Directus system tables that keep copies of item data or user sessions. */
 const PII_COPY_TABLES = [
@@ -137,9 +142,10 @@ function toSqlLiteral(value: unknown, target: PseudonymizeSqlTarget): string {
  * values may contain newlines, which break the line-based SQL output), so the
  * seed is per row rather than per original value.
  * Each chunk is ONE `UPDATE … SET f = CASE pk WHEN … END` statement, because
- * the SQLite driver executes only the first statement of a batch.
- * ponytail: chunks travel as exec arguments; switch to copying a .sql file
- * into the container if ACA exec rejects the argument length.
+ * the SQLite driver executes only the first statement of a batch. Chunks are
+ * cut by length, see MAX_UPDATE_LENGTH.
+ * ponytail: many small execs are slow on big tables; copy a .sql file into
+ * the container if that ever hurts.
  */
 export async function pseudonymizeDatabase(
   target: PseudonymizeSqlTarget,
@@ -170,24 +176,47 @@ export async function pseudonymizeDatabase(
       .map((line) => line.trim())
       .filter(Boolean);
 
-    for (let i = 0; i < pks.length; i += UPDATE_CHUNK_SIZE) {
-      const chunk = pks.slice(i, i + UPDATE_CHUNK_SIZE);
-      const keys = chunk.map((key) => target.escapeString(key));
-      const assignments = fields.map(([field, path]) => {
+    // null rules need no CASE: clearing a NULL keeps it NULL anyway.
+    const cleared = fields
+      .filter(([, path]) => path === null)
+      .map(([field]) => `${target.escapeIdentifier(field)} = NULL`);
+    const faked = fields.filter(([, path]) => path !== null);
+
+    const update = (keys: string[], cases: string[][]) => {
+      const assignments = faked.map(([field], i) => {
         const f = target.escapeIdentifier(field);
-        const cases = chunk
-          .map(
-            (key, j) =>
-              `WHEN ${keys[j]} THEN ${toSqlLiteral(fakeValue(path, `${salt}:${table}:${key}:${field}`), target)}`,
-          )
-          .join(' ');
         // Keep NULLs NULL. No `= ''` check: it errors on non-text columns in Postgres.
-        return `${f} = CASE WHEN ${f} IS NULL THEN NULL ELSE CASE ${p} ${cases} END END`;
+        return `${f} = CASE WHEN ${f} IS NULL THEN NULL ELSE CASE ${p} ${cases[i].join(' ')} END END`;
       });
-      await target.executeSql(
-        `UPDATE ${t} SET ${assignments.join(', ')} WHERE ${p} IN (${keys.join(', ')})`,
+      return target.executeSql(
+        `UPDATE ${t} SET ${[...assignments, ...cleared].join(', ')} WHERE ${p} IN (${keys.join(', ')})`,
       );
+    };
+
+    let keys: string[] = [];
+    let cases: string[][] = faked.map(() => []);
+    let length = 0;
+    for (const pkValue of pks) {
+      const key = target.escapeString(pkValue);
+      const whens = faked.map(
+        ([field, path]) =>
+          `WHEN ${key} THEN ${toSqlLiteral(fakeValue(path, `${salt}:${table}:${pkValue}:${field}`), target)}`,
+      );
+      const rowLength = whens.reduce(
+        (sum, when) => sum + when.length + 1,
+        key.length + 2,
+      );
+      if (keys.length > 0 && length + rowLength > MAX_UPDATE_LENGTH) {
+        await update(keys, cases);
+        keys = [];
+        cases = faked.map(() => []);
+        length = 0;
+      }
+      keys.push(key);
+      whens.forEach((when, i) => cases[i].push(when));
+      length += rowLength;
     }
+    if (keys.length > 0) await update(keys, cases);
   }
 
   for (const table of PII_COPY_TABLES) {

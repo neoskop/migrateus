@@ -117,11 +117,41 @@ describe('pseudonymizeDatabase', () => {
     );
     expect(statements[2]).toBe('SELECT "customer_id" FROM "customers"');
     expect(statements[3]).toMatch(/WHEN '7' THEN '.+' WHEN '8' THEN/);
-    expect(statements[3]).toContain(`"iban" = CASE WHEN "iban" IS NULL THEN NULL ELSE CASE "customer_id" WHEN '7' THEN NULL`);
+    expect(statements[3]).toContain(`, "iban" = NULL WHERE`);
     expect(statements.slice(4)).toEqual([
       'DELETE FROM "directus_revisions"',
       'DELETE FROM "directus_activity"',
       'DELETE FROM "directus_sessions"',
     ]);
+  });
+
+  it('splits big tables into statements short enough for one exec argument', async () => {
+    const statements: string[] = [];
+    const pks = Array.from({ length: 5000 }, (_, i) => `${i}`);
+    const target = {
+      escapeIdentifier: (id: string) => `"${id}"`,
+      escapeString: (v: string) => `'${v.replaceAll("'", "''")}'`,
+      executeSql: async (sql: string) => {
+        statements.push(sql);
+        return sql.startsWith('SELECT') ? pks.join('\n') : '';
+      },
+    };
+
+    await pseudonymizeDatabase(
+      target,
+      { t: { a: 'lorem.paragraph', b: 'person.fullName' } },
+      'salt',
+      new Set(),
+    );
+
+    const updates = statements.filter((sql) => sql.startsWith('UPDATE'));
+    expect(updates.length).toBeGreaterThan(1);
+    expect(Math.max(...updates.map((sql) => sql.length))).toBeLessThan(
+      128 * 1024,
+    );
+    const updated = updates.flatMap((sql) =>
+      sql.match(/WHERE "id" IN \((.*)\)$/)[1].split(', '),
+    );
+    expect(updated).toEqual(pks.map((pk) => `'${pk}'`));
   });
 });
