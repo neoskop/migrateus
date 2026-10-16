@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.3] - 2026-10-16
+
+### 🚀 Features
+
+- *(restore)* Stop Directus on k8s while a physical dump is restored
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency @inquirer/password to v5.2.3 ([#1145](https://github.com/neoskop/migrateus/issues/1145))
+- *(deps)* Update dependency @inquirer/type to v4.2.0 ([#1146](https://github.com/neoskop/migrateus/issues/1146))
+- *(directus-user)* Detach restored files before deleting the temp admin
+
 ## [4.0.2] - 2026-10-16
 
 ### 🚀 Features
