@@ -323,6 +323,8 @@ environments:
 
 Each field maps to a [Faker][5] method path (`module.method`), or to `null` to clear the field. Unknown paths stop Migrateus when it loads the config.
 
+Set the top-level `pseudonymizeLocale` to a [Faker locale][6] (e.g. `de`) for localized names, addresses and phone numbers. Default is `en`.
+
 - **Logical backups** are pseudonymized while they are created. Use `--raw` to keep real data.
 - **Restores** pseudonymize backups with real data (physical or `--raw` backups) when the target environment sets `pseudonymize: true`. For logical backups, rows are replaced before the import. For physical backups, rows are replaced with SQL after the dump is restored, and `directus_revisions`, `directus_activity` and `directus_sessions` are emptied because they hold copies of the original data.
 
@@ -403,3 +405,4 @@ See [License](LICENSE).
 [3]: https://learn.microsoft.com/cli/azure/install-azure-cli
 [4]: https://pgloader.io
 [5]: https://fakerjs.dev/api/
+[6]: https://fakerjs.dev/guide/localization.html#available-locales

@@ -20,6 +20,7 @@ import { exec } from '../util/exec.js';
 import { fileExists } from '../util/file-exists.js';
 import {
   PseudonymizeRules,
+  setFakerLocale,
   validateRules,
 } from '../pseudonymize/pseudonymize.js';
 
@@ -80,6 +81,7 @@ export class ConfigService {
       );
       this.config = yaml.load(subsitutedConfig) as Config;
       this.redactCredentials();
+      setFakerLocale(this.config.pseudonymizeLocale);
       for (const warning of validateRules(this.config.pseudonymize ?? {})) {
         this.logger.warn(warning);
       }

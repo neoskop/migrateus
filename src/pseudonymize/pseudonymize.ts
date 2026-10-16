@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { faker } from '@faker-js/faker';
+import { allFakers, Faker, faker as defaultFaker } from '@faker-js/faker';
 
 /**
  * `collection → field → faker method path` (e.g. `person.firstName`), or
@@ -29,6 +29,22 @@ const PII_COPY_TABLES = [
   'directus_activity',
   'directus_sessions',
 ];
+
+let faker: Faker = defaultFaker;
+
+/** Selects the faker locale (e.g. `de`, `de_AT`); `undefined` keeps English. */
+export function setFakerLocale(locale: string | undefined): void {
+  if (locale === undefined) {
+    faker = defaultFaker;
+    return;
+  }
+  if (!(locale in allFakers)) {
+    throw new Error(
+      `Unknown faker locale '${locale}' — expected one of ${Object.keys(allFakers).join(', ')}`,
+    );
+  }
+  faker = allFakers[locale as keyof typeof allFakers];
+}
 
 export function newSalt(): string {
   return randomBytes(16).toString('hex');

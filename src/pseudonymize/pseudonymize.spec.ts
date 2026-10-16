@@ -3,6 +3,7 @@ import {
   fakeValue,
   pseudonymizeDatabase,
   pseudonymizeRows,
+  setFakerLocale,
   validateRules,
   PseudonymizeRules,
 } from './pseudonymize.js';
@@ -153,5 +154,15 @@ describe('pseudonymizeDatabase', () => {
       sql.match(/WHERE "id" IN \((.*)\)$/)[1].split(', '),
     );
     expect(updated).toEqual(pks.map((pk) => `'${pk}'`));
+  });
+});
+
+describe('setFakerLocale', () => {
+  it('switches the locale and rejects unknown ones', () => {
+    setFakerLocale('de');
+    const german = fakeValue('location.country', 'seed');
+    setFakerLocale(undefined);
+    expect(fakeValue('location.country', 'seed')).not.toEqual(german);
+    expect(() => setFakerLocale('xx')).toThrow("Unknown faker locale 'xx'");
   });
 });

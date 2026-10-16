@@ -11,6 +11,8 @@ export interface Config {
     ignore?: { [key: string]: string[] | boolean };
   };
   pseudonymize?: PseudonymizeRules;
+  /** Faker locale for pseudonyms, e.g. `de`. Default: `en`. */
+  pseudonymizeLocale?: string;
   environments: (
     | K8sEnvironment
     | DockerEnvironment
