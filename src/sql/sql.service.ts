@@ -58,6 +58,9 @@ export class SqlService {
     return this._config?.filename ?? this._config?.name;
   }
 
+  /** Container the temp admin was set up through, reused to clean it up. */
+  private directusUserContainer?: ContainerService;
+
   private get driver(): DbDriver {
     return this._driver;
   }
@@ -81,6 +84,7 @@ export class SqlService {
     containerService: ContainerService,
     port: number,
   ) {
+    this.directusUserContainer = containerService;
     await this.directusUserService.setupUser(
       (command) => containerService.execInDirectus(command),
       (p, token) => this.directus.getClient(p, token),
@@ -91,7 +95,12 @@ export class SqlService {
   public async cleanUpDirectusUser() {
     // removeUser self-guards when the temp admin was never created (setup
     // failed before setupDirectusUser ran), so this is a safe no-op then.
-    await this.directusUserService.removeUser();
+    const containerService = this.directusUserContainer;
+    await this.directusUserService.removeUser(
+      containerService &&
+        ((sql) => this._driver.executeSql(this.execFor(containerService), sql)),
+      this._driver,
+    );
   }
 
   public async cleanUpAllDirectusUsers(containerService: ContainerService) {

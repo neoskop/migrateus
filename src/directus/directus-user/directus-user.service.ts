@@ -116,11 +116,22 @@ export class DirectusUserService {
    * because removing it kills the token. A failed role delete must not throw —
    * the leftover empty role is acceptable and is swept by the `clean` command.
    */
-  public async removeUser(): Promise<void> {
+  public async removeUser(
+    execSql?: MysqlExecutor,
+    driver?: DbDriver,
+  ): Promise<void> {
     if (!this.userId || !this.token) {
       return;
     }
     const client = this.getClient(this.port, this.token);
+
+    // Assets restored through the temp admin reference it as `modified_by`,
+    // which blocks the delete with a foreign key error.
+    if (execSql && driver) {
+      await execSql(
+        `UPDATE directus_files SET modified_by = null WHERE modified_by = ${driver.escapeString(this.userId)}`,
+      );
+    }
 
     // Delete the USER first, while the temp admin still has the admin access it
     // derives from its role's policy. Deleting the role first strips that access
@@ -188,7 +199,9 @@ export class DirectusUserService {
       }
 
       if (credential.password) {
-        const hash = driver.escapeString(await argon2.hash(credential.password));
+        const hash = driver.escapeString(
+          await argon2.hash(credential.password),
+        );
         await execSql(
           `UPDATE directus_users SET password = ${hash} WHERE email = ${email}`,
         );
@@ -221,7 +234,9 @@ export class DirectusUserService {
     await execSql(`DELETE FROM directus_users WHERE email LIKE 'migrateus%'`);
 
     const roleIds = (
-      await execSql(`SELECT id FROM directus_roles WHERE name LIKE 'migrateus%'`)
+      await execSql(
+        `SELECT id FROM directus_roles WHERE name LIKE 'migrateus%'`,
+      )
     )
       .split('\n')
       .filter(Boolean)

@@ -267,6 +267,32 @@ describe('DirectusUserService.removeUser', () => {
     expect(request).toHaveBeenCalled();
   }, 20000);
 
+  it('detaches restored files from the temp user before deleting it', async () => {
+    const { service } = build();
+    const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
+
+    globalThis.fetch = (async () =>
+      ({
+        ok: true,
+        json: async () => ({ data: { access_token: 'tok' } }),
+      }) as never) as never;
+
+    const request = jest.fn(async () => undefined);
+    const getClient = jest.fn(() => ({ request }));
+    const execSql = jest.fn(async (_sql: string) => '');
+    const driver = { escapeString: (v: string) => `'${v}'` };
+
+    await service.setupUser(fn as never, getClient as never, 8055);
+    await service.removeUser(execSql, driver as never);
+
+    expect(execSql).toHaveBeenCalledWith(
+      `UPDATE directus_files SET modified_by = null WHERE modified_by = '${USER_ID}'`,
+    );
+    expect(execSql.mock.invocationCallOrder[0]).toBeLessThan(
+      request.mock.invocationCallOrder[0],
+    );
+  }, 20000);
+
   it('is idempotent: a second removeUser issues no further requests', async () => {
     const { service } = build();
     const { fn } = makeExec([`${ROLE_ID}\n`, `${USER_ID}\n`]);
