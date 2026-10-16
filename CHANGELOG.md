@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.2] - 2026-10-16
+
+### 🚀 Features
+
+- *(pseudonymize)* Make the faker locale configurable via pseudonymizeLocale
+
+### 🐛 Bug Fixes
+
+- *(pseudonymize)* Cut physical restore UPDATEs by length to avoid E2BIG
+
 ## [4.0.1] - 2026-10-16
 
 ### 🐛 Bug Fixes
