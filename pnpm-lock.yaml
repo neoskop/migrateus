@@ -33,8 +33,8 @@ importers:
         specifier: 5.2.6
         version: 5.2.6(@types/node@24.19.2)
       '@inquirer/type':
-        specifier: 4.0.7
-        version: 4.0.7(@types/node@24.19.2)
+        specifier: 4.2.0
+        version: 4.2.0(@types/node@24.19.2)
       '@nestjs/common':
         specifier: 11.1.28
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0)
@@ -723,15 +723,6 @@ packages:
   '@inquirer/type@3.0.10':
     resolution: {integrity: sha512-BvziSRxfz5Ov8ch0z/n3oijRSEcEsHnhggm4xFZe93DHcUCTlutlq9Ox4SVENAfcRD22UQq7T/atg9Wr3k09eA==}
     engines: {node: '>=18'}
-    peerDependencies:
-      '@types/node': '>=18'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-
-  '@inquirer/type@4.0.7':
-    resolution: {integrity: sha512-t28inv14nMQ1PhKpsJPY+kEs/c00qzeCOS2gTNRyTjG5d6qsVA2fItxW4hkvGZ5lvanGLdtCzVIx5dwdRpN1+g==}
-    engines: {node: '>=23.5.0 || ^22.13.0 || ^20.17.0'}
     peerDependencies:
       '@types/node': '>=18'
     peerDependenciesMeta:
@@ -4290,7 +4281,7 @@ snapshots:
     dependencies:
       '@inquirer/ansi': 2.0.7
       '@inquirer/figures': 2.0.9
-      '@inquirer/type': 4.0.7(@types/node@24.19.2)
+      '@inquirer/type': 4.2.0(@types/node@24.19.2)
       cli-width: 4.1.0
       fast-wrap-ansi: 0.2.2
       mute-stream: 3.0.0
@@ -4441,10 +4432,6 @@ snapshots:
       '@types/node': 24.19.2
 
   '@inquirer/type@3.0.10(@types/node@24.19.2)':
-    optionalDependencies:
-      '@types/node': 24.19.2
-
-  '@inquirer/type@4.0.7(@types/node@24.19.2)':
     optionalDependencies:
       '@types/node': 24.19.2
 
