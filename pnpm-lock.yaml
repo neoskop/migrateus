@@ -72,8 +72,8 @@ importers:
         specifier: 3.0.2
         version: 3.0.2
       nanoid:
-        specifier: 5.1.16
-        version: 5.1.16
+        specifier: 6.0.2
+        version: 6.0.2
       nest-commander:
         specifier: 3.21.0
         version: 3.21.0(@nestjs/common@11.2.7(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@5.5.0))(@nestjs/core@11.2.7)(@types/inquirer@8.2.13)(@types/node@24.19.2)(typescript@6.0.3)
@@ -2900,9 +2900,9 @@ packages:
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
 
-  nanoid@5.1.16:
-    resolution: {integrity: sha512-kVrnsrJqMR8+oLJnGEmSWw9BivK5mt7H3FZatVRjrc5wGqFYuBxX1yG7+A7Gi5AefkX6t/oCkizcQgpu0cY1dQ==}
-    engines: {node: ^18 || >=20}
+  nanoid@6.0.2:
+    resolution: {integrity: sha512-hIvVOb9Qr1p/9CNNLOe0OlWvgx/ziTsVwKN/GDSsuArN2K0wDiafP3s0SWmsm7o2BdnyS8Z9Z64NFBUbn6ziBg==}
+    engines: {node: ^22 || ^24 || >=26}
     hasBin: true
 
   napi-postinstall@0.3.4:
@@ -6877,7 +6877,7 @@ snapshots:
       object-assign: 4.1.1
       thenify-all: 1.6.0
 
-  nanoid@5.1.16: {}
+  nanoid@6.0.2: {}
 
   napi-postinstall@0.3.4: {}
 
