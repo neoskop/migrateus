@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.0.4] - 2026-10-16
+
+### 🐛 Bug Fixes
+
+- *(deps)* Update dependency file-type to v22.1.1 ([#1148](https://github.com/neoskop/migrateus/issues/1148))
+- *(deps)* Update dependency nest-commander to v3.21.0 ([#1149](https://github.com/neoskop/migrateus/issues/1149))
+- *(sql)* Run MySQL statements with utf8mb4
+
 ## [4.0.3] - 2026-10-16
 
 ### 🚀 Features
