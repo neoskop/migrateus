@@ -7,6 +7,11 @@ import { version } from '../version.js';
 import { exec, throwIfFailed } from '../util/exec.js';
 import confirm from '@inquirer/confirm';
 
+// Migrateus is published on npmjs. Pin the registry: a user's .npmrc may map
+// the @neoskop scope elsewhere (e.g. GitHub Packages), where it does not exist.
+// `--registry` does not override a scoped entry, so set the scope's registry.
+const REGISTRY_FLAG = '--@neoskop:registry=https://registry.npmjs.org';
+
 @Injectable()
 export class UpdateService {
   constructor(
@@ -14,7 +19,14 @@ export class UpdateService {
   ) {}
 
   public async checkForUpdates() {
-    const latestVersion = await this.getLatestVersion();
+    let latestVersion: Awaited<ReturnType<typeof this.getLatestVersion>>;
+    try {
+      latestVersion = await this.getLatestVersion();
+    } catch (error: any) {
+      // The update check is a convenience; it must never block the command.
+      this.logger.debug(`Skipping update check: ${error?.message ?? error}`);
+      return;
+    }
 
     if (semver.gte(version, latestVersion)) {
       return;
@@ -32,7 +44,9 @@ export class UpdateService {
       `Updating from ${chalk.red(version)} to ${chalk.green(latestVersion)}`,
     );
 
-    await exec(`npm install -g @neoskop/migrateus@${latestVersion}`);
+    await exec(
+      `npm install -g @neoskop/migrateus@${latestVersion} ${REGISTRY_FLAG}`,
+    );
 
     this.logger.info(
       `Update complete. Please restart the application to use the latest version.`,
@@ -43,7 +57,7 @@ export class UpdateService {
 
   private async getLatestVersion() {
     const { stdout } = throwIfFailed(
-      await exec('npm view @neoskop/migrateus versions --json', {
+      await exec(`npm view @neoskop/migrateus versions --json ${REGISTRY_FLAG}`, {
         silent: true,
       }),
       (o) => o.stderr,
