@@ -55,7 +55,7 @@
     "js-yaml": "4.3.2",
     "mime-types": "3.0.2",
     "nanoid": "5.1.16",
-    "nest-commander": "3.20.1",
+    "nest-commander": "3.21.0",
     "ora": "9.4.1",
     "p-limit": "7.3.3",
     "portfinder": "1.0.38",
