@@ -1,5 +1,6 @@
 allowBuilds:
   '@nestjs/core': false
+  '@parcel/watcher': false
   argon2: true
   unrs-resolver: false
 minimumReleaseAge: 4320
