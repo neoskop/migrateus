@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@directus/sdk':
-        specifier: 22.0.0
-        version: 22.0.0
+        specifier: 27.0.0
+        version: 27.0.0
       '@faker-js/faker':
         specifier: 10.6.0
         version: 10.6.0
@@ -439,8 +439,8 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@directus/sdk@22.0.0':
-    resolution: {integrity: sha512-1D3cgjg2jnA7S1LXwKoYSw7yyJCs/DyKUOUDMLbvLtljafWJ5KOef7O8bVDPuQkVw6Bvoo6GUCbAMYI6Ff8Igg==}
+  '@directus/sdk@27.0.0':
+    resolution: {integrity: sha512-aoBjJgU9ewYQiLXQQExoahl5pAJew+BImSJhFOmZbgT5a8SdFwv+NIvIeBKoThmVYNK6BsxpwKGO11aKGvirhQ==}
     engines: {node: '>=22'}
 
   '@dual-bundle/import-meta-resolve@4.2.1':
@@ -4101,7 +4101,7 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@directus/sdk@22.0.0': {}
+  '@directus/sdk@27.0.0': {}
 
   '@dual-bundle/import-meta-resolve@4.2.1': {}
 
