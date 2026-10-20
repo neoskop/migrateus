@@ -54,7 +54,7 @@
     "glob": "13.0.6",
     "js-yaml": "4.3.2",
     "mime-types": "3.0.2",
-    "nanoid": "5.1.16",
+    "nanoid": "6.0.2",
     "nest-commander": "3.21.0",
     "ora": "9.4.1",
     "p-limit": "7.3.3",
