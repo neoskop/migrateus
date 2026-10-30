@@ -33,7 +33,7 @@
     "update-changelog": "git-cliff -o --tag $version"
   },
   "dependencies": {
-    "@directus/sdk": "22.0.0",
+    "@directus/sdk": "27.1.0",
     "@faker-js/faker": "10.6.0",
     "@inquirer/confirm": "6.3.3",
     "@inquirer/core": "11.2.1",
